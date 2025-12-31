@@ -1,14 +1,26 @@
 {
   "name": "rbw-claude-code",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Python development and productivity plugins for Claude Code",
   "owner": {
     "name": "RBozydar"
   },
   "metadata": {
-    "description": "A collection of Claude Code plugins for Python development workflows including uv enforcement, conventional commits, auto-formatting, type checking, and test reminders."
+    "description": "A collection of Claude Code plugins for Python development workflows including AI-powered code review, workflow automation, uv enforcement, conventional commits, auto-formatting, type checking, and test reminders."
   },
   "plugins": [
+    {
+      "name": "core",
+      "description": "Universal AI-powered development tools: 14 agents, 13 commands, 6 skills for code review, research, and workflow automation",
+      "source": "./plugins/core",
+      "category": "development"
+    },
+    {
+      "name": "python-backend",
+      "description": "Python-specific tools: 5 reviewers (including Gemini) and 2 commands for pytest and type checking",
+      "source": "./plugins/python-backend",
+      "category": "development"
+    },
     {
       "name": "enforce-uv",
       "description": "Block bare python/pip/pytest commands, enforce uv usage",
@@ -38,6 +50,12 @@
       "description": "Remind to add tests when creating new Python files",
       "source": "./plugins/test-reminder",
       "category": "development"
+    },
+    {
+      "name": "protect-env",
+      "description": "Prevent reading .env files to protect secrets",
+      "source": "./plugins/protect-env",
+      "category": "security"
     }
   ]
 }

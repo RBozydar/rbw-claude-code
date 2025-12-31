@@ -1,6 +1,6 @@
 # rbw-claude-code
 
-A Claude Code plugin marketplace with Python development and productivity plugins.
+A Claude Code plugin marketplace for Python development with AI-powered code review, workflow automation, and productivity tools.
 
 ## Installation
 
@@ -18,6 +18,15 @@ Then browse and install plugins:
 
 ## Available Plugins
 
+### AI-Powered Development
+
+| Plugin | Description |
+|--------|-------------|
+| [core](plugins/core) | Universal AI development tools: 14 agents, 13 commands, 6 skills for code review, research, and workflow automation |
+| [python-backend](plugins/python-backend) | Python-specific tools: 5 reviewers (including Gemini), 2 commands for pytest and type checking |
+
+### Automation Hooks
+
 | Plugin | Description |
 |--------|-------------|
 | [enforce-uv](plugins/enforce-uv) | Block bare python/pip/pytest commands, enforce uv usage |
@@ -25,33 +34,82 @@ Then browse and install plugins:
 | [python-format](plugins/python-format) | Auto-format Python files with ruff after edits |
 | [python-typecheck](plugins/python-typecheck) | Run type checking after Python file edits |
 | [test-reminder](plugins/test-reminder) | Remind to add tests when creating new Python files |
+| [protect-env](plugins/protect-env) | Block reading .env files to protect secrets |
 
-## Plugin Details
+## Core Plugin
+
+The `core` plugin provides language-agnostic AI-powered development tools:
+
+### Workflow Commands
+- `/workflows:plan` - Transform features into structured plans
+- `/workflows:work` - Execute work plans efficiently
+- `/workflows:review` - Multi-agent code reviews with parallel analysis
+- `/workflows:compound` - Document solved problems for knowledge compounding
+
+### Review Agents
+- `code-simplicity-reviewer` - Reviews for unnecessary complexity
+- `security-sentinel` - Security vulnerability analysis
+- `performance-oracle` - Performance analysis
+- `architecture-strategist` - System design review
+- `pattern-recognition-specialist` - Pattern/anti-pattern detection
+- `agent-native-reviewer` - Ensures features are agent-accessible
+- `data-migration-expert` - Database migration validation
+
+### Research Agents
+- `framework-docs-researcher` - Framework documentation lookup
+- `git-history-analyzer` - Git history analysis
+- `repo-research-analyst` - Repository analysis
+- `best-practices-researcher` - Industry best practices
+
+### Skills
+- `compound-docs` - Document solved problems
+- `git-worktree` - Manage Git worktrees
+- `file-todos` - File-based todo tracking
+- `create-agent-skills` - Create Claude Code skills
+- `agent-native-architecture` - Build prompt-native AI agents
+- `skill-creator` - Create new skills
+
+## Python Backend Plugin
+
+The `python-backend` plugin extends core with Python-specific capabilities:
+
+### Review Agents
+- `kieran-python-reviewer` - High-quality Python code review
+- `skeptical-simplicity-reviewer` - Anti-overengineering critique
+- `ml-expert-reviewer` - ML/DS/LLM specialized review
+- `gemini-brainstorm` - Second opinion from Gemini
+- `gemini-reviewer` - Alternative code review from Gemini
+
+### Commands
+- `/pytest-runner` - Smart pytest execution with failure analysis
+- `/type-check` - Intelligent type checking with mypy/pyright
+
+## Hook Plugins
 
 ### enforce-uv
-
-Ensures Claude Code uses `uv` for all Python operations. Blocks bare `python`, `pip`, `pytest` commands with suggestions to use `uv run` or `uvx`.
+Ensures Claude Code uses `uv` for all Python operations. Blocks bare `python`, `pip`, `pytest` commands.
 
 ### conventional-commits
-
-Validates commit messages follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Blocks commits without proper format like `feat:`, `fix:`, `docs:`, etc.
+Validates commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
 ### python-format
-
-Runs `uvx ruff format` automatically after any Python file is written or edited. Non-blocking - shows warnings but allows operation to proceed.
+Runs `uvx ruff format` automatically after any Python file edit.
 
 ### python-typecheck
-
-Runs `uvx pyright` automatically after any Python file is written or edited. Shows type errors without blocking.
+Runs `uvx pyright` automatically after any Python file edit.
 
 ### test-reminder
+Reminds you to add tests when creating new Python modules.
 
-Gently reminds you to add tests when creating new Python modules. Checks for `test_<module>.py` in common locations.
+### protect-env
+Blocks reading `.env` files to prevent exposing secrets to AI.
 
 ## Requirements
 
 - Claude Code with plugin support
-- `uv` installed for python-format and python-typecheck plugins
+- `uv` installed for Python-related plugins
+- GitHub CLI (`gh`) for PR operations
+- Gemini CLI for Gemini agents (optional)
 
 ## License
 

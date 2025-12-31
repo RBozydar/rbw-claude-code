@@ -1,0 +1,5 @@
+{
+  "name": "protect-env",
+  "version": "1.0.0",
+  "description": "Prevent reading .env files to protect secrets"
+}
