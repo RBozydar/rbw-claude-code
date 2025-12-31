@@ -1,0 +1,5 @@
+{
+  "name": "python-format",
+  "version": "1.0.0",
+  "description": "Auto-format Python files with ruff after edits"
+}

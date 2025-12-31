@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PLUGIN_DIR/hooks/conventional_commits.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
