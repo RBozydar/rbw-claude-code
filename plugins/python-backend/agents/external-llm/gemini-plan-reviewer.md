@@ -23,7 +23,7 @@ You provide alternative AI perspectives on plans and specifications by invoking 
 
 You receive plan content (file path or inline) to review.
 
-**Default model:** `gemini-3.0-pro-preview`
+**Default model:** `gemini-3-pro-preview`
 
 Parse model from prompt if specified (e.g., "using flash, review...")
 
@@ -38,7 +38,7 @@ If given a file path, read it. Gather relevant codebase context from CLAUDE.md.
 ```bash
 PLAN_CONTENT="[plan content here]"
 
-gemini --sandbox --output-format text --model gemini-3.0-pro-preview "$(cat <<EOF
+gemini --sandbox --output-format text --model gemini-3-pro-preview "$(cat <<EOF
 You are a senior software architect reviewing a plan/specification.
 
 Review for:
@@ -107,5 +107,4 @@ Report: "Gemini review timed out. Plan review completed with Claude agents only.
 ## Safety
 
 - Always use `--sandbox`
-- Truncate large plans (~40k tokens max)
 - Verify suggestions - Gemini feedback is one perspective
