@@ -55,12 +55,13 @@ claude plugin add ./plugins/core
 - `/create-agent-skill` - Create Claude Code skills
 - `/plan_review` - Multi-agent plan review
 
-### Skills (6)
+### Skills (7)
 
 - `agent-native-architecture` - Building AI agents with prompt-native patterns
 - `create-agent-skills` - Guide for creating Claude Code skills
 - `compound-docs` - Document solved problems for knowledge compounding
 - `git-worktree` - Manage Git worktrees for isolated development
+- `git-ship` - Complete git workflow: commit, push, PR, CI wait, merge
 - `file-todos` - File-based todo tracking system
 - `skill-creator` - Creating new Claude Code skills
 

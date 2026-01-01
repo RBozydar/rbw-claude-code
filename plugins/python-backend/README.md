@@ -22,7 +22,7 @@ claude plugin add ./plugins/core
 
 ## Components
 
-### Agents (5)
+### Agents (6)
 
 **Review Agents:**
 
@@ -52,6 +52,11 @@ claude plugin add ./plugins/core
 - `gemini-reviewer` - Alternative code review from Gemini
   - Different perspective on code quality
   - Highlights consensus and differences
+  - Requires Gemini CLI installed
+
+- `gemini-plan-reviewer` - Alternative plan review from Gemini
+  - Reviews plans and specifications
+  - Surfaces blind spots through model diversity
   - Requires Gemini CLI installed
 
 ### Commands (2)

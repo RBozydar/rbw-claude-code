@@ -1,6 +1,6 @@
 {
   "name": "rbw-claude-code",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Python development and productivity plugins for Claude Code",
   "owner": {
     "name": "RBozydar"
