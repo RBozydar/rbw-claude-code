@@ -19,24 +19,21 @@ command = c.tool_input.get("command", "")
 
 # Safe patterns - allow these
 SAFE_PATTERNS = [
-    r"rm\s+-rf\s+(/tmp/|/var/tmp/|\$TMPDIR|\${TMPDIR})",
-    r"rm\s+-fr\s+(/tmp/|/var/tmp/|\$TMPDIR|\${TMPDIR})",
+    r"rm\s+-rf\s+(/tmp/|/var/tmp/|\$TMPDIR/|\${TMPDIR}/)",
+    r"rm\s+-fr\s+(/tmp/|/var/tmp/|\$TMPDIR/|\${TMPDIR}/)",
 ]
 
 # Destructive patterns - block these
 BLOCKED_PATTERNS = [
     # File destruction
-    (r"rm\s+(-[rRf]+\s+)+(?!/tmp/)(?!/var/tmp/)(?!\$TMPDIR)", "rm -rf is destructive outside temp directories"),
+    (r"rm\s+(-[rRf]+\s+)+", "rm -rf is destructive outside temp directories"),
     (r"find\s+.*-delete", "find -delete permanently removes files"),
     (r"find\s+.*-exec\s+rm", "find -exec rm permanently removes files"),
     (r"shred\s+", "shred permanently destroys file data"),
     (r"truncate\s+", "truncate destroys file contents"),
 
     # Supply chain attacks
-    (r"curl\s+.*\|\s*(ba)?sh", "curl pipe to shell is a supply chain attack vector"),
-    (r"wget\s+.*\|\s*(ba)?sh", "wget pipe to shell is a supply chain attack vector"),
-    (r"curl\s+.*\|\s*zsh", "curl pipe to shell is a supply chain attack vector"),
-    (r"wget\s+.*\|\s*zsh", "wget pipe to shell is a supply chain attack vector"),
+    (r"(curl|wget)\s+.*\|\s*(ba|z)?sh", "piping curl/wget to a shell is a supply chain attack vector"),
 
     # Command execution bypass (check for destructive git commands hidden in bash -c)
     (r"(ba)?sh\s+-c\s+['\"].*git\s+reset\s+--hard", "bash -c with destructive git command detected"),
