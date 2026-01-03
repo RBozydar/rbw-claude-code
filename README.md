@@ -34,7 +34,14 @@ Then browse and install plugins:
 | [python-format](plugins/python-format) | Auto-format Python files with ruff after edits |
 | [python-typecheck](plugins/python-typecheck) | Run type checking after Python file edits |
 | [test-reminder](plugins/test-reminder) | Remind to add tests when creating new Python files |
+
+### Security Hooks
+
+| Plugin | Description |
+|--------|-------------|
 | [protect-env](plugins/protect-env) | Block reading .env files to protect secrets |
+| [git-safety-guard](plugins/git-safety-guard) | Block destructive git commands (reset --hard, push --force, etc.) |
+| [safety-guard](plugins/safety-guard) | Block destructive file ops, supply chain attacks, and .env reading |
 
 ## Core Plugin
 
@@ -103,6 +110,25 @@ Reminds you to add tests when creating new Python modules.
 
 ### protect-env
 Blocks reading `.env` files to prevent exposing secrets to AI.
+
+### git-safety-guard
+Blocks destructive git commands that could cause data loss:
+- `git reset --hard`, `git reset --merge`
+- `git push --force`, `git push -f`
+- `git checkout -- <files>`, `git restore <files>`
+- `git clean -f`, `git branch -D`
+- `git stash drop`, `git stash clear`
+- `git reflog expire`, `git filter-branch`
+
+Allows safe alternatives: `git checkout -b`, `git push --force-with-lease`, `git clean -n`.
+
+### safety-guard
+Blocks destructive file operations and supply chain attacks:
+- `rm -rf` outside temp directories
+- `find -delete`, `shred`, `truncate`
+- `curl | bash`, `wget | sh` (supply chain attacks)
+- `bash -c` with destructive commands (bypass detection)
+- Reading `.env` files (allows `.env.example`, `.env.sample`, `.env.template`)
 
 ## Requirements
 

@@ -87,7 +87,42 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Follow project coding standards (see CLAUDE.md)
    - When in doubt, grep for similar implementations
 
-3. **Test Continuously**
+3. **Use Specialized Coding Agents**
+
+   When implementing code, delegate to the appropriate specialized coding agent with full context:
+
+   **For Python projects:**
+   Use the `python-coder` agent via Task tool. Provide comprehensive context so the agent doesn't have to figure things out:
+
+   **Required context to include:**
+   - What to implement (specific task from the plan)
+   - Where to implement it (file paths, module location)
+   - Related files to reference (existing patterns to follow)
+   - Expected interfaces/signatures (function names, class structure)
+   - Dependencies to use (libraries, internal modules)
+   - Any constraints or requirements from the plan
+
+   **Example with full context:**
+   ```
+   Task(python-coder): "Implement UserAuthService in src/services/auth.py
+
+   Context:
+   - Follow pattern from src/services/email.py (async service with dependency injection)
+   - Use httpx for async HTTP calls to the OAuth provider
+   - Inject DatabaseAdapter via __init__ (don't instantiate)
+   - Must implement: authenticate(token: str) -> User | None
+   - Use Pydantic for User model validation
+   - Add tests in tests/services/test_auth.py following test_email.py pattern"
+   ```
+
+   **Bad example (lacks context):**
+   ```
+   Task(python-coder): "Implement authentication"  # Agent has to guess everything
+   ```
+
+   The agent enforces SOLID principles, asyncio patterns, and production-quality standards automatically - you just need to tell it WHAT to build and WHERE.
+
+4. **Test Continuously**
 
    - Run relevant tests after each significant change
    - Don't wait until the end to test
@@ -100,7 +135,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Go: `go test ./...`
    - Generic: Check `package.json`, `pyproject.toml`, `Makefile`, or CI config for test commands
 
-4. **Figma Design Sync** (if applicable)
+5. **Figma Design Sync** (if applicable)
 
    For UI work with Figma designs:
 
@@ -109,7 +144,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Fix visual differences identified
    - Repeat until implementation matches design
 
-5. **Track Progress**
+6. **Track Progress**
    - Keep TodoWrite updated as you complete tasks
    - Note any blockers or unexpected discoveries
    - Create new tasks if scope expands
@@ -124,10 +159,10 @@ This command takes a work document (plan, specification, or todo file) and execu
    **For Python projects:**
    ```bash
    # Run tests
-   pytest  # or uv run pytest
+   uv run pytest
 
    # Run linting
-   ruff check .  # or uvx ruff check .
+   uvx ruff check .
 
    # Run type checking
    mypy .  # or pyright

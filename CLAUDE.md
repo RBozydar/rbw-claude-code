@@ -18,6 +18,8 @@ This is a Claude Code plugin marketplace containing AI-powered development tools
 | `python-typecheck` | hook | Type check after edits |
 | `test-reminder` | hook | Remind about missing tests |
 | `protect-env` | hook | Block reading .env files |
+| `git-safety-guard` | hook | Block destructive git commands |
+| `safety-guard` | hook | Block destructive file ops & supply chain attacks |
 
 ## Structure
 

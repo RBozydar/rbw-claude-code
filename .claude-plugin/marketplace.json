@@ -56,6 +56,18 @@
       "description": "Prevent reading .env files to protect secrets",
       "source": "./plugins/protect-env",
       "category": "security"
+    },
+    {
+      "name": "git-safety-guard",
+      "description": "Block destructive git commands to prevent data loss",
+      "source": "./plugins/git-safety-guard",
+      "category": "security"
+    },
+    {
+      "name": "safety-guard",
+      "description": "Block destructive file operations, env file reading, and supply chain attacks",
+      "source": "./plugins/safety-guard",
+      "category": "security"
     }
   ]
 }

@@ -1,0 +1,5 @@
+{
+  "name": "git-safety-guard",
+  "version": "1.0.0",
+  "description": "Block destructive git commands to prevent data loss"
+}
