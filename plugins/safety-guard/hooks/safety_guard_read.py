@@ -34,6 +34,7 @@ for pattern in SAFE_PATTERNS:
 ENV_PATTERNS = [
     r"\.env$",           # Exactly .env
     r"\.env\.[^/]+$",    # .env.local, .env.production, etc.
+    r"\.envrc$",        # .envrc files
 ]
 
 for pattern in ENV_PATTERNS:
