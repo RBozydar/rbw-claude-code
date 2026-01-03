@@ -15,7 +15,7 @@ jobs:
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
+    # github.event.pull_request.user.login == 'new-developer'
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
 
     runs-on: ubuntu-latest
@@ -31,6 +31,9 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Validate plugins
+        run: claude plugin validate .
+
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
@@ -45,7 +48,7 @@ jobs:
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
-            - Test coverage
+            - Clarity of skills passed to Claude (can you undertand them? are they unamabigious and well defined?)
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
