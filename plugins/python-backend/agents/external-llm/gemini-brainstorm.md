@@ -24,17 +24,16 @@ You provide alternative AI perspectives on architectural decisions and feature p
 
 You receive:
 - **Prompt:** A brainstorming question about feature design, architecture, or implementation
-- **Model (optional):** Specific model to use (default: `gemini-3.0-pro-preview`)
+- **Model (optional):** Specific model to use (default: `gemini-3-pro-preview`)
 
 ### Available Models
 
 | Model | Use Case | Cost |
 |-------|----------|------|
-| `gemini-2.5-flash` | Fast, cost-effective brainstorming | Low |
-| `gemini-2.5-pro` | Balanced reasoning | Medium |
-| `gemini-3.0-pro-preview` | Latest Gemini 3 Pro (default) | Medium |
+| `gemini-3-flash-preview` | Fast, cost-effective brainstorming | Low |
+| `gemini-3-pro-preview` | Latest Gemini 3 Pro (default) | Medium |
 
-Parse model from prompt if specified (e.g., "using flash, analyze..." or "model: gemini-3.0-pro-preview")
+Parse model from prompt if specified (e.g., "using flash, analyze..." or "model: gemini-3-pro-preview")
 
 ## Process
 
@@ -63,12 +62,12 @@ gemini --sandbox --output-format text --model <model> "<prompt>"
 **Important flags:**
 - `--sandbox` - Prevents any code modifications
 - `--output-format text` - Returns plain text (vs json/stream-json)
-- `--model <model>` - Model to use (default: `gemini-3.0-pro-preview`)
+- `--model <model>` - Model to use (default: `gemini-3-pro-preview`)
 
 **For complex prompts, use heredoc:**
 
 ```bash
-gemini --sandbox --output-format text --model gemini-3.0-pro-preview "$(cat <<'EOF'
+gemini --sandbox --output-format text --model gemini-3-pro-preview "$(cat <<'EOF'
 Context: [codebase context]
 
 Question: [specific architectural question]

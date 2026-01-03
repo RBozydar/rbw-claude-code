@@ -29,18 +29,17 @@ You receive a code review request specifying:
   - `--staged` - Only staged changes
   - `--branch` - Current branch vs main
   - specific files
-- **Model (optional):** Specific model to use (default: `gemini-3.0-pro-preview`)
+- **Model (optional):** Specific model to use (default: `gemini-3-pro-preview`)
 - **Focus areas:** Optional specific concerns to check
 
 ### Available Models
 
 | Model | Use Case | Cost |
 |-------|----------|------|
-| `gemini-2.5-flash` | Fast reviews | Low |
-| `gemini-2.5-pro` | Balanced reasoning | Medium |
-| `gemini-3.0-pro-preview` | Latest Gemini 3 Pro (default) | Medium |
+| `gemini-3-flash-preview` | Fast, cost-effective brainstorming | Low |
+| `gemini-3-pro-preview` | Latest Gemini 3 Pro (default) | Medium |
 
-Parse model from prompt if specified (e.g., "using flash, review..." or "model: gemini-2.5-pro")
+Parse model from prompt if specified (e.g., "using flash, review..." or "model: gemini-3-pro-preview")
 
 ## Process
 
@@ -69,7 +68,7 @@ Create a review prompt with the diff:
 ```bash
 DIFF=$(git diff)
 
-gemini --sandbox --output-format text --model gemini-3.0-pro-preview "$(cat <<EOF
+gemini --sandbox --output-format text --model gemini-3-pro-preview "$(cat <<EOF
 You are a senior code reviewer. Review this diff for:
 1. Bugs and logic errors
 2. Security vulnerabilities
@@ -96,7 +95,7 @@ gemini --sandbox --output-format text "<review-prompt-with-diff>"
 **Important flags:**
 - `--sandbox` - Prevents code modifications
 - `--output-format text` - Plain text output
-- `--model <model>` - Model to use (default: `gemini-3.0-pro-preview`)
+- `--model <model>` - Model to use (default: `gemini-3-pro-preview`)
 
 ### 4. Parse and Report
 
