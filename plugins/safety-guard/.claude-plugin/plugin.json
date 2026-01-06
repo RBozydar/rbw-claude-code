@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/safety_guard_bash.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/safety_guard_bash.py",
             "timeout": 10
           }
         ]
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/safety_guard_read.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/safety_guard_read.py",
             "timeout": 10
           }
         ]

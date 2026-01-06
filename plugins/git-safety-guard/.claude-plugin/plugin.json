@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/git_safety_guard.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/git_safety_guard.py",
             "timeout": 10
           }
         ]

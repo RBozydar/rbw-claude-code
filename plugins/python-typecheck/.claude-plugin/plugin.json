@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/typecheck.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/typecheck.py",
             "timeout": 120
           }
         ]
