@@ -4,13 +4,14 @@ Instructions for Claude Code when working in this repository.
 
 ## Repository Overview
 
-This is a Claude Code plugin marketplace containing AI-powered development tools and Python workflow plugins.
+This is a Claude Code plugin marketplace containing AI-powered development
+tools and Python workflow plugins.
 
 ## Available Plugins
 
 | Plugin | Type | Description |
 |--------|------|-------------|
-| `core` | agents/commands/skills | Universal AI development tools (14 agents, 13 commands, 6 skills) |
+| `core` | agents/commands/skills | Universal AI development tools |
 | `python-backend` | agents/commands | Python-specific reviewers and commands |
 | `enforce-uv` | hook | Block bare python/pip commands |
 | `conventional-commits` | hook | Validate commit message format |
@@ -23,7 +24,7 @@ This is a Claude Code plugin marketplace containing AI-powered development tools
 
 ## Structure
 
-```
+```text
 .claude-plugin/marketplace.json    # Marketplace registry
 plugins/
   core/                            # AI-powered development tools
@@ -47,12 +48,14 @@ plugins/
 ## Plugin Types
 
 ### Agent Plugins (core, python-backend)
+
 - Agents are markdown files with YAML frontmatter
 - Organized by category: `agents/review/`, `agents/research/`, etc.
 - Commands are markdown files in `commands/`
 - Skills are directories with `SKILL.md` and optional references
 
 ### Hook Plugins (enforce-uv, python-format, etc.)
+
 - Python scripts with PEP 723 inline metadata
 - Use `cchooks` library for context
 - Hooks defined inline in `.claude-plugin/plugin.json`
@@ -60,10 +63,12 @@ plugins/
 ## Conventions
 
 ### Plugin Naming
+
 - Use kebab-case: `my-plugin-name`
 - Be descriptive but concise
 
 ### Hook Scripts
+
 ```python
 #!/usr/bin/env -S uv run --script
 # /// script
@@ -78,6 +83,7 @@ c.output.exit_success()  # or c.output.exit_block(message)
 ```
 
 ### Agent Files
+
 ```markdown
 ---
 name: agent-name
@@ -88,6 +94,7 @@ Agent instructions here...
 ```
 
 ### Command Files
+
 ```markdown
 ---
 name: command-name
@@ -99,7 +106,8 @@ Command instructions here...
 ```
 
 ### Skill Directories
-```
+
+```text
 skills/<skill-name>/
   SKILL.md           # Main skill file with YAML frontmatter
   references/        # Supporting documentation (optional)
@@ -111,6 +119,7 @@ skills/<skill-name>/
 
 1. Create directory: `plugins/<plugin-name>/`
 2. Create `.claude-plugin/plugin.json`:
+
    ```json
    {
      "name": "<plugin-name>",
@@ -132,6 +141,7 @@ skills/<skill-name>/
      }
    }
    ```
+
 3. Add components (hooks, agents, commands, skills)
 4. Write `README.md`
 5. Add to `.claude-plugin/marketplace.json`
@@ -140,6 +150,7 @@ skills/<skill-name>/
 ## Validation
 
 Always run before committing:
+
 ```bash
 claude plugin validate .
 ```
@@ -147,7 +158,8 @@ claude plugin validate .
 ## Commit Format
 
 Use conventional commits:
-```
+
+```text
 feat(plugin-name): add new feature
 fix(plugin-name): fix bug
 docs: update documentation
