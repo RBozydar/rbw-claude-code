@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/conventional_commits.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/conventional_commits.py",
             "timeout": 10
           }
         ]
