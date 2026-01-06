@@ -1,5 +1,19 @@
 {
   "name": "protect-env",
   "version": "1.0.0",
-  "description": "Prevent reading .env files to protect secrets"
+  "description": "Prevent reading .env files to protect secrets",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/protect_env.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }
