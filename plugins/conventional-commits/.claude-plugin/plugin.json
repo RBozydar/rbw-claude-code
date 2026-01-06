@@ -1,6 +1,5 @@
 {
   "name": "conventional-commits",
   "version": "1.0.0",
-  "description": "Validate git commit messages follow conventional format",
-  "hooks": "./hooks/hooks.json"
+  "description": "Validate git commit messages follow conventional format"
 }
