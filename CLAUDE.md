@@ -40,8 +40,8 @@ plugins/
       external-llm/                # Gemini agents
     commands/                      # /pytest-runner, /type-check
   <hook-plugin>/                   # Hook-based plugins
+    .claude-plugin/plugin.json     # Plugin config with inline hooks
     hooks/                         # Hook scripts
-    settings.json                  # Hook registrations
 ```
 
 ## Plugin Types
@@ -55,7 +55,7 @@ plugins/
 ### Hook Plugins (enforce-uv, python-format, etc.)
 - Python scripts with PEP 723 inline metadata
 - Use `cchooks` library for context
-- Registered via `settings.json`
+- Hooks defined inline in `.claude-plugin/plugin.json`
 
 ## Conventions
 
@@ -115,14 +115,27 @@ skills/<skill-name>/
    {
      "name": "<plugin-name>",
      "version": "1.0.0",
-     "description": "What it does"
+     "description": "What it does",
+     "hooks": {
+       "PreToolUse": [
+         {
+           "matcher": "Bash",
+           "hooks": [
+             {
+               "type": "command",
+               "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/script.py\"",
+               "timeout": 10
+             }
+           ]
+         }
+       ]
+     }
    }
    ```
 3. Add components (hooks, agents, commands, skills)
-4. Create `settings.json` if using hooks
-5. Write `README.md`
-6. Add to `.claude-plugin/marketplace.json`
-7. Validate: `claude plugin validate .`
+4. Write `README.md`
+5. Add to `.claude-plugin/marketplace.json`
+6. Validate: `claude plugin validate .`
 
 ## Validation
 

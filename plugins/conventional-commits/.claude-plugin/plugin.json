@@ -1,5 +1,19 @@
 {
   "name": "conventional-commits",
   "version": "1.0.0",
-  "description": "Validate git commit messages follow conventional format"
+  "description": "Validate git commit messages follow conventional format",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/conventional_commits.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }

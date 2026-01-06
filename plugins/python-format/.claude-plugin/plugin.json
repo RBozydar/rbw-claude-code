@@ -1,5 +1,19 @@
 {
   "name": "python-format",
   "version": "1.0.0",
-  "description": "Auto-format Python files with ruff after edits"
+  "description": "Auto-format Python files with ruff after edits",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/format_python.py\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
 }
