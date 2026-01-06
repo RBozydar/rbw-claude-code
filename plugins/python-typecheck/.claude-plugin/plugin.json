@@ -1,6 +1,5 @@
 {
   "name": "python-typecheck",
   "version": "1.0.0",
-  "description": "Run type checking after Python file edits",
-  "hooks": "./hooks/hooks.json"
+  "description": "Run type checking after Python file edits"
 }

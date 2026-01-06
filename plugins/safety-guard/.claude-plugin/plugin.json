@@ -1,6 +1,5 @@
 {
   "name": "safety-guard",
   "version": "1.0.0",
-  "description": "Block destructive file operations and supply chain attacks",
-  "hooks": "./hooks/hooks.json"
+  "description": "Block destructive file operations and supply chain attacks"
 }
