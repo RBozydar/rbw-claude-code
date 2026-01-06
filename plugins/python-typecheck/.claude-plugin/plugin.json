@@ -2,18 +2,5 @@
   "name": "python-typecheck",
   "version": "1.0.0",
   "description": "Run type checking after Python file edits",
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/typecheck.py",
-            "timeout": 120
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": "./hooks/hooks.json"
 }
