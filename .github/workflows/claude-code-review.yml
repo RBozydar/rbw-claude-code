@@ -46,6 +46,7 @@ jobs:
             - Performance considerations
             - Security concerns
             - Test coverage
+            - Clarity of skills passed to Claude (can you undertand them? are they unamabigious and well defined?)
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
