@@ -42,8 +42,8 @@ SETTINGS_FILE="$HOME/.claude/settings.json"
 # Create .claude directory if it doesn't exist
 mkdir -p "$HOME/.claude"
 
-# Initialize settings file if it doesn't exist
-if [[ ! -f "$SETTINGS_FILE" ]]; then
+# Initialize settings file if it doesn't exist or is empty
+if [[ ! -s "$SETTINGS_FILE" ]]; then
     echo '{}' > "$SETTINGS_FILE"
 fi
 
@@ -133,15 +133,9 @@ if [[ -f "$SETTINGS_FILE" ]]; then
     echo -e "${YELLOW}Backed up existing settings to: $BACKUP_FILE${NC}"
 fi
 
-# Read existing settings
-EXISTING_SETTINGS=$(cat "$SETTINGS_FILE")
-
-# Generate new hooks
-NEW_HOOKS=$(generate_hooks)
-
 # Merge hooks into settings
 # This preserves existing settings and adds/updates the hooks section
-MERGED_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq --argjson hooks "$(echo "$NEW_HOOKS" | jq '.hooks')" '.hooks = $hooks')
+MERGED_SETTINGS=$(jq --argjson hooks "$(generate_hooks | jq '.hooks')" '.hooks = $hooks' "$SETTINGS_FILE")
 
 # Write merged settings
 echo "$MERGED_SETTINGS" | jq '.' > "$SETTINGS_FILE"
