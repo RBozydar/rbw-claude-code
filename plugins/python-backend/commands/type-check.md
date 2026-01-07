@@ -38,8 +38,8 @@ First, determine which type checker is configured and how to run it.
 **Detect runner:**
 ```bash
 # Priority order
-1. uvx pyright / uvx mypy    # If using uv
-2. poetry run pyright/mypy   # If poetry.lock present
+1. poetry run pyright/mypy   # If poetry.lock present
+2. uvx pyright / uvx mypy    # If using uv
 3. pyright / mypy            # Direct execution
 ```
 

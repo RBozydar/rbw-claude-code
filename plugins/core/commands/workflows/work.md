@@ -130,7 +130,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Add new tests for new functionality
 
    **Test Commands by Language:**
-   - Python: `pytest`, `uv run pytest`, or `poetry run pytest`
+   - Python: `pytest`, `poetry run pytest`, or `uv run pytest`
    - JavaScript/TypeScript: `npm test`, `yarn test`, or `pnpm test`
    - Go: `go test ./...`
    - Generic: Check `package.json`, `pyproject.toml`, `Makefile`, or CI config for test commands
@@ -159,10 +159,10 @@ This command takes a work document (plan, specification, or todo file) and execu
    **For Python projects:**
    ```bash
    # Run tests
-   uv run pytest
+   poetry run pytest
 
    # Run linting
-   uvx ruff check .
+   poetry run ruff check .
 
    # Run type checking
    mypy .  # or pyright

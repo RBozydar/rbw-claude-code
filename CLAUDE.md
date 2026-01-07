@@ -13,7 +13,7 @@ tools and Python workflow plugins.
 |--------|------|-------------|
 | `core` | agents/commands/skills | Universal AI development tools |
 | `python-backend` | agents/commands | Python-specific reviewers and commands |
-| `enforce-uv` | hook | Block bare python/pip commands |
+| `enforce-poetry` | hook | Block bare python/pip commands |
 | `conventional-commits` | hook | Validate commit message format |
 | `python-format` | hook | Auto-format with ruff |
 | `python-typecheck` | hook | Type check after edits |
@@ -54,7 +54,7 @@ plugins/
 - Commands are markdown files in `commands/`
 - Skills are directories with `SKILL.md` and optional references
 
-### Hook Plugins (enforce-uv, python-format, etc.)
+### Hook Plugins (enforce-poetry, python-format, etc.)
 
 - Python scripts with PEP 723 inline metadata
 - Use `cchooks` library for context

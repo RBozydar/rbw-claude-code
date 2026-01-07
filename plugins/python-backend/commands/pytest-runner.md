@@ -39,8 +39,8 @@ First, determine how pytest is configured and how to run it.
 **Detect test runner:**
 ```bash
 # Priority order for running pytest
-1. uv run pytest        # If uv.lock or pyproject.toml with uv
-2. poetry run pytest    # If poetry.lock present
+1. poetry run pytest    # If poetry.lock present
+2. uv run pytest        # If uv.lock or pyproject.toml with uv
 3. python -m pytest     # If virtual env active
 4. pytest               # Fallback
 ```
