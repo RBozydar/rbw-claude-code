@@ -22,9 +22,9 @@
       "category": "development"
     },
     {
-      "name": "enforce-poetry",
-      "description": "Block bare python/pip/pytest commands, enforce poetry usage",
-      "source": "./plugins/enforce-poetry",
+      "name": "enforce-uv",
+      "description": "Block bare python/pip/pytest commands, enforce uv usage",
+      "source": "./plugins/enforce-uv",
       "category": "development"
     },
     {

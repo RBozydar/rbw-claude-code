@@ -13,7 +13,7 @@ tools and Python workflow plugins.
 |--------|------|-------------|
 | `core` | agents/commands/skills | Universal AI development tools |
 | `python-backend` | agents/commands | Python-specific reviewers and commands |
-| `enforce-poetry` | hook | Block bare python/pip commands |
+| `enforce-uv` | hook | Block bare python/pip commands |
 | `conventional-commits` | hook | Validate commit message format |
 | `python-format` | hook | Auto-format with ruff |
 | `python-typecheck` | hook | Type check after edits |

@@ -60,7 +60,7 @@ You should see the configured hooks listed (enforce-uv, conventional-commits, et
 
 | Plugin | Description |
 |--------|-------------|
-| [enforce-poetry](plugins/enforce-poetry) | Block bare python/pip/pytest commands, enforce poetry |
+| [enforce-uv](plugins/enforce-uv) | Block bare python/pip/pytest commands, enforce uv |
 | [conventional-commits](plugins/conventional-commits) | Validate conventional commit format |
 | [python-format](plugins/python-format) | Auto-format Python files with ruff after edits |
 | [python-typecheck](plugins/python-typecheck) | Run type checking after Python file edits |
@@ -130,9 +130,9 @@ The `python-backend` plugin extends core with Python-specific capabilities:
 
 ## Hook Plugins
 
-### enforce-poetry
+### enforce-uv
 
-Ensures Claude Code uses `poetry` for all Python operations.
+Ensures Claude Code uses `uv` for all Python operations.
 Blocks bare `python`, `pip`, `pytest` commands.
 
 ### conventional-commits
