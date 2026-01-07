@@ -17,6 +17,16 @@ Then browse and install plugins:
 /plugin menu
 ```
 
+### Poetry Users
+
+If you use Poetry instead of uv for package management, install from the `poetry-variant` branch:
+
+```bash
+/plugin marketplace add RBozydar/rbw-claude-code#poetry-variant
+```
+
+This variant includes `enforce-poetry` instead of `enforce-uv`, suggesting `poetry run` and `poetry add` commands.
+
 ### Hook Setup (Required Workaround)
 
 Due to a [known Claude Code bug](https://github.com/anthropics/claude-code/issues/16288),
