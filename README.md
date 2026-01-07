@@ -104,12 +104,15 @@ The `core` plugin provides language-agnostic AI-powered development tools:
 
 ### Skills
 
-- `compound-docs` - Document solved problems
-- `git-worktree` - Manage Git worktrees
-- `file-todos` - File-based todo tracking
-- `create-agent-skills` - Create Claude Code skills
-- `agent-native-architecture` - Build prompt-native AI agents
-- `skill-creator` - Create new skills
+| Skill Name | Description |
+|------------|-------------|
+| `core:agent-native-architecture` | Build AI agents using prompt-native architecture |
+| `core:compound-docs` | Capture solved problems as categorized documentation |
+| `core:create-agent-skills` | Expert guidance for creating Claude Code skills |
+| `core:file-todos` | File-based todo tracking in todos/ directory |
+| `core:git-ship` | Complete git workflow: commit, push, PR, CI, merge |
+| `core:git-worktree` | Manage Git worktrees for parallel development |
+| `core:skill-creator` | Guide for creating effective skills |
 
 ## Python Backend Plugin
 
