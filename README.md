@@ -52,7 +52,7 @@ To verify hooks are active:
 /hooks
 ```
 
-You should see the configured hooks listed (enforce-uv, conventional-commits, etc.).
+You should see the configured hooks listed (enforce-poetry, conventional-commits, etc.).
 
 ## Available Plugins
 
