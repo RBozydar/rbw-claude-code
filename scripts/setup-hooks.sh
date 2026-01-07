@@ -1,6 +1,7 @@
 #!/bin/bash
 # Setup script for rbw-claude-code hooks
-# Works around Claude Code bug where plugin hooks are matched but not executed
+# Dynamically discovers and configures hooks from all plugins
+# Works around Claude Code bug #16288 where plugin hooks are matched but not executed
 # See: https://github.com/anthropics/claude-code/issues/16288
 
 set -e
@@ -9,7 +10,24 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Settings file path
+SETTINGS_FILE="$HOME/.claude/settings.json"
+BACKUP_FILE=""
+
+# Cleanup/rollback on error
+cleanup() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 && -n "$BACKUP_FILE" && -f "$BACKUP_FILE" ]]; then
+        echo -e "${RED}Error occurred. Restoring settings from backup...${NC}"
+        cp "$BACKUP_FILE" "$SETTINGS_FILE"
+        echo -e "${GREEN}Settings restored from: $BACKUP_FILE${NC}"
+    fi
+    exit $exit_code
+}
+trap cleanup EXIT
 
 echo -e "${GREEN}rbw-claude-code Hook Setup${NC}"
 echo "================================================"
@@ -17,7 +35,7 @@ echo ""
 
 # Detect marketplace path
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MARKETPLACE_ROOT="$(dirname "$SCRIPT_DIR")"
+MARKETPLACE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Verify we're in the right directory
 if [[ ! -f "$MARKETPLACE_ROOT/.claude-plugin/marketplace.json" ]]; then
@@ -36,9 +54,6 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# Settings file path
-SETTINGS_FILE="$HOME/.claude/settings.json"
-
 # Create .claude directory if it doesn't exist
 mkdir -p "$HOME/.claude"
 
@@ -47,122 +62,148 @@ if [[ ! -s "$SETTINGS_FILE" ]]; then
     echo '{}' > "$SETTINGS_FILE"
 fi
 
-# Generate hooks configuration
-generate_hooks() {
-    cat <<EOF
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/enforce-uv/hooks/enforce_uv.py",
-            "timeout": 30
-          },
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/conventional-commits/hooks/conventional_commits.py",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/git-safety-guard/hooks/git_safety_guard.py",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/safety-guard/hooks/safety_guard_bash.py",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/protect-env/hooks/protect_env.py",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/safety-guard/hooks/safety_guard_read.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/python-format/hooks/format_python.py",
-            "timeout": 60
-          },
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/python-typecheck/hooks/typecheck.py",
-            "timeout": 120
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$MARKETPLACE_ROOT/plugins/test-reminder/hooks/test_reminder.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
-}
-EOF
-}
-
 # Backup existing settings
-if [[ -f "$SETTINGS_FILE" ]]; then
-    BACKUP_FILE="$SETTINGS_FILE.backup.$(date +%Y%m%d_%H%M%S)"
-    cp "$SETTINGS_FILE" "$BACKUP_FILE"
-    echo -e "${YELLOW}Backed up existing settings to: $BACKUP_FILE${NC}"
+BACKUP_FILE="$SETTINGS_FILE.backup.$(date +%Y%m%d_%H%M%S)"
+cp "$SETTINGS_FILE" "$BACKUP_FILE"
+echo -e "${YELLOW}Backed up existing settings to: $BACKUP_FILE${NC}"
+echo ""
+
+# Discover all hooks.json files
+echo -e "${BLUE}Discovering hooks...${NC}"
+HOOKS_FILES=()
+for hooks_file in "$MARKETPLACE_ROOT"/plugins/*/hooks/hooks.json; do
+    if [[ -f "$hooks_file" ]]; then
+        HOOKS_FILES+=("$hooks_file")
+    fi
+done
+
+if [[ ${#HOOKS_FILES[@]} -eq 0 ]]; then
+    echo -e "${RED}No hooks.json files found in plugins${NC}"
+    exit 1
 fi
 
-# Merge hooks into settings
-# This preserves existing settings and adds/updates the hooks section
-MERGED_SETTINGS=$(jq --argjson hooks "$(generate_hooks | jq '.hooks')" '.hooks = $hooks' "$SETTINGS_FILE")
+echo "Found ${#HOOKS_FILES[@]} hook configuration(s)"
+echo ""
 
-# Write merged settings
-echo "$MERGED_SETTINGS" | jq '.' > "$SETTINGS_FILE"
+# Process each hooks.json and collect resolved hooks
+RESOLVED_HOOKS=()
+DISCOVERED_PLUGINS=()
+
+for hooks_file in "${HOOKS_FILES[@]}"; do
+    # Get plugin directory (parent of hooks/)
+    PLUGIN_DIR="$(dirname "$(dirname "$hooks_file")")"
+    PLUGIN_NAME="$(basename "$PLUGIN_DIR")"
+
+    # Resolve ${CLAUDE_PLUGIN_ROOT} to absolute path
+    resolved=$(jq --arg root "$PLUGIN_DIR" \
+        'walk(if type == "string" then gsub("\\$\\{CLAUDE_PLUGIN_ROOT\\}"; $root) else . end)' \
+        "$hooks_file") || {
+        echo -e "${RED}Error parsing $hooks_file${NC}"
+        exit 1
+    }
+
+    RESOLVED_HOOKS+=("$resolved")
+    DISCOVERED_PLUGINS+=("$PLUGIN_NAME")
+    echo "  - $PLUGIN_NAME"
+done
+
+echo ""
+
+# Aggregate all hooks into a single structure
+echo -e "${BLUE}Aggregating hooks...${NC}"
+
+# Create a temporary file for aggregation
+TEMP_FILE=$(mktemp)
+
+# Write all resolved hooks to temp file (one per line for jq slurp)
+for hook in "${RESOLVED_HOOKS[@]}"; do
+    echo "$hook" >> "$TEMP_FILE"
+done
+
+# Aggregate hooks by event type
+AGGREGATED=$(jq -s '
+    reduce .[] as $item ({hooks: {PreToolUse: [], PostToolUse: []}};
+        .hooks.PreToolUse += ($item.hooks.PreToolUse // []) |
+        .hooks.PostToolUse += ($item.hooks.PostToolUse // [])
+    )
+' "$TEMP_FILE") || {
+    echo -e "${RED}Error aggregating hooks${NC}"
+    rm -f "$TEMP_FILE"
+    exit 1
+}
+
+rm -f "$TEMP_FILE"
+
+# Validate hook scripts exist
+echo -e "${BLUE}Validating hook scripts...${NC}"
+WARNINGS=0
+
+while IFS= read -r cmd; do
+    if [[ -n "$cmd" ]]; then
+        if [[ ! -f "$cmd" ]]; then
+            echo -e "${YELLOW}Warning: Script not found: $cmd${NC}"
+            ((WARNINGS++))
+        elif [[ ! -x "$cmd" ]]; then
+            echo -e "${YELLOW}Warning: Script not executable: $cmd${NC}"
+            ((WARNINGS++))
+        fi
+    fi
+done < <(echo "$AGGREGATED" | jq -r '.. | .command? // empty')
+
+if [[ $WARNINGS -eq 0 ]]; then
+    echo "  All hook scripts validated"
+else
+    echo -e "${YELLOW}  $WARNINGS warning(s) found${NC}"
+fi
+echo ""
+
+# Extract just the hooks object for merging
+HOOKS_ONLY=$(echo "$AGGREGATED" | jq '.hooks')
+
+# Merge hooks into existing settings (preserving other settings)
+echo -e "${BLUE}Merging into settings...${NC}"
+MERGED=$(jq --argjson hooks "$HOOKS_ONLY" '.hooks = $hooks' "$SETTINGS_FILE") || {
+    echo -e "${RED}Error merging hooks into settings${NC}"
+    exit 1
+}
+
+# Write to temp file first (atomic write)
+TEMP_SETTINGS=$(mktemp)
+echo "$MERGED" | jq '.' > "$TEMP_SETTINGS" || {
+    echo -e "${RED}Error writing settings${NC}"
+    rm -f "$TEMP_SETTINGS"
+    exit 1
+}
+
+# Move temp file to settings (atomic)
+mv "$TEMP_SETTINGS" "$SETTINGS_FILE"
+
+# Count hooks by type
+PRE_BASH=$(echo "$AGGREGATED" | jq '[.hooks.PreToolUse[] | select(.matcher == "Bash") | .hooks | length] | add // 0')
+PRE_READ=$(echo "$AGGREGATED" | jq '[.hooks.PreToolUse[] | select(.matcher == "Read") | .hooks | length] | add // 0')
+POST_WRITE_EDIT=$(echo "$AGGREGATED" | jq '[.hooks.PostToolUse[] | select(.matcher == "Write|Edit") | .hooks | length] | add // 0')
+POST_WRITE=$(echo "$AGGREGATED" | jq '[.hooks.PostToolUse[] | select(.matcher == "Write") | .hooks | length] | add // 0')
 
 echo ""
 echo -e "${GREEN}Hooks configured successfully!${NC}"
 echo ""
-echo "The following hooks have been added to $SETTINGS_FILE:"
+echo "Configured hooks from ${#DISCOVERED_PLUGINS[@]} plugins:"
+for plugin in "${DISCOVERED_PLUGINS[@]}"; do
+    echo "  - $plugin"
+done
 echo ""
-echo "PreToolUse (Bash):"
-echo "  - enforce-uv: Block bare python/pip/pytest commands"
-echo "  - conventional-commits: Validate commit message format"
-echo "  - git-safety-guard: Block destructive git commands"
-echo "  - safety-guard: Block dangerous bash commands"
-echo ""
-echo "PreToolUse (Read):"
-echo "  - protect-env: Block reading .env files"
-echo "  - safety-guard: Block reading sensitive files"
-echo ""
-echo "PostToolUse (Write|Edit):"
-echo "  - python-format: Auto-format Python with ruff"
-echo "  - python-typecheck: Run type checking with pyright"
-echo ""
-echo "PostToolUse (Write):"
-echo "  - test-reminder: Remind to add tests for new Python files"
+echo "Hook summary:"
+echo "  PreToolUse (Bash):       $PRE_BASH hook(s)"
+echo "  PreToolUse (Read):       $PRE_READ hook(s)"
+echo "  PostToolUse (Write|Edit): $POST_WRITE_EDIT hook(s)"
+echo "  PostToolUse (Write):     $POST_WRITE hook(s)"
 echo ""
 echo -e "${YELLOW}Note: This is a workaround for Claude Code issue #16288${NC}"
 echo "Plugin hooks should work natively once the bug is fixed."
 echo ""
 echo "To verify hooks are active, run: /hooks"
+echo ""
+echo -e "${GREEN}Backup saved at: $BACKUP_FILE${NC}"
+
+# Clear the trap since we succeeded
+trap - EXIT
