@@ -3,6 +3,10 @@
 # Dynamically discovers and configures hooks from all plugins
 # Works around Claude Code bug #16288 where plugin hooks are matched but not executed
 # See: https://github.com/anthropics/claude-code/issues/16288
+#
+# Usage:
+#   ./setup-hooks.sh           # Install to global ~/.claude/settings.json
+#   ./setup-hooks.sh --project # Install to current project's .claude/settings.json
 
 set -e
 
@@ -13,8 +17,64 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Settings file path
-SETTINGS_FILE="$HOME/.claude/settings.json"
+# Parse arguments
+INSTALL_MODE="global"
+for arg in "$@"; do
+    case $arg in
+        --project|-p)
+            INSTALL_MODE="project"
+            shift
+            ;;
+        --global|-g)
+            INSTALL_MODE="global"
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [--global|--project]"
+            echo ""
+            echo "Options:"
+            echo "  --global, -g   Install hooks to ~/.claude/settings.json (default)"
+            echo "  --project, -p  Install hooks to <project>/.claude/settings.json"
+            echo "  --help, -h     Show this help message"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $arg${NC}"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Find project root (look for .git directory)
+find_project_root() {
+    local dir="$PWD"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -d "$dir/.git" ]]; then
+            echo "$dir"
+            return 0
+        fi
+        dir="$(dirname "$dir")"
+    done
+    return 1
+}
+
+# Determine settings file path based on mode
+if [[ "$INSTALL_MODE" == "project" ]]; then
+    PROJECT_ROOT=$(find_project_root) || {
+        echo -e "${RED}Error: Not in a git repository${NC}"
+        echo "Run with --project from within a git project, or use --global"
+        exit 1
+    }
+    SETTINGS_DIR="$PROJECT_ROOT/.claude"
+    SETTINGS_FILE="$SETTINGS_DIR/settings.json"
+    SCOPE_LABEL="PROJECT: $PROJECT_ROOT"
+else
+    SETTINGS_DIR="$HOME/.claude"
+    SETTINGS_FILE="$SETTINGS_DIR/settings.json"
+    SCOPE_LABEL="GLOBAL: ~/.claude/settings.json"
+fi
+
 BACKUP_FILE=""
 TEMP_FILES=()
 
@@ -41,6 +101,8 @@ shopt -s nullglob
 echo -e "${GREEN}rbw-claude-code Hook Setup${NC}"
 echo "================================================"
 echo ""
+echo -e "${BLUE}Scope: ${SCOPE_LABEL}${NC}"
+echo ""
 
 # Detect marketplace path
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -63,8 +125,8 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# Create .claude directory if it doesn't exist
-mkdir -p "$HOME/.claude"
+# Create settings directory if it doesn't exist
+mkdir -p "$SETTINGS_DIR"
 
 # Initialize settings file if it doesn't exist or is empty
 if [[ ! -s "$SETTINGS_FILE" ]]; then
@@ -214,6 +276,13 @@ echo "  PreToolUse (Read):       $PRE_READ hook(s)"
 echo "  PostToolUse (Write|Edit): $POST_WRITE_EDIT hook(s)"
 echo "  PostToolUse (Write):     $POST_WRITE hook(s)"
 echo ""
+
+if [[ "$INSTALL_MODE" == "project" ]]; then
+    echo -e "${YELLOW}Note: Project hooks only apply when working in this directory.${NC}"
+    echo "For global hooks, run: ./scripts/setup-hooks.sh --global"
+    echo ""
+fi
+
 echo -e "${YELLOW}Note: This is a workaround for Claude Code issue #16288${NC}"
 echo "Plugin hooks should work natively once the bug is fixed."
 echo ""

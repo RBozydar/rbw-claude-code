@@ -29,22 +29,15 @@ Navigate to the marketplace directory:
 cd ~/.claude/plugins/RBozydar/rbw-claude-code
 ```
 
-**Option 1: Global hooks** (apply to all projects)
+Run the setup script:
 
 ```bash
+# Global hooks (apply to all projects) - default
 ./scripts/setup-hooks.sh
+
+# Or project-specific hooks (run from within your project)
+./scripts/setup-hooks.sh --project
 ```
-
-This adds hooks to `~/.claude/settings.json`.
-
-**Option 2: Project-specific hooks** (apply to one repository)
-
-```bash
-# Run from within your project directory
-./scripts/setup-hooks-project.sh
-```
-
-This adds hooks to `<your-project>/.claude/settings.json`.
 
 To verify hooks are active:
 
