@@ -17,6 +17,16 @@ Then browse and install plugins:
 /plugin menu
 ```
 
+### Poetry Users
+
+If you use Poetry instead of uv for package management, install from the `poetry-variant` branch:
+
+```bash
+/plugin marketplace add RBozydar/rbw-claude-code#poetry-variant
+```
+
+This variant includes `enforce-poetry` instead of `enforce-uv`, suggesting `poetry run` and `poetry add` commands.
+
 ### Hook Setup (Required Workaround)
 
 Due to a [known Claude Code bug](https://github.com/anthropics/claude-code/issues/16288),
@@ -52,7 +62,7 @@ To verify hooks are active:
 /hooks
 ```
 
-You should see the configured hooks listed (enforce-poetry, conventional-commits, etc.).
+You should see the configured hooks listed (enforce-uv, conventional-commits, etc.).
 
 ## Available Plugins
 
@@ -67,7 +77,7 @@ You should see the configured hooks listed (enforce-poetry, conventional-commits
 
 | Plugin | Description |
 |--------|-------------|
-| [enforce-poetry](plugins/enforce-poetry) | Block bare python/pip/pytest commands, enforce poetry |
+| [enforce-uv](plugins/enforce-uv) | Block bare python/pip/pytest commands, enforce uv |
 | [conventional-commits](plugins/conventional-commits) | Validate conventional commit format |
 | [python-format](plugins/python-format) | Auto-format Python files with ruff after edits |
 | [python-typecheck](plugins/python-typecheck) | Run type checking after Python file edits |
@@ -137,9 +147,9 @@ The `python-backend` plugin extends core with Python-specific capabilities:
 
 ## Hook Plugins
 
-### enforce-poetry
+### enforce-uv
 
-Ensures Claude Code uses `poetry` for all Python operations.
+Ensures Claude Code uses `uv` for all Python operations.
 Blocks bare `python`, `pip`, `pytest` commands.
 
 ### conventional-commits
