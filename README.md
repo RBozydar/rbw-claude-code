@@ -17,6 +17,32 @@ Then browse and install plugins:
 /plugin menu
 ```
 
+### Hook Setup (Required Workaround)
+
+Due to a [known Claude Code bug](https://github.com/anthropics/claude-code/issues/16288),
+plugin hooks are matched but not executed. Until this is fixed upstream, you need to
+manually configure hooks in your settings.
+
+Run the setup script after installing the marketplace:
+
+```bash
+# Clone or navigate to the marketplace directory
+cd ~/.claude/plugins/RBozydar/rbw-claude-code
+
+# Run the setup script
+./scripts/setup-hooks.sh
+```
+
+This adds all hook configurations to `~/.claude/settings.json` with absolute paths.
+
+To verify hooks are active:
+
+```bash
+/hooks
+```
+
+You should see the configured hooks listed (enforce-uv, conventional-commits, etc.).
+
 ## Available Plugins
 
 ### AI-Powered Development

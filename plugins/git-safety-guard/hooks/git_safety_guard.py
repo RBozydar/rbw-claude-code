@@ -37,7 +37,7 @@ BLOCKED_PATTERNS = [
 
     # Remote/history destruction
     (r"git\s+push\s+.*--force(?!-with-lease)", "git push --force destroys remote history"),
-    (r"git\s+push\s+.*-[a-zA-Z]*f", "git push -f destroys remote history"),
+    (r"git\s+push\s+.*\s-[a-zA-Z]*f(?:\s|$)", "git push -f destroys remote history"),
     (r"git\s+push\s+.*--delete", "git push --delete removes remote branches/tags"),
     (r"git\s+push\s+\S+\s+:\S", "git push origin :ref deletes remote refs"),
     (r"git\s+branch\s+-D", "git branch -D force-deletes without merge check"),
