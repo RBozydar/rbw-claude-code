@@ -235,18 +235,31 @@ AGGREGATED=$(jq -s '
     exit 1
 }
 
-# Validate hook scripts exist and fix permissions (skip detailed output in check mode)
-if [[ "$CHECK_MODE" != "true" ]]; then
+# Helper function to expand ~ and validate script exists
+validate_script_exists() {
+    local cmd_path="$1"
+    # Expand ~ to $HOME for file checks (bash doesn't expand ~ in variables)
+    local cmd_path_expanded="${cmd_path/#\~/$HOME}"
+    [[ -f "$cmd_path_expanded" ]]
+}
+
+# Validate hook scripts exist and fix permissions
+if [[ "$CHECK_MODE" == "true" ]]; then
+    # In check mode, silently verify all scripts exist
+    while IFS= read -r cmd_path; do
+        if [[ -n "$cmd_path" ]] && ! validate_script_exists "$cmd_path"; then
+            echo "VALIDATION_ERROR: Script not found: $cmd_path"
+            exit 1
+        fi
+    done < <(echo "$AGGREGATED" | jq -r '.. | .command? // empty | gsub("^\"|\"$"; "")')
+else
     echo -e "${BLUE}Validating hook scripts...${NC}"
     ERRORS=0
     FIXED=0
 
-    while IFS= read -r cmd; do
-        if [[ -n "$cmd" ]]; then
-            # Strip surrounding quotes for file path check (they're there for shell escaping)
-            cmd_path="${cmd#\"}"
-            cmd_path="${cmd_path%\"}"
-            # Expand ~ to $HOME for file checks (bash doesn't expand ~ in variables)
+    while IFS= read -r cmd_path; do
+        if [[ -n "$cmd_path" ]]; then
+            # Expand ~ to $HOME for file checks
             cmd_path_expanded="${cmd_path/#\~/$HOME}"
             if [[ ! -f "$cmd_path_expanded" ]]; then
                 echo -e "${RED}Error: Script not found: $cmd_path${NC}"
@@ -262,7 +275,7 @@ if [[ "$CHECK_MODE" != "true" ]]; then
                 fi
             fi
         fi
-    done < <(echo "$AGGREGATED" | jq -r '.. | .command? // empty')
+    done < <(echo "$AGGREGATED" | jq -r '.. | .command? // empty | gsub("^\"|\"$"; "")')
 
     if [[ $ERRORS -gt 0 ]]; then
         echo -e "${RED}  $ERRORS error(s) found - some hooks may not work${NC}"
