@@ -57,6 +57,31 @@ To verify hooks are active:
 
 You should see the configured hooks listed (enforce-uv, conventional-commits, etc.).
 
+#### Auto-Sync Detection
+
+Once hooks are installed, a `SessionStart` hook automatically checks if your
+configured hooks are in sync with available plugin hooks. If hooks change
+(e.g., after updating the marketplace), you'll see a warning at session start:
+
+```text
+====================================================
+  rbw-claude-code: Hooks are out of sync!
+====================================================
+
+  Plugin hooks have changed. Run to update:
+
+    ./scripts/setup-hooks.sh --project
+
+====================================================
+```
+
+You can also manually check sync status:
+
+```bash
+./scripts/setup-hooks.sh --check           # Check global hooks
+./scripts/setup-hooks.sh --check --project # Check project hooks
+```
+
 ## Available Plugins
 
 ### AI-Powered Development

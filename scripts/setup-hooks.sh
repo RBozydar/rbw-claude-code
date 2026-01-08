@@ -19,6 +19,7 @@ NC='\033[0m' # No Color
 
 # Parse arguments
 INSTALL_MODE="global"
+CHECK_MODE="false"
 for arg in "$@"; do
     case $arg in
         --project|-p)
@@ -29,12 +30,17 @@ for arg in "$@"; do
             INSTALL_MODE="global"
             shift
             ;;
+        --check|-c)
+            CHECK_MODE="true"
+            shift
+            ;;
         --help|-h)
-            echo "Usage: $0 [--global|--project]"
+            echo "Usage: $0 [--global|--project|--check]"
             echo ""
             echo "Options:"
             echo "  --global, -g   Install hooks to ~/.claude/settings.json (default)"
             echo "  --project, -p  Install hooks to <project>/.claude/settings.json"
+            echo "  --check, -c    Check if hooks are in sync (exit 0=sync, 1=desync)"
             echo "  --help, -h     Show this help message"
             exit 0
             ;;
@@ -98,11 +104,14 @@ trap cleanup EXIT
 # Enable nullglob to handle empty glob matches safely
 shopt -s nullglob
 
-echo -e "${GREEN}rbw-claude-code Hook Setup${NC}"
-echo "================================================"
-echo ""
-echo -e "${BLUE}Scope: ${SCOPE_LABEL}${NC}"
-echo ""
+# Quiet mode for check
+if [[ "$CHECK_MODE" != "true" ]]; then
+    echo -e "${GREEN}rbw-claude-code Hook Setup${NC}"
+    echo "================================================"
+    echo ""
+    echo -e "${BLUE}Scope: ${SCOPE_LABEL}${NC}"
+    echo ""
+fi
 
 # Detect marketplace path
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -115,8 +124,10 @@ if [[ ! -f "$MARKETPLACE_ROOT/.claude-plugin/marketplace.json" ]]; then
     exit 1
 fi
 
-echo "Marketplace path: $MARKETPLACE_ROOT"
-echo ""
+if [[ "$CHECK_MODE" != "true" ]]; then
+    echo "Marketplace path: $MARKETPLACE_ROOT"
+    echo ""
+fi
 
 # Check for jq
 if ! command -v jq &> /dev/null; then
@@ -125,22 +136,21 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# Create settings directory if it doesn't exist
-mkdir -p "$SETTINGS_DIR"
-
 # Initialize settings file if it doesn't exist or is empty
 if [[ ! -s "$SETTINGS_FILE" ]]; then
     echo '{}' > "$SETTINGS_FILE"
 fi
 
-# Backup existing settings
-BACKUP_FILE="$SETTINGS_FILE.backup.$(date +%Y%m%d_%H%M%S)"
-cp "$SETTINGS_FILE" "$BACKUP_FILE"
-echo -e "${YELLOW}Backed up existing settings to: $BACKUP_FILE${NC}"
-echo ""
+# Backup existing settings (skip in check mode)
+if [[ "$CHECK_MODE" != "true" ]]; then
+    BACKUP_FILE="$SETTINGS_FILE.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$SETTINGS_FILE" "$BACKUP_FILE"
+    echo -e "${YELLOW}Backed up existing settings to: $BACKUP_FILE${NC}"
+    echo ""
+fi
 
 # Discover all hooks.json files
-echo -e "${BLUE}Discovering hooks...${NC}"
+[[ "$CHECK_MODE" != "true" ]] && echo -e "${BLUE}Discovering hooks...${NC}"
 HOOKS_FILES=()
 for hooks_file in "$MARKETPLACE_ROOT"/plugins/*/hooks/hooks.json; do
     if [[ -f "$hooks_file" ]]; then
@@ -153,8 +163,21 @@ if [[ ${#HOOKS_FILES[@]} -eq 0 ]]; then
     exit 1
 fi
 
-echo "Found ${#HOOKS_FILES[@]} hook configuration(s)"
-echo ""
+if [[ "$CHECK_MODE" != "true" ]]; then
+    echo "Found ${#HOOKS_FILES[@]} hook configuration(s)"
+    echo ""
+fi
+
+# Compute relative path prefix for hooks
+# If marketplace is under ~/.claude, use ~/ relative path; otherwise use absolute
+CLAUDE_HOME="$HOME/.claude"
+if [[ "$MARKETPLACE_ROOT" == "$CLAUDE_HOME"* ]]; then
+    # Marketplace is under ~/.claude, compute relative path
+    RELATIVE_PREFIX="~/.claude${MARKETPLACE_ROOT#$CLAUDE_HOME}"
+else
+    # Not under ~/.claude, use absolute path
+    RELATIVE_PREFIX="$MARKETPLACE_ROOT"
+fi
 
 # Process each hooks.json and collect resolved hooks
 RESOLVED_HOOKS=()
@@ -165,8 +188,16 @@ for hooks_file in "${HOOKS_FILES[@]}"; do
     PLUGIN_DIR="$(dirname "$(dirname "$hooks_file")")"
     PLUGIN_NAME="$(basename "$PLUGIN_DIR")"
 
-    # Resolve ${CLAUDE_PLUGIN_ROOT} to absolute path
-    resolved=$(jq --arg root "$PLUGIN_DIR" \
+    # Compute the path to use for this plugin
+    if [[ "$MARKETPLACE_ROOT" == "$CLAUDE_HOME"* ]]; then
+        # Use relative path with ~/
+        PLUGIN_PATH="~/.claude${PLUGIN_DIR#$CLAUDE_HOME}"
+    else
+        PLUGIN_PATH="$PLUGIN_DIR"
+    fi
+
+    # Resolve ${CLAUDE_PLUGIN_ROOT} to the computed path
+    resolved=$(jq --arg root "$PLUGIN_PATH" \
         'walk(if type == "string" then gsub("\\$\\{CLAUDE_PLUGIN_ROOT\\}"; $root) else . end)' \
         "$hooks_file") || {
         echo -e "${RED}Error parsing $hooks_file${NC}"
@@ -175,13 +206,13 @@ for hooks_file in "${HOOKS_FILES[@]}"; do
 
     RESOLVED_HOOKS+=("$resolved")
     DISCOVERED_PLUGINS+=("$PLUGIN_NAME")
-    echo "  - $PLUGIN_NAME"
+    [[ "$CHECK_MODE" != "true" ]] && echo "  - $PLUGIN_NAME"
 done
 
-echo ""
+[[ "$CHECK_MODE" != "true" ]] && echo ""
 
 # Aggregate all hooks into a single structure
-echo -e "${BLUE}Aggregating hooks...${NC}"
+[[ "$CHECK_MODE" != "true" ]] && echo -e "${BLUE}Aggregating hooks...${NC}"
 
 # Create a temporary file for aggregation
 TEMP_FILE=$(mktemp)
@@ -194,7 +225,8 @@ done
 
 # Aggregate hooks by event type
 AGGREGATED=$(jq -s '
-    reduce .[] as $item ({hooks: {PreToolUse: [], PostToolUse: []}};
+    reduce .[] as $item ({hooks: {SessionStart: [], PreToolUse: [], PostToolUse: []}};
+        .hooks.SessionStart += ($item.hooks.SessionStart // []) |
         .hooks.PreToolUse += ($item.hooks.PreToolUse // []) |
         .hooks.PostToolUse += ($item.hooks.PostToolUse // [])
     )
@@ -203,40 +235,77 @@ AGGREGATED=$(jq -s '
     exit 1
 }
 
-# Validate hook scripts exist and fix permissions
-echo -e "${BLUE}Validating hook scripts...${NC}"
-ERRORS=0
-FIXED=0
+# Helper function to expand ~ and validate script exists
+validate_script_exists() {
+    local cmd_path="$1"
+    # Expand ~ to $HOME for file checks (bash doesn't expand ~ in variables)
+    local cmd_path_expanded="${cmd_path/#\~/$HOME}"
+    [[ -f "$cmd_path_expanded" ]]
+}
 
-while IFS= read -r cmd; do
-    if [[ -n "$cmd" ]]; then
-        if [[ ! -f "$cmd" ]]; then
-            echo -e "${RED}Error: Script not found: $cmd${NC}"
-            ((ERRORS++))
-        elif [[ ! -x "$cmd" ]]; then
-            # Auto-fix non-executable scripts
-            if chmod +x "$cmd" 2>/dev/null; then
-                echo -e "${YELLOW}Fixed: Made executable: $cmd${NC}"
-                ((FIXED++))
-            else
-                echo -e "${RED}Error: Cannot make executable: $cmd${NC}"
+# Validate hook scripts exist and fix permissions
+if [[ "$CHECK_MODE" == "true" ]]; then
+    # In check mode, silently verify all scripts exist
+    while IFS= read -r cmd_path; do
+        if [[ -n "$cmd_path" ]] && ! validate_script_exists "$cmd_path"; then
+            echo "VALIDATION_ERROR: Script not found: $cmd_path"
+            exit 1
+        fi
+    done < <(echo "$AGGREGATED" | jq -r '.. | .command? // empty | gsub("^\"|\"$"; "")')
+else
+    echo -e "${BLUE}Validating hook scripts...${NC}"
+    ERRORS=0
+    FIXED=0
+
+    while IFS= read -r cmd_path; do
+        if [[ -n "$cmd_path" ]]; then
+            # Expand ~ to $HOME for file checks
+            cmd_path_expanded="${cmd_path/#\~/$HOME}"
+            if [[ ! -f "$cmd_path_expanded" ]]; then
+                echo -e "${RED}Error: Script not found: $cmd_path${NC}"
                 ((ERRORS++))
+            elif [[ ! -x "$cmd_path_expanded" ]]; then
+                # Auto-fix non-executable scripts
+                if chmod +x "$cmd_path_expanded" 2>/dev/null; then
+                    echo -e "${YELLOW}Fixed: Made executable: $cmd_path${NC}"
+                    ((FIXED++))
+                else
+                    echo -e "${RED}Error: Cannot make executable: $cmd_path${NC}"
+                    ((ERRORS++))
+                fi
             fi
         fi
-    fi
-done < <(echo "$AGGREGATED" | jq -r '.. | .command? // empty')
+    done < <(echo "$AGGREGATED" | jq -r '.. | .command? // empty | gsub("^\"|\"$"; "")')
 
-if [[ $ERRORS -gt 0 ]]; then
-    echo -e "${RED}  $ERRORS error(s) found - some hooks may not work${NC}"
-elif [[ $FIXED -gt 0 ]]; then
-    echo -e "${GREEN}  Fixed $FIXED script(s), all validated${NC}"
-else
-    echo "  All hook scripts validated"
+    if [[ $ERRORS -gt 0 ]]; then
+        echo -e "${RED}  $ERRORS error(s) found - some hooks may not work${NC}"
+    elif [[ $FIXED -gt 0 ]]; then
+        echo -e "${GREEN}  Fixed $FIXED script(s), all validated${NC}"
+    else
+        echo "  All hook scripts validated"
+    fi
+    echo ""
 fi
-echo ""
 
 # Extract just the hooks object for merging
 HOOKS_ONLY=$(echo "$AGGREGATED" | jq '.hooks')
+
+# Check mode: compare current settings to what we would write
+if [[ "$CHECK_MODE" == "true" ]]; then
+    # Get current hooks from settings (normalized)
+    CURRENT_HOOKS=$(jq -S '.hooks // {}' "$SETTINGS_FILE" 2>/dev/null)
+    # Get what we would write (normalized)
+    NEW_HOOKS=$(echo "$HOOKS_ONLY" | jq -S '.')
+
+    if [[ "$CURRENT_HOOKS" == "$NEW_HOOKS" ]]; then
+        echo "SYNC_OK"
+        exit 0
+    else
+        echo "SYNC_NEEDED"
+        echo "Run: ./scripts/setup-hooks.sh $([ "$INSTALL_MODE" == "project" ] && echo "--project" || echo "--global")"
+        exit 1
+    fi
+fi
 
 # Merge hooks into existing settings (preserving other settings)
 echo -e "${BLUE}Merging into settings...${NC}"
@@ -257,6 +326,7 @@ echo "$MERGED" | jq '.' > "$TEMP_SETTINGS" || {
 mv "$TEMP_SETTINGS" "$SETTINGS_FILE"
 
 # Count hooks by type
+SESSION_START=$(echo "$AGGREGATED" | jq '[.hooks.SessionStart[] | .hooks | length] | add // 0')
 PRE_BASH=$(echo "$AGGREGATED" | jq '[.hooks.PreToolUse[] | select(.matcher == "Bash") | .hooks | length] | add // 0')
 PRE_READ=$(echo "$AGGREGATED" | jq '[.hooks.PreToolUse[] | select(.matcher == "Read") | .hooks | length] | add // 0')
 POST_WRITE_EDIT=$(echo "$AGGREGATED" | jq '[.hooks.PostToolUse[] | select(.matcher == "Write|Edit") | .hooks | length] | add // 0')
@@ -271,10 +341,11 @@ for plugin in "${DISCOVERED_PLUGINS[@]}"; do
 done
 echo ""
 echo "Hook summary:"
-echo "  PreToolUse (Bash):       $PRE_BASH hook(s)"
-echo "  PreToolUse (Read):       $PRE_READ hook(s)"
+echo "  SessionStart:             $SESSION_START hook(s)"
+echo "  PreToolUse (Bash):        $PRE_BASH hook(s)"
+echo "  PreToolUse (Read):        $PRE_READ hook(s)"
 echo "  PostToolUse (Write|Edit): $POST_WRITE_EDIT hook(s)"
-echo "  PostToolUse (Write):     $POST_WRITE hook(s)"
+echo "  PostToolUse (Write):      $POST_WRITE hook(s)"
 echo ""
 
 if [[ "$INSTALL_MODE" == "project" ]]; then

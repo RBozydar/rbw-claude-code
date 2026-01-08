@@ -68,6 +68,12 @@
       "description": "Block destructive file operations, env file reading, and supply chain attacks",
       "source": "./plugins/safety-guard",
       "category": "security"
+    },
+    {
+      "name": "gh-api-guard",
+      "description": "Allow only safe gh api commands (PR comment fetching)",
+      "source": "./plugins/gh-api-guard",
+      "category": "security"
     }
   ]
 }
