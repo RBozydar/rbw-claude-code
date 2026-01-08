@@ -22,6 +22,7 @@ tools and Python workflow plugins.
 | `git-safety-guard` | hook | Block destructive git commands |
 | `safety-guard` | hook | Block destructive file ops & supply chain attacks |
 | `gh-api-guard` | hook | Allow only safe gh api commands |
+| `gemini-model-guard` | hook | Block Gemini 2.x models, enforce Gemini 3 |
 
 ## Structure
 
