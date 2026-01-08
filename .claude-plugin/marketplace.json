@@ -74,6 +74,12 @@
       "description": "Allow only safe gh api commands (PR comment fetching)",
       "source": "./plugins/gh-api-guard",
       "category": "security"
+    },
+    {
+      "name": "gemini-model-guard",
+      "description": "Block Gemini 2.x models, enforce Gemini 3 models only",
+      "source": "./plugins/gemini-model-guard",
+      "category": "development"
     }
   ]
 }
