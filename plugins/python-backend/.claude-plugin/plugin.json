@@ -1,6 +1,6 @@
 {
   "name": "python-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Python-specific development tools: 5 specialized reviewers (including Gemini) and 2 commands for pytest and type checking",
   "author": {
     "name": "RBozydar",

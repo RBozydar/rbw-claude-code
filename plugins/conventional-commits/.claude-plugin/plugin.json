@@ -1,5 +1,5 @@
 {
   "name": "conventional-commits",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Validate git commit messages follow conventional format"
 }

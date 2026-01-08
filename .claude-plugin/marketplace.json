@@ -1,6 +1,6 @@
 {
   "name": "rbw-claude-code",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Python development and productivity plugins for Claude Code",
   "owner": {
     "name": "RBozydar"
@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Universal AI-powered development tools: 14 agents, 13 commands, 6 skills for code review, research, and workflow automation",
+      "description": "Universal AI-powered development tools: 14 agents, 13 commands, 7 skills for code review, research, and workflow automation",
       "source": "./plugins/core",
       "category": "development"
     },

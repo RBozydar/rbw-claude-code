@@ -4,14 +4,42 @@ Prevents Claude from executing destructive file operations and supply chain atta
 
 ## What it blocks
 
-### File Operations
+### File Destruction
 
 | Command | Reason |
 |---------|--------|
 | `rm -rf` (outside /tmp) | Catastrophic file deletion |
-| `find ... -delete` | Mass file deletion |
 | `shred` | Unrecoverable file destruction |
 | `truncate` | Destroys file contents |
+
+### find Command Patterns
+
+| Command | Reason |
+|---------|--------|
+| `find ... -delete` | Mass file deletion |
+| `find ... -exec rm` | Mass file deletion via exec |
+| `find ... -execdir rm` | Mass file deletion via execdir |
+| `find ... -exec shred` | Mass file destruction |
+| `find ... -exec chmod 000` | Removes all permissions |
+| `find ... -exec mv ... /dev/null` | Destroys files |
+
+### xargs Piping Patterns
+
+| Command | Reason |
+|---------|--------|
+| `... \| xargs rm` | Mass file deletion |
+| `... \| xargs shred` | Mass file destruction |
+| `... \| xargs chmod 000` | Removes all permissions |
+| `... \| xargs rm -rf` | Catastrophic file deletion |
+
+### chmod Dangerous Patterns
+
+| Command | Reason |
+|---------|--------|
+| `chmod 000` | Removes all permissions |
+| `chmod 777 ... .ssh` | Security risk on SSH files |
+| `chmod 777 ... .env` | Security risk on env files |
+| `chmod -R 000` | Recursive permission removal |
 
 ### Environment Files
 
@@ -29,6 +57,8 @@ Prevents Claude from executing destructive file operations and supply chain atta
 | `curl ... \| bash` | Remote code execution |
 | `wget ... \| sh` | Remote code execution |
 | `bash -c "rm -rf ..."` | Bypass attempt |
+| `bash -c "git reset --hard ..."` | Bypass attempt |
+| `bash -c "git push --force ..."` | Bypass attempt |
 
 ## What it allows
 
