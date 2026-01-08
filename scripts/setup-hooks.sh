@@ -136,9 +136,6 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# Create settings directory if it doesn't exist
-mkdir -p "$SETTINGS_DIR"
-
 # Initialize settings file if it doesn't exist or is empty
 if [[ ! -s "$SETTINGS_FILE" ]]; then
     echo '{}' > "$SETTINGS_FILE"
@@ -171,6 +168,17 @@ if [[ "$CHECK_MODE" != "true" ]]; then
     echo ""
 fi
 
+# Compute relative path prefix for hooks
+# If marketplace is under ~/.claude, use ~/ relative path; otherwise use absolute
+CLAUDE_HOME="$HOME/.claude"
+if [[ "$MARKETPLACE_ROOT" == "$CLAUDE_HOME"* ]]; then
+    # Marketplace is under ~/.claude, compute relative path
+    RELATIVE_PREFIX="~/.claude${MARKETPLACE_ROOT#$CLAUDE_HOME}"
+else
+    # Not under ~/.claude, use absolute path
+    RELATIVE_PREFIX="$MARKETPLACE_ROOT"
+fi
+
 # Process each hooks.json and collect resolved hooks
 RESOLVED_HOOKS=()
 DISCOVERED_PLUGINS=()
@@ -180,8 +188,16 @@ for hooks_file in "${HOOKS_FILES[@]}"; do
     PLUGIN_DIR="$(dirname "$(dirname "$hooks_file")")"
     PLUGIN_NAME="$(basename "$PLUGIN_DIR")"
 
-    # Resolve ${CLAUDE_PLUGIN_ROOT} to absolute path
-    resolved=$(jq --arg root "$PLUGIN_DIR" \
+    # Compute the path to use for this plugin
+    if [[ "$MARKETPLACE_ROOT" == "$CLAUDE_HOME"* ]]; then
+        # Use relative path with ~/
+        PLUGIN_PATH="~/.claude${PLUGIN_DIR#$CLAUDE_HOME}"
+    else
+        PLUGIN_PATH="$PLUGIN_DIR"
+    fi
+
+    # Resolve ${CLAUDE_PLUGIN_ROOT} to the computed path
+    resolved=$(jq --arg root "$PLUGIN_PATH" \
         'walk(if type == "string" then gsub("\\$\\{CLAUDE_PLUGIN_ROOT\\}"; $root) else . end)' \
         "$hooks_file") || {
         echo -e "${RED}Error parsing $hooks_file${NC}"
@@ -230,12 +246,14 @@ if [[ "$CHECK_MODE" != "true" ]]; then
             # Strip surrounding quotes for file path check (they're there for shell escaping)
             cmd_path="${cmd#\"}"
             cmd_path="${cmd_path%\"}"
-            if [[ ! -f "$cmd_path" ]]; then
+            # Expand ~ to $HOME for file checks (bash doesn't expand ~ in variables)
+            cmd_path_expanded="${cmd_path/#\~/$HOME}"
+            if [[ ! -f "$cmd_path_expanded" ]]; then
                 echo -e "${RED}Error: Script not found: $cmd_path${NC}"
                 ((ERRORS++))
-            elif [[ ! -x "$cmd_path" ]]; then
+            elif [[ ! -x "$cmd_path_expanded" ]]; then
                 # Auto-fix non-executable scripts
-                if chmod +x "$cmd_path" 2>/dev/null; then
+                if chmod +x "$cmd_path_expanded" 2>/dev/null; then
                     echo -e "${YELLOW}Fixed: Made executable: $cmd_path${NC}"
                     ((FIXED++))
                 else
@@ -262,7 +280,7 @@ HOOKS_ONLY=$(echo "$AGGREGATED" | jq '.hooks')
 # Check mode: compare current settings to what we would write
 if [[ "$CHECK_MODE" == "true" ]]; then
     # Get current hooks from settings (normalized)
-    CURRENT_HOOKS=$(jq -c '.hooks // {}' "$SETTINGS_FILE" 2>/dev/null | jq -S '.')
+    CURRENT_HOOKS=$(jq -S '.hooks // {}' "$SETTINGS_FILE" 2>/dev/null)
     # Get what we would write (normalized)
     NEW_HOOKS=$(echo "$HOOKS_ONLY" | jq -S '.')
 

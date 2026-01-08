@@ -28,7 +28,7 @@ elif [[ -f ".claude/settings.json" ]]; then
 fi
 
 # Run the check (suppress stderr, we just want the result)
-if ! "$SETUP_SCRIPT" --check $CHECK_MODE >/dev/null 2>&1; then
+if ! "$SETUP_SCRIPT" --check "$CHECK_MODE" >/dev/null 2>&1; then
     echo ""
     echo "===================================================="
     echo "  rbw-claude-code: Hooks are out of sync!"
