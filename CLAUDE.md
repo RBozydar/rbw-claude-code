@@ -21,6 +21,7 @@ tools and Python workflow plugins.
 | `protect-env` | hook | Block reading .env files |
 | `git-safety-guard` | hook | Block destructive git commands |
 | `safety-guard` | hook | Block destructive file ops & supply chain attacks |
+| `gh-api-guard` | hook | Allow only safe gh api commands |
 
 ## Structure
 
