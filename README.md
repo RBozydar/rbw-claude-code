@@ -53,7 +53,7 @@ Once hooks are installed, a `SessionStart` hook automatically checks if your
 configured hooks are in sync with available plugin hooks. If hooks change
 (e.g., after updating the marketplace), you'll see a warning at session start:
 
-```
+```text
 ====================================================
   rbw-claude-code: Hooks are out of sync!
 ====================================================
