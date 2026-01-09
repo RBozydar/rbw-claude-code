@@ -1,7 +1,7 @@
 {
   "name": "gh-api-guard",
-  "version": "1.0.1",
-  "description": "Allow only safe gh api commands (PR comment fetching)",
+  "version": "1.1.0",
+  "description": "Allow only safe read-only gh api commands",
   "hooks": {
     "PreToolUse": [
       {
