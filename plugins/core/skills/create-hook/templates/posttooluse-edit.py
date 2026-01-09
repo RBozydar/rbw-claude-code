@@ -42,6 +42,7 @@ if path.suffix == ".py":
     try:
         subprocess.run(
             ["ruff", "format", file_path],
+            check=False,  # Ignore non-zero exit codes
             capture_output=True,
             timeout=30,
         )
