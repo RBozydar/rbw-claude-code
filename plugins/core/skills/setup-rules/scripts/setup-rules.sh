@@ -57,6 +57,12 @@ create_link() {
     local name=$(basename "$source")
     local target="${RULES_DIR}/${name}"
 
+    # Verify source exists
+    if [ ! -f "$source" ]; then
+        echo -e "${RED}  Error: Source not found: ${source}${NC}"
+        return 1
+    fi
+
     if [ -L "$target" ]; then
         echo -e "${YELLOW}  Replacing existing symlink: ${name}${NC}"
         rm "$target"

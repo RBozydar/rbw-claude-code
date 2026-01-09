@@ -15,8 +15,8 @@
 #        "command": "~/.claude/file-suggestion.sh"
 #      }
 
-# Parse JSON input to get query
-QUERY=$(jq -r '.query // ""')
+# Parse JSON input to get query (sanitize to prevent shell injection)
+QUERY=$(jq -r '.query // ""' | tr -cd 'a-zA-Z0-9._/ -')
 
 # Use project dir from env, fallback to pwd
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
