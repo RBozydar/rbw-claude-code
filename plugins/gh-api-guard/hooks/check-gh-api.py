@@ -9,16 +9,32 @@ import shlex
 
 from cchooks import PreToolUseContext, create_context
 
-# Safe patterns for gh api - read-only PR comment operations
+# Safe patterns for gh api - read-only operations
+# Note: Leading slash is stripped before matching
 ALLOWED_PATTERNS = [
-    # Fetch inline PR comments: gh api repos/{owner}/{repo}/pulls/{num}/comments
+    # PR comments (inline/review comments)
     r"^repos/[^/]+/[^/]+/pulls/\d+/comments$",
-    # Fetch issue/PR comments: gh api repos/{owner}/{repo}/issues/{num}/comments
+    # Issue/PR conversation comments
     r"^repos/[^/]+/[^/]+/issues/\d+/comments$",
-    # Fetch PR reviews: gh api repos/{owner}/{repo}/pulls/{num}/reviews$
+    # PR reviews
     r"^repos/[^/]+/[^/]+/pulls/\d+/reviews$",
-    # Fetch specific review comments
+    # Specific review comments
     r"^repos/[^/]+/[^/]+/pulls/\d+/reviews/\d+/comments$",
+    # PR details
+    r"^repos/[^/]+/[^/]+/pulls/\d+$",
+    # Issue details
+    r"^repos/[^/]+/[^/]+/issues/\d+$",
+    # Commit comments
+    r"^repos/[^/]+/[^/]+/commits/[a-f0-9]+/comments$",
+    # Repository info
+    r"^repos/[^/]+/[^/]+$",
+    # List PRs/issues (useful for searching)
+    r"^repos/[^/]+/[^/]+/pulls$",
+    r"^repos/[^/]+/[^/]+/issues$",
+    # PR files (for reviewing changes)
+    r"^repos/[^/]+/[^/]+/pulls/\d+/files$",
+    # Commits on a PR
+    r"^repos/[^/]+/[^/]+/pulls/\d+/commits$",
 ]
 
 # Dangerous HTTP methods to block
@@ -84,6 +100,9 @@ def main() -> None:
     if endpoint is None:
         c.output.exit_block("Could not determine gh api endpoint")
         return  # noreturn, but helps type checker
+
+    # Strip leading slash for consistent matching
+    endpoint = endpoint.lstrip("/")
 
     # Check if endpoint matches allowed patterns
     for pattern in ALLOWED_PATTERNS:
