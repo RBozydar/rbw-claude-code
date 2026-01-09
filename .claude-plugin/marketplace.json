@@ -1,6 +1,6 @@
 {
   "name": "rbw-claude-code",
-  "version": "1.2.7",
+  "version": "1.3.0",
   "description": "Python development and productivity plugins for Claude Code",
   "owner": {
     "name": "RBozydar"
@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Universal AI-powered development tools: 14 agents, 13 commands, 7 skills for code review, research, and workflow automation",
+      "description": "Universal AI-powered development tools: 14 agents, 14 commands, 11 skills for code review, research, and workflow automation",
       "source": "./plugins/core",
       "category": "development"
     },
@@ -71,7 +71,7 @@
     },
     {
       "name": "gh-api-guard",
-      "description": "Allow only safe gh api commands (PR comment fetching)",
+      "description": "Allow only safe read-only gh api commands",
       "source": "./plugins/gh-api-guard",
       "category": "security"
     },
