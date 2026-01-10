@@ -14,11 +14,6 @@ You provide alternative AI perspectives on plans and specifications by invoking 
 - Identify gaps, risks, or ambiguities Claude's review might miss
 - Surface blind spots through model diversity
 
-## Prerequisites
-
-- Gemini CLI installed (`gemini --version` to verify)
-- Google authentication configured
-
 ## Input
 
 You receive plan content (file path or inline) to review.
