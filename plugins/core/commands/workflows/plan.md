@@ -28,11 +28,12 @@ Do not proceed until you have a clear feature description from the user.
 First, I need to understand the project's conventions and existing patterns, leveraging all available resources and use paralel subagents to do this.
 </thinking>
 
-Runn these three agents in paralel at the same time:
+Run these research agents in parallel:
 
 - Task repo-research-analyst(feature_description)
 - Task best-practices-researcher(feature_description)
 - Task framework-docs-researcher(feature_description)
+- Task gemini-brainstorm(feature_description) - Alternative architectural perspectives from a different LLM
 
 **Reference Collection:**
 
@@ -41,7 +42,42 @@ Runn these three agents in paralel at the same time:
 - [ ] Create a reference list of similar issues or PRs (e.g., `#123`, `#456`)
 - [ ] Note any team conventions discovered in `CLAUDE.md` or team documentation
 
-### 2. Issue Planning & Structure
+### 2. Deep Analysis (For Complex Issues)
+
+<thinking>
+For complex problems, bugs, or refactoring tasks, run specialized analysis agents before planning.
+</thinking>
+
+**When to use these agents:**
+- Bug reports or unexpected behavior → `problem-analysis-agent`
+- Multiple valid approaches exist → `solution-design-agent`
+- Refactoring or technical debt cleanup → `refactor-analyst-agent`
+
+**Problem Analysis (for bugs/issues):**
+
+If the feature is actually a bug or complex issue where the root cause is unclear:
+
+- Task problem-analysis-agent(feature_description) - Identifies WHY the problem occurs (not how to fix it)
+
+Output: Root cause statement with evidence, confidence assessment, ready for solution design.
+
+**Solution Design (when multiple approaches exist):**
+
+If multiple valid solutions exist and choosing wrong has real cost:
+
+- Task solution-design-agent(problem_statement_or_root_cause) - Generates diverse solutions from 7 perspectives
+
+Output: Ranked solutions with trade-offs, failure conditions, and recommendation.
+
+**Refactoring Analysis (for cleanup/refactor):**
+
+If the plan involves refactoring or technical debt:
+
+- Task refactor-analyst-agent(scope_description) - 11-dimension analysis of existing code
+
+Output: Tiered recommendations (Critical/Recommended/Consider) with evidence.
+
+### 3. Issue Planning & Structure
 
 <thinking>
 Think like a product manager - what would make this issue clear and actionable? Consider multiple perspectives
@@ -64,7 +100,7 @@ Think like a product manager - what would make this issue clear and actionable? 
 - [ ] Gather supporting materials (error logs, screenshots, design mockups)
 - [ ] Prepare code examples or reproduction steps if applicable, name the mock filenames in the lists
 
-### 3. SpecFlow Analysis
+### 4. SpecFlow Analysis
 
 After planning the issue structure, run SpecFlow Analyzer to validate and refine the feature specification:
 
@@ -76,7 +112,7 @@ After planning the issue structure, run SpecFlow Analyzer to validate and refine
 - [ ] Incorporate any identified gaps or edge cases into the issue
 - [ ] Update acceptance criteria based on SpecFlow findings
 
-### 4. Choose Implementation Detail Level
+### 5. Choose Implementation Detail Level
 
 Select how comprehensive you want the issue to be, simpler is mostly better.
 
@@ -114,6 +150,24 @@ class Test
     @name = "test"
   end
 end
+```
+
+## Code Changes (Unified Diff Format)
+
+For non-trivial code changes, use unified diff format to specify exact locations:
+
+```diff
+--- a/path/to/file.py
++++ b/path/to/file.py
+@@ -123,6 +123,15 @@ def existing_function(ctx):
+   # Context lines (unchanged) serve as location anchors
+   existing_code()
+
++  # WHY: Guard against race condition when messages arrive out-of-order
++  new_code()
+
+   # More context to anchor the insertion point
+   more_existing_code()
 ```
 
 ## References
@@ -297,7 +351,7 @@ end
 - Design documents: [links]
 ```
 
-### 5. Issue Creation & Formatting
+### 6. Issue Creation & Formatting
 
 <thinking>
 Apply best practices for clarity and actionability, making the issue easy to scan and understand
@@ -353,7 +407,7 @@ end
 - [ ] Emphasize comprehensive testing given rapid implementation
 - [ ] Document any AI-generated code that needs human review
 
-### 6. Final Review & Submission
+### 7. Final Review & Submission
 
 **Pre-submission Checklist:**
 
@@ -424,3 +478,87 @@ When user selects "Create Issue", detect their project tracker from CLAUDE.md:
    - Ask if they want to proceed to `/workflows:work` or `/plan_review`
 
 NEVER CODE! Just research and write the plan.
+
+---
+
+## Appendix: Unified Diff Format for Code Changes
+
+When the plan includes code changes, use unified diff format for precise specification.
+
+### When to Use Diff Format
+
+| Code Characteristic | Use Diff? | Reason |
+| --- | --- | --- |
+| Conditionals, loops, error handling | YES | Has branching logic |
+| Multiple insertions same file | YES | >1 change location |
+| Deletions or replacements | YES | Removing/changing existing code |
+| Pure assignment/return (CRUD) | NO | Single statement, no branching |
+| Boilerplate from template | NO | Developer can generate from pattern |
+
+**Boundary test**: "Does developer need to see exact placement and context to implement correctly?"
+
+### Diff Components
+
+| Component | Authority | Purpose |
+| --- | --- | --- |
+| File path (`--- a/path/to/file.py`) | AUTHORITATIVE | Exact target file |
+| Line numbers (`@@ -123,6 +123,15 @@`) | APPROXIMATE | May drift with earlier changes |
+| Function context (`@@ ... @@ def func():`) | SCOPE HINT | Function containing the change |
+| Context lines (unchanged) | AUTHORITATIVE ANCHORS | Match patterns to locate insertion |
+| `+` lines | NEW CODE | Code to add, with WHY comments |
+| `-` lines | REMOVED CODE | Code to delete |
+
+### Comment Rules in Diffs
+
+Comments in `+` lines explain **WHY**, not **WHAT**:
+
+```diff
+# CORRECT - explains WHY
++  # Polling chosen over webhooks: 30% webhook delivery failures observed
++  updates = poll_api(interval=30)
+
+# INCORRECT - restates WHAT the code does
++  # Poll the API every 30 seconds
++  updates = poll_api(interval=30)
+```
+
+### Avoid Temporal Contamination
+
+Comments must pass the "timeless present" test - no change-relative language:
+
+| Contaminated | Clean |
+| --- | --- |
+| "Added mutex to fix race" | "Mutex serializes concurrent access" |
+| "Changed to use batch API" | "Batch API reduces round-trips from N to 1" |
+| "Unlike the old approach" | "Thread-safe: each goroutine gets independent state" |
+
+### Location Directives: Forbidden
+
+The diff structure handles location. Never put location directives in comments:
+
+```diff
+# WRONG - location directive in comment
++  # Insert this BEFORE the retry loop (line 716)
++  timestamp_guard()
+
+# CORRECT - diff structure provides location
+@@ -714,6 +714,10 @@ def put(self, ctx, tags):
+   for tag in tags:
+       subject = tag.subject
+
++      # Timestamp guard: prevent older data from overwriting newer
++      timestamp_guard()
+
+       # Retry loop for Put operations
+       for attempt in range(max_retries):
+```
+
+### Validation Checklist
+
+Before finalizing code changes in a plan:
+- [ ] File path is exact (not "auth files" but `src/auth/handler.py`)
+- [ ] Context lines exist in target file (patterns match actual code)
+- [ ] Comments explain WHY, not WHAT
+- [ ] No location directives in comments
+- [ ] No hidden baselines ("[adjective] compared to what?")
+- [ ] 2-3 context lines for reliable anchoring
