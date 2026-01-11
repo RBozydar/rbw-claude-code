@@ -52,6 +52,7 @@ For complex problems, bugs, or refactoring tasks, run specialized analysis agent
 - Bug reports or unexpected behavior → `problem-analysis-agent`
 - Multiple valid approaches exist → `solution-design-agent`
 - Refactoring or technical debt cleanup → `refactor-analyst-agent`
+- Open-ended analytical questions (taxonomy, trade-offs, definitions) → `deepthink-agent`
 
 **Problem Analysis (for bugs/issues):**
 
@@ -76,6 +77,14 @@ If the plan involves refactoring or technical debt:
 - Task refactor-analyst-agent(scope_description) - 11-dimension analysis of existing code
 
 Output: Tiered recommendations (Critical/Recommended/Consider) with evidence.
+
+**Deep Thinking (for open-ended analytical questions):**
+
+If the feature requires answering questions like "What's the right way to classify X?" or "How should we balance A vs B?":
+
+- Task deepthink-agent(analytical_question) - Structured multi-step reasoning with verification
+
+Output: Structured answer based on question type (taxonomy, trade-off, definitional, evaluative, exploratory).
 
 ### 3. Issue Planning & Structure
 
