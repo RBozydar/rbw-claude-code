@@ -4,20 +4,31 @@ A **standalone** Claude Code plugin for geopolitical research using GDELT (Globa
 
 > **Note**: This plugin is NOT included in the rbw-claude-code marketplace by default to avoid polluting context in unrelated sessions. Install it separately when needed.
 
-## Quick Start (Project-specific)
+## Installation
 
-To enable this plugin for a specific project/repo:
+This plugin has its own marketplace, separate from rbw-claude-code.
+
+### Option 1: Install in a specific project
 
 ```bash
-# 1. Create .claude/settings.json in your project root
-mkdir -p .claude
+# In your target project directory
+claude plugin add /path/to/rbw-claude-code/plugins/geopolitical-research
+```
 
-# 2. Add plugin path (adjust path to your rbw-claude-code location)
-cat > .claude/settings.json << 'EOF'
+This installs the plugin only for that project.
+
+### Option 2: Install globally
+
+```bash
+claude plugin add /path/to/rbw-claude-code/plugins/geopolitical-research --global
+```
+
+### Enable GDELT MCP Server (optional but recommended)
+
+Add to your project's `.claude/settings.json`:
+
+```json
 {
-  "plugins": [
-    "/path/to/rbw-claude-code/plugins/geopolitical-research"
-  ],
   "mcpServers": {
     "gdelt": {
       "command": "uv",
@@ -26,14 +37,14 @@ cat > .claude/settings.json << 'EOF'
     }
   }
 }
-EOF
+```
 
-# 3. Install MCP server dependencies (one-time)
+Then install dependencies once:
+
+```bash
 cd /path/to/rbw-claude-code/plugins/geopolitical-research/mcp-server
 uv sync
 ```
-
-Now `/geo-research` and GDELT tools are available only in that project.
 
 ## Features
 
@@ -102,55 +113,7 @@ Invoke the skill with:
 
 - Python 3.11+
 - [py-gdelt](https://github.com/RBozydar/py-gdelt) library
-- MCP-compatible Claude Code installation
-
-## Setup
-
-### 1. Install MCP server dependencies
-
-```bash
-cd plugins/geopolitical-research/mcp-server
-uv sync
-```
-
-### 2. Enable the MCP server (opt-in)
-
-The GDELT MCP server is **not enabled by default** to avoid overhead in sessions that don't need it.
-
-**Option A: Project-specific** - Add to `.claude/settings.json` in your project:
-
-```json
-{
-  "mcpServers": {
-    "gdelt": {
-      "command": "uv",
-      "args": ["run", "python", "server.py"],
-      "cwd": "/path/to/rbw-claude-code/plugins/geopolitical-research/mcp-server"
-    }
-  }
-}
-```
-
-**Option B: Global** - Add to `~/.claude/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "gdelt": {
-      "command": "uv",
-      "args": ["run", "python", "server.py"],
-      "cwd": "/path/to/rbw-claude-code/plugins/geopolitical-research/mcp-server"
-    }
-  }
-}
-```
-
-**Option C: Per-session** - Start Claude Code with MCP enabled:
-
-```bash
-# Set GDELT_MCP_PATH to the mcp-server directory
-claude --mcp-server gdelt="uv run python server.py" --mcp-cwd "$GDELT_MCP_PATH"
-```
+- Claude Code CLI
 
 ## Data Sources
 
