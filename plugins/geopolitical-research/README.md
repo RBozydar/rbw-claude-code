@@ -1,6 +1,39 @@
 # Geopolitical Research Agent
 
-A specialized Claude Code plugin for geopolitical research using GDELT (Global Database of Events, Language, and Tone) data. Provides structured analysis of international events, conflicts, sanctions, actor relationships, and media narratives.
+A **standalone** Claude Code plugin for geopolitical research using GDELT (Global Database of Events, Language, and Tone) data. Provides structured analysis of international events, conflicts, sanctions, actor relationships, and media narratives.
+
+> **Note**: This plugin is NOT included in the rbw-claude-code marketplace by default to avoid polluting context in unrelated sessions. Install it separately when needed.
+
+## Quick Start (Project-specific)
+
+To enable this plugin for a specific project/repo:
+
+```bash
+# 1. Create .claude/settings.json in your project root
+mkdir -p .claude
+
+# 2. Add plugin path (adjust path to your rbw-claude-code location)
+cat > .claude/settings.json << 'EOF'
+{
+  "plugins": [
+    "/path/to/rbw-claude-code/plugins/geopolitical-research"
+  ],
+  "mcpServers": {
+    "gdelt": {
+      "command": "uv",
+      "args": ["run", "python", "server.py"],
+      "cwd": "/path/to/rbw-claude-code/plugins/geopolitical-research/mcp-server"
+    }
+  }
+}
+EOF
+
+# 3. Install MCP server dependencies (one-time)
+cd /path/to/rbw-claude-code/plugins/geopolitical-research/mcp-server
+uv sync
+```
+
+Now `/geo-research` and GDELT tools are available only in that project.
 
 ## Features
 

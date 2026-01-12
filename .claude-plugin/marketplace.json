@@ -86,12 +86,6 @@
       "description": "Diffusion-based deep research with parallel subagents, iterative gap detection, and comprehensive synthesis",
       "source": "./plugins/deep_research",
       "category": "research"
-    },
-    {
-      "name": "geopolitical-research",
-      "description": "GDELT-powered geopolitical research: conflict analysis, sanctions tracking, actor mapping, and media sentiment using structured event data",
-      "source": "./plugins/geopolitical-research",
-      "category": "research"
     }
   ]
 }
