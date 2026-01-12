@@ -1,0 +1,19 @@
+{
+  "name": "deep-research-plus",
+  "version": "1.0.0",
+  "description": "Advanced research plugin: deep web research + GDELT geopolitical analysis",
+  "owner": {
+    "name": "RBozydar"
+  },
+  "metadata": {
+    "description": "Combines diffusion-based deep research with specialized geopolitical analysis. Includes: general research agents (research-worker, gap-detector, research-orchestrator), geopolitical specialists (conflict-analyst, sanctions-researcher, actor-mapper, sentiment-tracker, trend-analyst), two skills (/deep-research, /geo-research), and GDELT MCP server."
+  },
+  "plugins": [
+    {
+      "name": "deep-research-plus",
+      "description": "Deep web research + GDELT geopolitical analysis with 9 agents, 2 skills, and MCP server",
+      "source": ".",
+      "category": "research"
+    }
+  ]
+}
