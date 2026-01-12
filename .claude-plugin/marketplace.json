@@ -1,6 +1,6 @@
 {
   "name": "rbw-claude-code",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "Python development and productivity plugins for Claude Code",
   "owner": {
     "name": "RBozydar"
@@ -80,6 +80,18 @@
       "description": "Block Gemini 2.x models, enforce Gemini 3 models only",
       "source": "./plugins/gemini-model-guard",
       "category": "development"
+    },
+    {
+      "name": "deep_research",
+      "description": "Diffusion-based deep research with parallel subagents, iterative gap detection, and comprehensive synthesis",
+      "source": "./plugins/deep_research",
+      "category": "research"
+    },
+    {
+      "name": "geopolitical-research",
+      "description": "GDELT-powered geopolitical research: conflict analysis, sanctions tracking, actor mapping, and media sentiment using structured event data",
+      "source": "./plugins/geopolitical-research",
+      "category": "research"
     }
   ]
 }
