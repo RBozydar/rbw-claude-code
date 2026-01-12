@@ -73,13 +73,51 @@ Invoke the skill with:
 
 ## Setup
 
-1. Install dependencies in the MCP server:
-   ```bash
-   cd mcp-server
-   uv sync
-   ```
+### 1. Install MCP server dependencies
 
-2. The MCP server will be automatically started when the plugin loads (configured in `plugin.json`)
+```bash
+cd plugins/geopolitical-research/mcp-server
+uv sync
+```
+
+### 2. Enable the MCP server (opt-in)
+
+The GDELT MCP server is **not enabled by default** to avoid overhead in sessions that don't need it.
+
+**Option A: Project-specific** - Add to `.claude/settings.json` in your project:
+
+```json
+{
+  "mcpServers": {
+    "gdelt": {
+      "command": "uv",
+      "args": ["run", "python", "server.py"],
+      "cwd": "/path/to/rbw-claude-code/plugins/geopolitical-research/mcp-server"
+    }
+  }
+}
+```
+
+**Option B: Global** - Add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "gdelt": {
+      "command": "uv",
+      "args": ["run", "python", "server.py"],
+      "cwd": "/path/to/rbw-claude-code/plugins/geopolitical-research/mcp-server"
+    }
+  }
+}
+```
+
+**Option C: Per-session** - Start Claude Code with MCP enabled:
+
+```bash
+# Set GDELT_MCP_PATH to the mcp-server directory
+claude --mcp-server gdelt="uv run python server.py" --mcp-cwd "$GDELT_MCP_PATH"
+```
 
 ## Data Sources
 

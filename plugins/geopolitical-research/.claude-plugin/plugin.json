@@ -20,12 +20,5 @@
     "events",
     "actors",
     "mcp-server"
-  ],
-  "mcpServers": {
-    "gdelt": {
-      "command": "uv",
-      "args": ["run", "python", "server.py"],
-      "cwd": "mcp-server"
-    }
-  }
+  ]
 }
