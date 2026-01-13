@@ -55,16 +55,21 @@ Ensure that the code is ready for analysis (either in worktree or on current bra
 Run ALL or most of these agents at the same time:
 
 **Core Reviewers (always run):**
-1. Task code-simplicity-reviewer(PR content)
+1. Task code-simplicity-reviewer(PR content) - YAGNI, severity taxonomy, temporal contamination
 2. Task architecture-strategist(PR content)
-3. Task pattern-recognition-specialist(PR content)
+3. Task pattern-recognition-specialist(PR content) - Coherence patterns, duplication thresholds
 4. Task security-sentinel(PR content)
 5. Task performance-oracle(PR content)
 6. Task agent-native-reviewer(PR content) - Verify new features are agent-accessible
 
+**Deep Code Quality Reviewers (run for thorough reviews):**
+7. Task baseline-code-reviewer(PR content) - 17 atomic code smell categories
+8. Task coherence-reviewer(PR content) - Repetition, naming consistency, zombie code
+9. Task drift-reviewer(PR content) - Module structure, cross-file comprehension, abstraction opportunities
+
 **Research Agents:**
-7. Task git-history-analyzer(PR content)
-8. Task best-practices-researcher(PR content)
+10. Task git-history-analyzer(PR content)
+11. Task best-practices-researcher(PR content)
 
 </parallel_tasks>
 
@@ -105,6 +110,19 @@ These agents are run ONLY when the PR matches specific criteria. Check the PR fi
 
 **What these agents check:**
 - `data-migration-expert`: Verifies hard-coded mappings match production reality (prevents swapped IDs), checks for orphaned associations, validates dual-write patterns
+
+**If PR is a significant refactor or technical debt cleanup:**
+
+- Task refactor-analyst-agent(PR content) - 11-dimension analysis, philosophy validation, tiered recommendations
+
+**When to run refactor agents:**
+- PR title/body mentions: refactor, cleanup, technical debt, reorganize
+- PR modifies file structure or moves code between modules
+- PR changes 5+ files without adding new features
+- PR simplifies or consolidates existing code
+
+**What these agents check:**
+- `refactor-analyst-agent`: Architecture, modules, abstraction opportunities, types, error handling, conditionals, naming, extraction, testability, modernization, readability
 
 </conditional_agents>
 
@@ -322,11 +340,20 @@ After creating all todo files, present comprehensive summary:
 
 ### Review Agents Used:
 
+**Core:**
 - code-simplicity-reviewer
 - security-sentinel
 - performance-oracle
 - architecture-strategist
+- pattern-recognition-specialist
 - agent-native-reviewer
+
+**Deep Quality (if run):**
+- baseline-code-reviewer
+- coherence-reviewer
+- drift-reviewer
+
+**Language-Specific:**
 - [language-specific agents used]
 
 ### Next Steps:

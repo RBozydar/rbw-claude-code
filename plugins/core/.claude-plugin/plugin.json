@@ -1,7 +1,7 @@
 {
   "name": "core",
-  "version": "1.0.0",
-  "description": "Universal AI-powered development tools: 14 agents, 13 commands, 6 skills for code review, research, and workflow automation",
+  "version": "1.1.0",
+  "description": "Universal AI-powered development tools: 14 agents, 13 commands, 7 skills for code review, research, and workflow automation",
   "author": {
     "name": "RBozydar",
     "url": "https://github.com/RBozydar"

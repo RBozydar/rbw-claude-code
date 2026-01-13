@@ -13,7 +13,7 @@ tools and Python workflow plugins.
 |--------|------|-------------|
 | `core` | agents/commands/skills | Universal AI development tools |
 | `python-backend` | agents/commands | Python-specific reviewers and commands |
-| `enforce-poetry` | hook | Block bare python/pip commands |
+| `enforce-uv` | hook | Block bare python/pip commands |
 | `conventional-commits` | hook | Validate commit message format |
 | `python-format` | hook | Auto-format with ruff |
 | `python-typecheck` | hook | Type check after edits |
@@ -21,6 +21,8 @@ tools and Python workflow plugins.
 | `protect-env` | hook | Block reading .env files |
 | `git-safety-guard` | hook | Block destructive git commands |
 | `safety-guard` | hook | Block destructive file ops & supply chain attacks |
+| `gh-api-guard` | hook | Allow only safe gh api commands |
+| `gemini-model-guard` | hook | Block Gemini 2.x models, enforce Gemini 3 |
 
 ## Structure
 
@@ -58,7 +60,71 @@ plugins/
 
 - Python scripts with PEP 723 inline metadata
 - Use `cchooks` library for context
-- Hooks defined inline in `.claude-plugin/plugin.json`
+- Hooks defined in `hooks/hooks.json`
+
+## Hook Development Quick Reference
+
+For full details, see the `create-hook` skill.
+
+### Hook Events
+
+| Event | Description |
+|-------|-------------|
+| `PreToolUse` | Block/validate before tool execution |
+| `PostToolUse` | React after tool completes |
+| `SessionStart` | Initialize on session start |
+| `Stop` | Verify task completion |
+
+### hooks.json Structure
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/my-hook.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Key Environment Variables
+
+- `CLAUDE_PLUGIN_ROOT` - Plugin directory (always use for paths)
+- `CLAUDE_PROJECT_DIR` - Current project root
+
+### Hook Script Pattern
+
+```python
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = ["cchooks"]
+# ///
+
+from cchooks import PreToolUseContext, create_context
+
+c = create_context()
+assert isinstance(c, PreToolUseContext)
+
+if c.tool_name != "Bash":
+    c.output.exit_success()
+
+command = c.tool_input.get("command", "")
+
+# Check safe patterns first, then blocked patterns
+if is_blocked(command):
+    c.output.exit_block("Reason for blocking")
+
+c.output.exit_success()
+```
 
 ## Conventions
 

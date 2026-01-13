@@ -1,5 +1,5 @@
 {
   "name": "test-reminder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Remind to add tests when creating new Python files"
 }

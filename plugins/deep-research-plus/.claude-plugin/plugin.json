@@ -1,0 +1,24 @@
+{
+  "name": "deep-research-plus",
+  "version": "1.0.0",
+  "description": "Advanced research plugin combining deep web research with GDELT-powered geopolitical analysis. Includes general research agents, specialized geopolitical analysts, and MCP server for structured GDELT queries.",
+  "author": {
+    "name": "RBozydar",
+    "url": "https://github.com/RBozydar"
+  },
+  "homepage": "https://github.com/RBozydar/rbw-claude-code",
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "deep-research",
+    "gdelt",
+    "geopolitical",
+    "conflicts",
+    "sanctions",
+    "multi-agent",
+    "diffusion",
+    "parallel",
+    "web-search",
+    "mcp-server"
+  ]
+}

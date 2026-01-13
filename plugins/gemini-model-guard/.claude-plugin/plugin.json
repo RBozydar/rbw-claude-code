@@ -1,0 +1,31 @@
+{
+  "name": "gemini-model-guard",
+  "version": "1.1.0",
+  "description": "Block Gemini 2.x models, enforce Gemini 3 models only",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/check-gemini-model.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/post-check-gemini.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

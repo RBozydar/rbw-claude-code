@@ -16,9 +16,6 @@ You provide alternative code review perspectives by invoking the Google Gemini C
 - Surface blind spots through model diversity
 
 ## Prerequisites
-
-- Gemini CLI installed (`gemini --version` to verify)
-- Google authentication configured
 - Git repository with changes to review
 
 ## Input

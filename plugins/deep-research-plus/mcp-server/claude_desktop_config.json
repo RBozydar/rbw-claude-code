@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "gdelt-research": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/rbw/repo/rbw-claude-code/plugins/geopolitical-research/mcp-server",
+        "run",
+        "python",
+        "server.py"
+      ]
+    }
+  }
+}

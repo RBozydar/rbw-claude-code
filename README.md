@@ -39,22 +39,15 @@ Navigate to the marketplace directory:
 cd ~/.claude/plugins/RBozydar/rbw-claude-code
 ```
 
-**Option 1: Global hooks** (apply to all projects)
+Run the setup script:
 
 ```bash
+# Global hooks (apply to all projects) - default
 ./scripts/setup-hooks.sh
+
+# Or project-specific hooks (run from within your project)
+./scripts/setup-hooks.sh --project
 ```
-
-This adds hooks to `~/.claude/settings.json`.
-
-**Option 2: Project-specific hooks** (apply to one repository)
-
-```bash
-# Run from within your project directory
-./scripts/setup-hooks-project.sh
-```
-
-This adds hooks to `<your-project>/.claude/settings.json`.
 
 To verify hooks are active:
 
@@ -63,6 +56,31 @@ To verify hooks are active:
 ```
 
 You should see the configured hooks listed (enforce-uv, conventional-commits, etc.).
+
+#### Auto-Sync Detection
+
+Once hooks are installed, a `SessionStart` hook automatically checks if your
+configured hooks are in sync with available plugin hooks. If hooks change
+(e.g., after updating the marketplace), you'll see a warning at session start:
+
+```text
+====================================================
+  rbw-claude-code: Hooks are out of sync!
+====================================================
+
+  Plugin hooks have changed. Run to update:
+
+    ./scripts/setup-hooks.sh --project
+
+====================================================
+```
+
+You can also manually check sync status:
+
+```bash
+./scripts/setup-hooks.sh --check           # Check global hooks
+./scripts/setup-hooks.sh --check --project # Check project hooks
+```
 
 ## Available Plugins
 
@@ -121,12 +139,15 @@ The `core` plugin provides language-agnostic AI-powered development tools:
 
 ### Skills
 
-- `compound-docs` - Document solved problems
-- `git-worktree` - Manage Git worktrees
-- `file-todos` - File-based todo tracking
-- `create-agent-skills` - Create Claude Code skills
-- `agent-native-architecture` - Build prompt-native AI agents
-- `skill-creator` - Create new skills
+| Skill Name | Description |
+|------------|-------------|
+| `core:agent-native-architecture` | Build AI agents using prompt-native architecture |
+| `core:compound-docs` | Capture solved problems as categorized documentation |
+| `core:create-agent-skills` | Expert guidance for creating Claude Code skills |
+| `core:file-todos` | File-based todo tracking in todos/ directory |
+| `core:git-ship` | Complete git workflow: commit, push, PR, CI, merge |
+| `core:git-worktree` | Manage Git worktrees for parallel development |
+| `core:skill-creator` | Guide for creating effective skills |
 
 ## Python Backend Plugin
 
