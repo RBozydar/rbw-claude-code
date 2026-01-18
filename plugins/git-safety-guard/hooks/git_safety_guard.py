@@ -68,7 +68,45 @@ BLOCKED_PATTERNS = [
     # History rewriting
     (r"git\s+filter-branch", "git filter-branch rewrites entire repository history"),
     (r"git\s+filter-repo", "git filter-repo rewrites entire repository history"),
+    # Reference manipulation (alternative to branch deletion)
+    (r"git\s+update-ref\s+-d", "git update-ref -d deletes references directly"),
+    (r"git\s+update-ref\s+--delete", "git update-ref --delete removes references"),
+    # Worktree destruction
+    (
+        r"git\s+worktree\s+remove\s+.*--force",
+        "git worktree remove --force can lose work",
+    ),
+    # Submodule destruction
+    (
+        r"git\s+submodule\s+deinit\s+.*--force",
+        "git submodule deinit --force removes submodule data",
+    ),
+    # Commit amendment (rewrites history)
+    (r"git\s+commit\s+.*--amend", "git commit --amend rewrites commit history"),
+    # Rebase (rewrites history)
+    (r"git\s+rebase\b(?!\s+--abort)", "git rebase rewrites commit history"),
 ]
+
+# Pattern for bash -c / sh -c / eval containing git commands
+SHELL_WRAPPER_PATTERN = re.compile(
+    r"""(?:(?:ba)?sh\s+-c|eval)\s+['"].*\bgit\s+""",
+    re.IGNORECASE,
+)
+
+# Check for shell wrapper bypass attempts
+if SHELL_WRAPPER_PATTERN.search(command):
+    # Extract the inner command and check it
+    inner_match = re.search(r"""(?:(?:ba)?sh\s+-c|eval)\s+['"](.+?)['"]""", command)
+    if inner_match:
+        inner_command = inner_match.group(1)
+        # Check if inner command contains dangerous git operations
+        for pattern, reason in BLOCKED_PATTERNS:
+            if re.search(pattern, inner_command):
+                c.output.exit_block(
+                    f"BLOCKED: {reason} (detected inside shell wrapper)\n"
+                    f"Command: {command}\n"
+                    "If this operation is truly needed, ask the user for explicit permission."
+                )
 
 # Check safe patterns first
 for pattern in SAFE_PATTERNS:

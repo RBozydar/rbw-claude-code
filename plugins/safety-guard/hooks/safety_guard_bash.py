@@ -32,6 +32,24 @@ BLOCKED_PATTERNS = [
     (r"shred\s+", "shred permanently destroys file data"),
     (r"truncate\s+", "truncate destroys file contents"),
     # ==========================================================================
+    # Data destruction via dd
+    # ==========================================================================
+    (r"\bdd\s+.*\bof=", "dd with of= can overwrite/destroy disk data"),
+    (r"\bdd\s+.*\bif=/dev/zero", "dd from /dev/zero overwrites data with zeros"),
+    (
+        r"\bdd\s+.*\bif=/dev/random",
+        "dd from /dev/random overwrites data with random bytes",
+    ),
+    # ==========================================================================
+    # In-place file modification via sed
+    # ==========================================================================
+    (r"\bsed\s+-i", "sed -i modifies files in-place (use non-destructive editing)"),
+    (r"\bsed\s+--in-place", "sed --in-place modifies files destructively"),
+    # ==========================================================================
+    # File destruction via mv to /dev/null
+    # ==========================================================================
+    (r"\bmv\s+.*\s+/dev/null", "mv to /dev/null destroys files"),
+    # ==========================================================================
     # find: Block file deletion and destructive exec patterns
     # ==========================================================================
     (r"find\s+.*-delete", "find -delete permanently removes files"),
@@ -69,6 +87,29 @@ BLOCKED_PATTERNS = [
         "piping curl/wget to a shell is a supply chain attack vector",
     ),
     # ==========================================================================
+    # Python/Perl one-liners for file destruction
+    # ==========================================================================
+    (
+        r"python[23]?\s+-c\s+['\"].*os\.(remove|unlink|rmdir|rmtree)",
+        "Python one-liner with file deletion detected",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*shutil\.rmtree",
+        "Python one-liner with recursive deletion detected",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*pathlib.*\.(unlink|rmdir)",
+        "Python one-liner with pathlib deletion detected",
+    ),
+    (
+        r"perl\s+-e\s+['\"].*unlink",
+        "Perl one-liner with file deletion detected",
+    ),
+    (
+        r"ruby\s+-e\s+['\"].*File(Utils)?\.rm",
+        "Ruby one-liner with file deletion detected",
+    ),
+    # ==========================================================================
     # Command execution bypass (destructive commands hidden in bash -c)
     # ==========================================================================
     (
@@ -80,6 +121,18 @@ BLOCKED_PATTERNS = [
         "bash -c with destructive git command detected",
     ),
     (r"(ba)?sh\s+-c\s+['\"].*rm\s+-rf", "bash -c with rm -rf detected"),
+    (r"(ba)?sh\s+-c\s+['\"].*shred\b", "bash -c with shred detected"),
+    (r"(ba)?sh\s+-c\s+['\"].*dd\s+.*of=", "bash -c with dd detected"),
+    (
+        r"(ba)?sh\s+-c\s+['\"].*mv\s+.*\s+/dev/null",
+        "bash -c with mv to /dev/null detected",
+    ),
+    # ==========================================================================
+    # eval bypass for destructive commands
+    # ==========================================================================
+    (r"\beval\s+['\"].*rm\s+-rf", "eval with rm -rf detected"),
+    (r"\beval\s+['\"].*shred\b", "eval with shred detected"),
+    (r"\beval\s+['\"].*dd\s+.*of=", "eval with dd detected"),
 ]
 
 # Check safe patterns first
