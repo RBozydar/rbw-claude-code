@@ -40,6 +40,17 @@ COMMIT_INDICATORS = [
     r"\bgit\s+commit-tree\b",
 ]
 
+# Commands that take large text arguments where git references are OK
+# These commands often include documentation, PR descriptions, etc.
+SAFE_ARGUMENT_COMMANDS = [
+    r"^gh\s+pr\s+create\b",
+    r"^gh\s+pr\s+edit\b",
+    r"^gh\s+issue\s+create\b",
+    r"^gh\s+issue\s+edit\b",
+    r"^echo\b",
+    r"^printf\b",
+]
+
 # Blocked commit methods we cannot reliably validate
 BLOCKED_PATTERNS = [
     (
@@ -66,6 +77,21 @@ OTHER_COMMIT_COMMANDS = [
     (r"\bgit\s+revert\b", "git revert"),
     (r"\bgit\s+am\b", "git am"),
 ]
+
+
+def is_commit_command_context(command: str) -> bool:
+    """Check if command is actually executing git commit, not just mentioning it.
+
+    Commands like 'gh pr create --body "... git commit --amend ..."' should NOT
+    trigger validation because they're just documenting git commands, not executing them.
+    """
+    stripped = command.strip()
+
+    for pattern in SAFE_ARGUMENT_COMMANDS:
+        if re.match(pattern, stripped):
+            return False  # Not a commit context, skip validation
+
+    return True
 
 
 def extract_all_commands(cmd: str) -> list[str]:
@@ -112,13 +138,52 @@ def extract_messages(commit_cmd: str) -> list[str]:
 
 
 def has_dynamic_content(msg: str) -> bool:
-    """Check if message contains command substitution or variable expansion."""
-    # Command substitution: $(...) or `...`
-    if "$(" in msg or "`" in msg:
+    """Check if message contains command substitution or variable expansion.
+
+    Allows markdown backticks (paired backticks like `code`) but blocks shell
+    command substitution (unpaired or containing shell-like content).
+    """
+    # Command substitution: $(...) - always dangerous
+    if "$(" in msg:
         return True
+
     # Variable expansion: $VAR or ${VAR}
     if re.search(r"\$\{?\w", msg):
         return True
+
+    # Backticks: check if they're markdown (paired) vs shell substitution
+    if "`" in msg:
+        # Triple backticks (```code```) are markdown code blocks - safe
+        if "```" in msg:
+            # Remove triple backtick blocks, then check what remains
+            remaining = re.sub(r"```[^`]*```", "", msg)
+            if "`" not in remaining:
+                return False
+            msg = remaining
+
+        # Count single backticks
+        backtick_count = msg.count("`")
+
+        # Unpaired backtick (odd count) = likely shell substitution
+        if backtick_count % 2 != 0:
+            return True
+
+        # Paired backticks - check if content looks like shell commands
+        # Extract content between backticks
+        backtick_contents = re.findall(r"`([^`]+)`", msg)
+        for content in backtick_contents:
+            # Shell-like patterns: starts with command + args, or contains pipes/redirects
+            # This catches `whoami`, `cat /etc/passwd`, but allows `method_name`, `ClassName`
+            if re.search(r"^[a-z/]+\s+", content, re.IGNORECASE):
+                # Looks like a command with arguments - block it
+                return True
+            if re.search(r"[|><]", content):
+                # Contains pipe or redirect - block it
+                return True
+
+        # Paired backticks with code-like content (identifiers) - safe markdown
+        return False
+
     return False
 
 
@@ -131,6 +196,11 @@ def main() -> None:
         c.output.exit_success()
 
     command = c.tool_input.get("command", "")
+
+    # Skip validation for commands that just mention git in text arguments
+    # (e.g., gh pr create --body "... git commit --amend ...")
+    if not is_commit_command_context(command):
+        c.output.exit_success()
 
     # Find any git commit command (including in nested shells)
     commit_cmd = find_commit_command(command)

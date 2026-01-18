@@ -21,6 +21,7 @@ extract_all_commands = conventional_commits.extract_all_commands
 find_commit_command = conventional_commits.find_commit_command
 extract_messages = conventional_commits.extract_messages
 has_dynamic_content = conventional_commits.has_dynamic_content
+is_commit_command_context = conventional_commits.is_commit_command_context
 CONVENTIONAL_PATTERN = conventional_commits.CONVENTIONAL_PATTERN
 
 
@@ -118,9 +119,31 @@ class TestHasDynamicContent:
         assert has_dynamic_content("$(date)")
         assert has_dynamic_content("feat: $(whoami)")
 
-    def test_command_substitution_backticks(self):
-        assert has_dynamic_content("`date`")
-        assert has_dynamic_content("feat: `whoami`")
+    def test_command_substitution_backticks_with_command(self):
+        """Backticks with shell-like content should be blocked."""
+        # Command with argument
+        assert has_dynamic_content("`cat /etc/passwd`")
+        assert has_dynamic_content("feat: `rm -rf /`")
+        # Pipes and redirects
+        assert has_dynamic_content("`echo test | grep t`")
+        assert has_dynamic_content("`cat < file`")
+
+    def test_markdown_backticks_allowed(self):
+        """Paired backticks with code identifiers should be allowed (markdown)."""
+        # Single code words (method/class names)
+        assert not has_dynamic_content("fix: update `method_name` to handle edge case")
+        assert not has_dynamic_content("fix: update `ClassName` method")
+        assert not has_dynamic_content("feat: add `foo` and `bar` functions")
+
+    def test_triple_backticks_allowed(self):
+        """Triple backticks (markdown code blocks) should be allowed."""
+        assert not has_dynamic_content("fix: ```code block```")
+        assert not has_dynamic_content("feat: add ```example``` feature")
+
+    def test_unpaired_backtick_blocked(self):
+        """Unpaired backticks should be blocked (likely shell substitution)."""
+        assert has_dynamic_content("feat: `whoami")
+        assert has_dynamic_content("feat: test`")
 
     def test_variable_expansion(self):
         assert has_dynamic_content("$VAR")
@@ -130,6 +153,49 @@ class TestHasDynamicContent:
     def test_static_content(self):
         assert not has_dynamic_content("feat: add feature")
         assert not has_dynamic_content("fix(scope): fix bug")
+
+
+class TestIsCommitCommandContext:
+    """Test detection of commit command context vs safe argument context."""
+
+    def test_actual_git_commit(self):
+        """Actual git commit commands should be in commit context."""
+        assert is_commit_command_context("git commit -m 'test'")
+        assert is_commit_command_context("git commit --amend")
+
+    def test_gh_pr_create_skipped(self):
+        """gh pr create should NOT trigger commit validation."""
+        assert not is_commit_command_context('gh pr create --body "git commit --amend"')
+        assert not is_commit_command_context(
+            "gh pr create --title 'test' --body 'details'"
+        )
+
+    def test_gh_pr_edit_skipped(self):
+        """gh pr edit should NOT trigger commit validation."""
+        assert not is_commit_command_context('gh pr edit --body "mentions git commit"')
+
+    def test_gh_issue_create_skipped(self):
+        """gh issue create should NOT trigger commit validation."""
+        assert not is_commit_command_context(
+            'gh issue create --body "git rebase issue"'
+        )
+
+    def test_gh_issue_edit_skipped(self):
+        """gh issue edit should NOT trigger commit validation."""
+        assert not is_commit_command_context('gh issue edit --body "test"')
+
+    def test_echo_skipped(self):
+        """echo commands should NOT trigger commit validation."""
+        assert not is_commit_command_context('echo "git commit --amend"')
+
+    def test_printf_skipped(self):
+        """printf commands should NOT trigger commit validation."""
+        assert not is_commit_command_context('printf "git commit example"')
+
+    def test_other_commands_not_skipped(self):
+        """Other commands should be checked for commits."""
+        assert is_commit_command_context("ls -la")
+        assert is_commit_command_context("cat file.txt")
 
 
 class TestConventionalPattern:
