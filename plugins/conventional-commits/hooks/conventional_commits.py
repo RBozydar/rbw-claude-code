@@ -174,7 +174,8 @@ def has_dynamic_content(msg: str) -> bool:
         for content in backtick_contents:
             # Shell-like patterns: starts with command + args, or contains pipes/redirects
             # This catches `whoami`, `cat /etc/passwd`, but allows `method_name`, `ClassName`
-            if re.search(r"^[a-z/]+\s+", content, re.IGNORECASE):
+            # Length limit {1,50} prevents ReDoS with very long strings
+            if re.search(r"^[a-z/]{1,50}\s+", content, re.IGNORECASE):
                 # Looks like a command with arguments - block it
                 return True
             if re.search(r"[|><]", content):

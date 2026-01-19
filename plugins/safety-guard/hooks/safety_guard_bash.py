@@ -41,10 +41,18 @@ BLOCKED_PATTERNS = [
         "dd from /dev/random overwrites data with random bytes",
     ),
     # ==========================================================================
-    # In-place file modification via sed
+    # In-place file modification via sed (without backup)
     # ==========================================================================
-    (r"\bsed\s+-i", "sed -i modifies files in-place (use non-destructive editing)"),
-    (r"\bsed\s+--in-place", "sed --in-place modifies files destructively"),
+    # Allow sed -i.bak or sed -i'.bak' (with backup suffix) - these are safe
+    # Block sed -i without suffix (no backup = destructive)
+    (
+        r"\bsed\s+-i(?![.\w])\s",
+        "sed -i without backup suffix is destructive (use sed -i.bak instead)",
+    ),
+    (
+        r"\bsed\s+--in-place(?!=)",
+        "sed --in-place without backup is destructive (use --in-place=.bak)",
+    ),
     # ==========================================================================
     # File destruction via mv to /dev/null
     # ==========================================================================

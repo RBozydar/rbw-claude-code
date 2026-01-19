@@ -182,12 +182,22 @@ def main() -> None:
         )
         return
 
-    # Find gh commands in the string (handle chained commands)
-    # Match "gh api" at start or after separators
-    gh_api_match = re.search(r"(?:^|[;&|])\s*(gh\s+api\b.*?)(?:[;&|]|$)", command)
-    if gh_api_match:
-        check_gh_api(gh_api_match.group(1), c)
-        return
+    # Check if this is a gh api command
+    # Use shlex to properly handle quoted arguments (e.g., --jq '.[] | .body')
+    try:
+        parts = shlex.split(command)
+        # Find 'gh' followed by 'api' in the command parts
+        for i, part in enumerate(parts):
+            if part == "gh" and i + 1 < len(parts) and parts[i + 1] == "api":
+                # Reconstruct the gh api command from this point
+                # (shlex already handled the quoting correctly)
+                check_gh_api(command, c)
+                return
+    except ValueError:
+        # If shlex fails, fall back to simple check
+        if re.search(r"\bgh\s+api\b", command):
+            check_gh_api(command, c)
+            return
 
     # For other gh commands not explicitly blocked, allow them
     c.output.exit_success()

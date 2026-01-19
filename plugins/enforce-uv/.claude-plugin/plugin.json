@@ -1,5 +1,5 @@
 {
   "name": "enforce-uv",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Block bare python/pip/pytest commands, enforce uv usage"
 }

@@ -1,6 +1,6 @@
 {
   "name": "gh-api-guard",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Allow only safe read-only gh api commands",
   "hooks": {
     "PreToolUse": [

@@ -59,11 +59,27 @@ patterns = {
 }
 
 # Check for eval/bash -c bypasses with Python commands
+# These patterns match Python commands ANYWHERE in the wrapped string (not just at start)
+# and use word boundaries to avoid matching strings like "echo python"
 SHELL_WRAPPER_PATTERNS = [
-    (r"""(?:ba)?sh\s+-c\s+['"]\s*python""", "python inside bash -c"),
-    (r"""eval\s+['"]\s*python""", "python inside eval"),
-    (r"""(?:ba)?sh\s+-c\s+['"]\s*pip\s+install""", "pip install inside bash -c"),
-    (r"""eval\s+['"]\s*pip\s+install""", "pip install inside eval"),
+    # Python interpreter inside shell wrapper - match as command (after ;, &&, ||, or at start)
+    (
+        r"""(?:ba)?sh\s+-c\s+['"](?:[^'"]*(?:^|[;&|]\s*))?python[23]?\s""",
+        "python command inside bash -c",
+    ),
+    (
+        r"""eval\s+['"](?:[^'"]*(?:^|[;&|]\s*))?python[23]?\s""",
+        "python command inside eval",
+    ),
+    # pip install inside shell wrapper
+    (
+        r"""(?:ba)?sh\s+-c\s+['"][^'"]*\bpip[3]?\s+install\b""",
+        "pip install inside bash -c",
+    ),
+    (r"""eval\s+['"][^'"]*\bpip[3]?\s+install\b""", "pip install inside eval"),
+    # pytest inside shell wrapper
+    (r"""(?:ba)?sh\s+-c\s+['"][^'"]*\bpytest\b""", "pytest inside bash -c"),
+    (r"""eval\s+['"][^'"]*\bpytest\b""", "pytest inside eval"),
 ]
 
 # Check standard patterns
