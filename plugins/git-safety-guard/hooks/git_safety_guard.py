@@ -5,6 +5,7 @@
 """PreToolUse hook to block destructive git commands."""
 
 import re
+import shlex
 
 from cchooks import PreToolUseContext, create_context
 
@@ -68,16 +69,103 @@ BLOCKED_PATTERNS = [
     # History rewriting
     (r"git\s+filter-branch", "git filter-branch rewrites entire repository history"),
     (r"git\s+filter-repo", "git filter-repo rewrites entire repository history"),
+    # Reference manipulation (alternative to branch deletion)
+    (r"git\s+update-ref\s+-d", "git update-ref -d deletes references directly"),
+    (r"git\s+update-ref\s+--delete", "git update-ref --delete removes references"),
+    # Worktree destruction
+    (
+        r"git\s+worktree\s+remove\s+.*?--force",
+        "git worktree remove --force can lose work",
+    ),
+    # Submodule destruction
+    (
+        r"git\s+submodule\s+deinit\s+.*?--force",
+        "git submodule deinit --force removes submodule data",
+    ),
+    # Rebase (rewrites history)
+    (
+        r"git\s+rebase\b(?!\s+--(abort|continue|skip))",
+        "git rebase rewrites commit history",
+    ),
 ]
 
-# Check safe patterns first
-for pattern in SAFE_PATTERNS:
-    if re.search(pattern, command):
-        c.output.exit_success()
+# Pattern for bash -c / sh -c / eval containing git commands
+SHELL_WRAPPER_PATTERN = re.compile(
+    r"""(?:(?:ba)?sh\s+-c|eval)\s+['"].*\bgit\s+""",
+    re.IGNORECASE,
+)
 
-# Check blocked patterns
+# Pattern for heredoc syntax: <<EOF, <<'EOF', <<"EOF", <<-EOF
+HEREDOC_PATTERN = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?")
+
+# Check for shell wrapper bypass attempts
+if SHELL_WRAPPER_PATTERN.search(command):
+    # Extract the inner command using shlex for proper quote handling
+    try:
+        parts = shlex.split(command)
+        # Find 'bash -c', 'sh -c', or 'eval' followed by the inner command
+        for i, part in enumerate(parts):
+            if (
+                part in ("bash", "sh")
+                and i + 1 < len(parts)
+                and parts[i + 1] == "-c"
+                and i + 2 < len(parts)
+            ):
+                inner_command = parts[i + 2]
+                # Check if inner command contains dangerous git operations
+                for pattern, reason in BLOCKED_PATTERNS:
+                    if re.search(pattern, inner_command):
+                        c.output.exit_block(
+                            f"BLOCKED: {reason} (detected inside shell wrapper)\n"
+                            f"Command: {command}\n"
+                            "If this operation is truly needed, ask the user for explicit permission."
+                        )
+            elif part == "eval" and i + 1 < len(parts):
+                inner_command = parts[i + 1]
+                # Check if inner command contains dangerous git operations
+                for pattern, reason in BLOCKED_PATTERNS:
+                    if re.search(pattern, inner_command):
+                        c.output.exit_block(
+                            f"BLOCKED: {reason} (detected inside shell wrapper)\n"
+                            f"Command: {command}\n"
+                            "If this operation is truly needed, ask the user for explicit permission."
+                        )
+    except ValueError:
+        # If shlex parsing fails, fall back to blocking the shell wrapper entirely
+        c.output.exit_block(
+            "Shell wrappers with git commands require manual approval.\n"
+            f"Command: {command}\n"
+            "Run git commands directly without shell wrappers."
+        )
+
+# Check for heredoc bypass attempts
+if HEREDOC_PATTERN.search(command):
+    # Heredocs can contain git commands that bypass quote-based detection
+    # Since we can't reliably extract heredoc content from the command string alone,
+    # we block any bash/sh with heredoc that mentions git
+    if re.search(
+        r"(ba)?sh\s+.{0,500}?<<.{0,500}?git\s+", command, re.DOTALL | re.IGNORECASE
+    ) or re.search(
+        r"<<.{0,500}?\n.{0,500}?\bgit\s+", command, re.DOTALL | re.IGNORECASE
+    ):
+        c.output.exit_block(
+            "BLOCKED: Heredoc with git commands requires manual approval.\n"
+            f"Command: {command}\n"
+            "Heredocs can hide destructive git operations. "
+            "If this operation is truly needed, ask the user for explicit permission."
+        )
+
+# Check if command matches any safe pattern
+safe_match = any(re.search(pattern, command) for pattern in SAFE_PATTERNS)
+
+# Check all blocked patterns
 for pattern, reason in BLOCKED_PATTERNS:
     if re.search(pattern, command):
+        # If the ENTIRE command is just a safe operation, allow it
+        # But if there are chained dangerous commands, block
+        if safe_match and not any(sep in command for sep in ["&&", "||", ";", "|"]):
+            # Safe pattern matched and no command chaining - this is a safe variant
+            continue
         c.output.exit_block(
             f"BLOCKED: {reason}\n"
             f"Command: {command}\n"

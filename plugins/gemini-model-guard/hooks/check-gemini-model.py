@@ -29,6 +29,26 @@ ALLOWED_MODELS = [
     "gemini-3-flash-preview",
 ]
 
+# Patterns for variable indirection that could bypass model detection
+VARIABLE_INDIRECTION_PATTERNS = [
+    # Shell variable substitution for model value
+    (r"--model[=\s]+\$", "variable substitution in --model"),
+    (r"-m\s+\$", "variable substitution in -m flag"),
+    # Command substitution for model value
+    (r"--model[=\s]+\$\(", "command substitution in --model"),
+    (r"-m\s+\$\(", "command substitution in -m flag"),
+    # Backtick command substitution
+    (r"--model[=\s]+`", "backtick substitution in --model"),
+    (r"-m\s+`", "backtick substitution in -m flag"),
+]
+
+# Environment variables that could set the model
+ENV_VAR_PATTERNS = [
+    (r"\bGEMINI_MODEL=\S*gemini-2", "GEMINI_MODEL env var set to Gemini 2.x"),
+    (r"\bGEMINI_MODEL_NAME=\S*gemini-2", "GEMINI_MODEL_NAME env var set to Gemini 2.x"),
+    (r"\bMODEL=\S*gemini-2", "MODEL env var may be set to Gemini 2.x"),
+]
+
 # Pattern to find gemini command invocations anywhere in the command
 # Matches after: start of string, separators (;&|), grouping (({`), newlines, pipes, whitespace
 GEMINI_INVOCATION_PATTERN = re.compile(
@@ -173,6 +193,16 @@ def main() -> None:
     if "gemini" not in command.lower():
         c.output.exit_success()
 
+    # Check for environment variable bypasses first
+    for pattern, description in ENV_VAR_PATTERNS:
+        if re.search(pattern, command, re.IGNORECASE):
+            c.output.exit_block(
+                f"Blocked: {description}\n"
+                "Use Gemini 3 models only:\n"
+                "  GEMINI_MODEL=gemini-3-pro-preview (recommended)\n"
+                "  GEMINI_MODEL=gemini-3-flash-preview (faster/cheaper)"
+            )
+
     # Find all gemini invocations in the command
     segments = find_gemini_segments(command)
 
@@ -188,6 +218,15 @@ def main() -> None:
                 f"Gemini CLI flag '{blocked_flag}' is blocked.\n"
                 "Direct gemini CLI introspection is not allowed."
             )
+
+        # Check for variable indirection (model value from variable/command)
+        for pattern, description in VARIABLE_INDIRECTION_PATTERNS:
+            if re.search(pattern, segment):
+                c.output.exit_block(
+                    f"Blocked: {description}\n"
+                    "Model must be specified directly as a literal string.\n"
+                    "Use: --model gemini-3-pro-preview or --model gemini-3-flash-preview"
+                )
 
         model = extract_model_from_segment(segment)
 

@@ -1,6 +1,6 @@
 {
   "name": "gemini-model-guard",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Block Gemini 2.x models, enforce Gemini 3 models only",
   "hooks": {
     "PreToolUse": [
