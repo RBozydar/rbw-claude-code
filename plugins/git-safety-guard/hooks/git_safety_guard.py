@@ -74,12 +74,12 @@ BLOCKED_PATTERNS = [
     (r"git\s+update-ref\s+--delete", "git update-ref --delete removes references"),
     # Worktree destruction
     (
-        r"git\s+worktree\s+remove\s+.{1,2000}?--force",
+        r"git\s+worktree\s+remove\s+.*?--force",
         "git worktree remove --force can lose work",
     ),
     # Submodule destruction
     (
-        r"git\s+submodule\s+deinit\s+.{1,2000}?--force",
+        r"git\s+submodule\s+deinit\s+.*?--force",
         "git submodule deinit --force removes submodule data",
     ),
     # Commit amendment (rewrites history)
@@ -137,17 +137,17 @@ if SHELL_WRAPPER_PATTERN.search(command):
             "Run git commands directly without shell wrappers."
         )
 
-# Check both safe and blocked patterns
-# A command is only allowed if:
-# 1. It matches a safe pattern AND no blocked pattern, OR
-# 2. It matches no blocked patterns at all
+# Check if command matches any safe pattern
 safe_match = any(re.search(pattern, command) for pattern in SAFE_PATTERNS)
 
 # Check all blocked patterns
 for pattern, reason in BLOCKED_PATTERNS:
     if re.search(pattern, command):
-        # Even if safe pattern matched, we still block if a blocked pattern matches
-        # This prevents bypasses like: git checkout -b new && git reset --hard
+        # If the ENTIRE command is just a safe operation, allow it
+        # But if there are chained dangerous commands, block
+        if safe_match and not any(sep in command for sep in ["&&", "||", ";", "|"]):
+            # Safe pattern matched and no command chaining - this is a safe variant
+            continue
         c.output.exit_block(
             f"BLOCKED: {reason}\n"
             f"Command: {command}\n"

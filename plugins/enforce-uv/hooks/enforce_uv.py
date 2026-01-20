@@ -50,7 +50,10 @@ patterns = {
     # pip commands (direct and module invocation)
     "pip install": (rf"{SEP}pip\s+install", "uv add"),
     "pip3 install": (rf"{SEP}pip3\s+install", "uv add"),
-    "python -m pip": (rf"{SEP}python(?:\d+(?:\.\d+)?)?\s+-m\s+pip\s+install", "uv add"),
+    "python -m pip": (
+        rf"{SEP}python(?:\d+(?:\.\d+)?)?\s+-m\s+pip(?:\s|$)",
+        "uv pip (or uv add for install)",
+    ),
     # Alternative package managers
     "conda install": (rf"{SEP}conda\s+install", "uv add (use uv instead of conda)"),
     "mamba install": (rf"{SEP}mamba\s+install", "uv add (use uv instead of mamba)"),
