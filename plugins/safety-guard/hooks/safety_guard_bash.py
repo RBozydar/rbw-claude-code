@@ -34,10 +34,10 @@ BLOCKED_PATTERNS = [
     # ==========================================================================
     # Data destruction via dd
     # ==========================================================================
-    (r"\bdd\s+.*\bof=", "dd with of= can overwrite/destroy disk data"),
-    (r"\bdd\s+.*\bif=/dev/zero", "dd from /dev/zero overwrites data with zeros"),
+    (r"\bdd\s+.{0,500}?\bof=", "dd with of= can overwrite/destroy disk data"),
+    (r"\bdd\s+.{0,500}?\bif=/dev/zero", "dd from /dev/zero overwrites data with zeros"),
     (
-        r"\bdd\s+.*\bif=/dev/random",
+        r"\bdd\s+.{0,500}?\bif=/dev/random",
         "dd from /dev/random overwrites data with random bytes",
     ),
     # ==========================================================================
@@ -56,17 +56,20 @@ BLOCKED_PATTERNS = [
     # ==========================================================================
     # File destruction via mv to /dev/null
     # ==========================================================================
-    (r"\bmv\s+.*\s+/dev/null", "mv to /dev/null destroys files"),
+    (r"\bmv\s+.{1,500}?/dev/null\b", "mv to /dev/null destroys files"),
     # ==========================================================================
     # find: Block file deletion and destructive exec patterns
     # ==========================================================================
-    (r"find\s+.*-delete", "find -delete permanently removes files"),
-    (r"find\s+.*-exec\s+rm\b", "find -exec rm permanently removes files"),
-    (r"find\s+.*-execdir\s+rm\b", "find -execdir rm permanently removes files"),
-    (r"find\s+.*-exec\s+shred\b", "find -exec shred permanently destroys files"),
-    (r"find\s+.*-exec\s+chmod\s+000", "find -exec chmod 000 removes all permissions"),
+    (r"find\s+.{0,500}?-delete", "find -delete permanently removes files"),
+    (r"find\s+.{0,500}?-exec\s+rm\b", "find -exec rm permanently removes files"),
+    (r"find\s+.{0,500}?-execdir\s+rm\b", "find -execdir rm permanently removes files"),
+    (r"find\s+.{0,500}?-exec\s+shred\b", "find -exec shred permanently destroys files"),
     (
-        r"find\s+.*-exec\s+mv\s+.*\s+/dev/null",
+        r"find\s+.{0,500}?-exec\s+chmod\s+000",
+        "find -exec chmod 000 removes all permissions",
+    ),
+    (
+        r"find\s+.{0,500}?-exec\s+mv\s+.{1,500}?/dev/null\b",
         "find -exec mv to /dev/null destroys files",
     ),
     # ==========================================================================
@@ -132,7 +135,7 @@ BLOCKED_PATTERNS = [
     (r"(ba)?sh\s+-c\s+['\"].*shred\b", "bash -c with shred detected"),
     (r"(ba)?sh\s+-c\s+['\"].*dd\s+.*of=", "bash -c with dd detected"),
     (
-        r"(ba)?sh\s+-c\s+['\"].*mv\s+.*\s+/dev/null",
+        r"(ba)?sh\s+-c\s+['\"].{0,500}?mv\s+.{1,500}?/dev/null\b",
         "bash -c with mv to /dev/null detected",
     ),
     # ==========================================================================

@@ -5,6 +5,7 @@
 """PreToolUse hook to block destructive git commands."""
 
 import re
+import shlex
 
 from cchooks import PreToolUseContext, create_context
 
@@ -73,12 +74,12 @@ BLOCKED_PATTERNS = [
     (r"git\s+update-ref\s+--delete", "git update-ref --delete removes references"),
     # Worktree destruction
     (
-        r"git\s+worktree\s+remove\s+.*--force",
+        r"git\s+worktree\s+remove\s+.{1,2000}?--force",
         "git worktree remove --force can lose work",
     ),
     # Submodule destruction
     (
-        r"git\s+submodule\s+deinit\s+.*--force",
+        r"git\s+submodule\s+deinit\s+.{1,2000}?--force",
         "git submodule deinit --force removes submodule data",
     ),
     # Commit amendment (rewrites history)
@@ -98,27 +99,55 @@ SHELL_WRAPPER_PATTERN = re.compile(
 
 # Check for shell wrapper bypass attempts
 if SHELL_WRAPPER_PATTERN.search(command):
-    # Extract the inner command and check it
-    inner_match = re.search(r"""(?:(?:ba)?sh\s+-c|eval)\s+['"](.+?)['"]""", command)
-    if inner_match:
-        inner_command = inner_match.group(1)
-        # Check if inner command contains dangerous git operations
-        for pattern, reason in BLOCKED_PATTERNS:
-            if re.search(pattern, inner_command):
-                c.output.exit_block(
-                    f"BLOCKED: {reason} (detected inside shell wrapper)\n"
-                    f"Command: {command}\n"
-                    "If this operation is truly needed, ask the user for explicit permission."
-                )
+    # Extract the inner command using shlex for proper quote handling
+    try:
+        parts = shlex.split(command)
+        # Find 'bash -c', 'sh -c', or 'eval' followed by the inner command
+        for i, part in enumerate(parts):
+            if (
+                part in ("bash", "sh")
+                and i + 1 < len(parts)
+                and parts[i + 1] == "-c"
+                and i + 2 < len(parts)
+            ):
+                inner_command = parts[i + 2]
+                # Check if inner command contains dangerous git operations
+                for pattern, reason in BLOCKED_PATTERNS:
+                    if re.search(pattern, inner_command):
+                        c.output.exit_block(
+                            f"BLOCKED: {reason} (detected inside shell wrapper)\n"
+                            f"Command: {command}\n"
+                            "If this operation is truly needed, ask the user for explicit permission."
+                        )
+            elif part == "eval" and i + 1 < len(parts):
+                inner_command = parts[i + 1]
+                # Check if inner command contains dangerous git operations
+                for pattern, reason in BLOCKED_PATTERNS:
+                    if re.search(pattern, inner_command):
+                        c.output.exit_block(
+                            f"BLOCKED: {reason} (detected inside shell wrapper)\n"
+                            f"Command: {command}\n"
+                            "If this operation is truly needed, ask the user for explicit permission."
+                        )
+    except ValueError:
+        # If shlex parsing fails, fall back to blocking the shell wrapper entirely
+        c.output.exit_block(
+            "Shell wrappers with git commands require manual approval.\n"
+            f"Command: {command}\n"
+            "Run git commands directly without shell wrappers."
+        )
 
-# Check safe patterns first
-for pattern in SAFE_PATTERNS:
-    if re.search(pattern, command):
-        c.output.exit_success()
+# Check both safe and blocked patterns
+# A command is only allowed if:
+# 1. It matches a safe pattern AND no blocked pattern, OR
+# 2. It matches no blocked patterns at all
+safe_match = any(re.search(pattern, command) for pattern in SAFE_PATTERNS)
 
-# Check blocked patterns
+# Check all blocked patterns
 for pattern, reason in BLOCKED_PATTERNS:
     if re.search(pattern, command):
+        # Even if safe pattern matched, we still block if a blocked pattern matches
+        # This prevents bypasses like: git checkout -b new && git reset --hard
         c.output.exit_block(
             f"BLOCKED: {reason}\n"
             f"Command: {command}\n"
