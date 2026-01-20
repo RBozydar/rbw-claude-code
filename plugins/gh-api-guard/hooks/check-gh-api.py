@@ -110,7 +110,7 @@ def check_for_dangerous_method(parts: list[str]) -> str | None:
 def check_blocked_subcommands(command: str) -> str | None:
     """Check if command contains blocked gh subcommands. Returns reason if blocked."""
     for pattern, reason in BLOCKED_SUBCOMMANDS:
-        if re.search(pattern, command, re.IGNORECASE):
+        if re.search(pattern, command, re.IGNORECASE | re.DOTALL):
             return reason
     return None
 

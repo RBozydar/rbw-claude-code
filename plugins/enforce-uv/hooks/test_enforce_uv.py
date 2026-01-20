@@ -9,27 +9,35 @@ import pytest
 SEP = r"(?:^|&&|\|\||;)\s*"
 
 patterns = {
-    "python": (rf"{SEP}python\s", "uv run python"),
-    "python3": (rf"{SEP}python3\s", "uv run python"),
+    "python": (rf"{SEP}python(?:\d+(?:\.\d+)?)?(?:\s|$)", "uv run python"),
+    "python3": (rf"{SEP}python3(?:\.\d+)?(?:\s|$)", "uv run python"),
     "pip install": (rf"{SEP}pip\s+install", "uv add"),
-    "pypy": (rf"{SEP}pypy[3]?\s", "uv run python"),
-    "ipython": (rf"{SEP}ipython[3]?\s", "uv run ipython"),
-    "/usr/bin/python": (rf"{SEP}/usr/bin/python[23]?\s", "uv run python"),
+    "python -m pip": (rf"{SEP}python(?:\d+(?:\.\d+)?)?\s+-m\s+pip\s+install", "uv add"),
+    "pypy": (rf"{SEP}pypy[3]?(?:\s|$)", "uv run python"),
+    "ipython": (rf"{SEP}ipython[3]?(?:\s|$)", "uv run ipython"),
+    "/usr/bin/python": (
+        rf"{SEP}/usr/bin/python[23]?(?:\.\d+)?(?:\s|$)",
+        "uv run python",
+    ),
+    "/usr/local/bin/python": (
+        rf"{SEP}/usr/local/bin/python[23]?(?:\.\d+)?(?:\s|$)",
+        "uv run python",
+    ),
     "conda install": (rf"{SEP}conda\s+install", "uv add"),
     "poetry add": (rf"{SEP}poetry\s+add", "uv add"),
     "pipenv install": (rf"{SEP}pipenv\s+install", "uv add"),
     "pytest": (rf"{SEP}pytest(?:\s|$)", "uv run pytest"),
-    "ruff": (rf"{SEP}ruff\s", "uvx ruff"),
-    "mypy": (rf"{SEP}mypy\s", "uvx mypy"),
+    "ruff": (rf"{SEP}ruff(?:\s|$)", "uvx ruff"),
+    "mypy": (rf"{SEP}mypy(?:\s|$)", "uvx mypy"),
 }
 
 SHELL_WRAPPER_PATTERNS = [
     (
-        r"""(?:ba)?sh\s+-c\s+['"](?:[^'"]*(?:^|[;&|]\s*))?python[23]?\s""",
+        r"""(?:ba)?sh\s+-c\s+['"](?:[^'"]*(?:^|[;&|]\s*))?python(?:\d+(?:\.\d+)?)?(?:\s|$)""",
         "python command inside bash -c",
     ),
     (
-        r"""eval\s+['"](?:[^'"]*(?:^|[;&|]\s*))?python[23]?\s""",
+        r"""eval\s+['"](?:[^'"]*(?:^|[;&|]\s*))?python(?:\d+(?:\.\d+)?)?(?:\s|$)""",
         "python command inside eval",
     ),
     (
@@ -64,6 +72,55 @@ class TestBasicPatterns:
         for cmd, (pattern, _) in patterns.items():
             assert not re.search(pattern, "uv run python script.py")
             assert not re.search(pattern, "uvx pytest")
+
+
+class TestVersionSpecificPython:
+    """Test detection of version-specific Python invocations."""
+
+    def test_python3_with_minor_version(self):
+        """python3.11, python3.8, etc. should be detected."""
+        pattern = patterns["python"][0]
+        assert re.search(pattern, "python3.11 script.py")
+        assert re.search(pattern, "python3.8 script.py")
+        assert re.search(pattern, "python3.12 script.py")
+        assert re.search(pattern, "cd /app && python3.11 manage.py")
+
+    def test_python2_with_minor_version(self):
+        """python2.7 should be detected."""
+        pattern = patterns["python"][0]
+        assert re.search(pattern, "python2.7 script.py")
+        assert re.search(pattern, "cd /legacy && python2.7 old_script.py")
+
+    def test_python3_pattern_with_minor_version(self):
+        """python3 pattern should catch python3.X."""
+        pattern = patterns["python3"][0]
+        assert re.search(pattern, "python3.11 script.py")
+        assert re.search(pattern, "python3.8 -m pip install requests")
+
+    def test_absolute_path_with_version(self):
+        """/usr/bin/python3.11 and /usr/local/bin/python3.11 should be detected."""
+        # Test /usr/bin patterns
+        usr_bin_pattern = patterns["/usr/bin/python"][0]
+        assert re.search(usr_bin_pattern, "/usr/bin/python3.11 script.py")
+        assert re.search(usr_bin_pattern, "/usr/bin/python3.8 script.py")
+        assert re.search(usr_bin_pattern, "/usr/bin/python2.7 legacy.py")
+
+        # Test /usr/local/bin patterns
+        usr_local_bin_pattern = patterns["/usr/local/bin/python"][0]
+        assert re.search(usr_local_bin_pattern, "/usr/local/bin/python3.11 script.py")
+        assert re.search(usr_local_bin_pattern, "/usr/local/bin/python3.8 script.py")
+        assert re.search(usr_local_bin_pattern, "/usr/local/bin/python2.7 legacy.py")
+
+    def test_python_m_pip_with_version(self):
+        """python3.11 -m pip install should be detected."""
+        # Use the "python -m pip" pattern which handles versioned python
+        pattern = (
+            patterns["python -m pip"][0]
+            if "python -m pip" in patterns
+            else patterns["python"][0]
+        )
+        assert re.search(pattern, "python3.11 -m pip install requests")
+        assert re.search(pattern, "python3.8 -m pip install numpy")
 
 
 class TestAlternativeInterpreters:
@@ -126,6 +183,19 @@ class TestShellWrapperPatterns:
         assert re.search(pattern, "bash -c 'python script.py'", re.IGNORECASE)
         assert re.search(pattern, "sh -c 'python script.py'", re.IGNORECASE)
 
+    def test_bash_c_python_versioned(self):
+        """bash -c 'python3.11 ...' should be detected."""
+        pattern = SHELL_WRAPPER_PATTERNS[0][0]  # python inside bash -c
+        assert re.search(pattern, "bash -c 'python3.11 script.py'", re.IGNORECASE)
+        assert re.search(pattern, "bash -c 'python3.8 script.py'", re.IGNORECASE)
+        assert re.search(pattern, "bash -c 'python2.7 script.py'", re.IGNORECASE)
+
+    def test_eval_python_versioned(self):
+        """eval 'python3.11 ...' should be detected."""
+        pattern = SHELL_WRAPPER_PATTERNS[1][0]  # python inside eval
+        assert re.search(pattern, "eval 'python3.11 script.py'", re.IGNORECASE)
+        assert re.search(pattern, "eval 'python3.8 script.py'", re.IGNORECASE)
+
     def test_bash_c_pip_detected(self):
         """bash -c 'pip install ...' should be detected."""
         pattern = SHELL_WRAPPER_PATTERNS[2][0]  # pip install inside bash -c
@@ -160,6 +230,46 @@ class TestChainedCommands:
     def test_chained_with_semicolon(self):
         pattern = patterns["python"][0]
         assert re.search(pattern, "echo hello; python script.py")
+
+
+class TestEndOfStringCommands:
+    """Test that commands at the end of the input (no trailing space) are detected."""
+
+    def test_python_at_end(self):
+        """python at end of string should be detected."""
+        pattern = patterns["python"][0]
+        assert re.search(pattern, "cd /tmp && python")
+
+    def test_python3_at_end(self):
+        """python3 at end of string should be detected."""
+        pattern = patterns["python3"][0]
+        assert re.search(pattern, "ls && python3")
+
+    def test_pytest_at_end(self):
+        """pytest at end of string should be detected."""
+        pattern = patterns["pytest"][0]
+        assert re.search(pattern, "cd /tests && pytest")
+        assert re.search(pattern, "pytest")  # Just the command itself
+
+    def test_ruff_at_end(self):
+        """ruff at end of string should be detected."""
+        pattern = patterns["ruff"][0]
+        assert re.search(pattern, "cd /src && ruff")
+
+    def test_mypy_at_end(self):
+        """mypy at end of string should be detected."""
+        pattern = patterns["mypy"][0]
+        assert re.search(pattern, "cd /src && mypy")
+
+    def test_ipython_at_end(self):
+        """ipython at end of string should be detected."""
+        pattern = patterns["ipython"][0]
+        assert re.search(pattern, "cd /notebook && ipython")
+
+    def test_pypy_at_end(self):
+        """pypy at end of string should be detected."""
+        pattern = patterns["pypy"][0]
+        assert re.search(pattern, "cd /app && pypy")
 
 
 if __name__ == "__main__":

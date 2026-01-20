@@ -84,7 +84,10 @@ BLOCKED_PATTERNS = [
     # Commit amendment (rewrites history)
     (r"git\s+commit\s+.*--amend", "git commit --amend rewrites commit history"),
     # Rebase (rewrites history)
-    (r"git\s+rebase\b(?!\s+--abort)", "git rebase rewrites commit history"),
+    (
+        r"git\s+rebase\b(?!\s+--(abort|continue|skip))",
+        "git rebase rewrites commit history",
+    ),
 ]
 
 # Pattern for bash -c / sh -c / eval containing git commands

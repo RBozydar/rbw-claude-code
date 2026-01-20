@@ -40,7 +40,10 @@ BLOCKED_PATTERNS = [
     # Commit amendment (rewrites history)
     (r"git\s+commit\s+.*--amend", "git commit --amend rewrites commit history"),
     # Rebase (rewrites history)
-    (r"git\s+rebase\b(?!\s+--abort)", "git rebase rewrites commit history"),
+    (
+        r"git\s+rebase\b(?!\s+--(abort|continue|skip))",
+        "git rebase rewrites commit history",
+    ),
 ]
 
 SHELL_WRAPPER_PATTERN = re.compile(
@@ -215,6 +218,26 @@ class TestRebasePatterns:
                 blocked = True
                 break
         assert not blocked, "git rebase --abort should NOT be blocked"
+
+    def test_rebase_continue_allowed(self):
+        """git rebase --continue should be allowed."""
+        cmd = "git rebase --continue"
+        blocked = False
+        for pattern, _ in BLOCKED_PATTERNS:
+            if re.search(pattern, cmd):
+                blocked = True
+                break
+        assert not blocked, "git rebase --continue should NOT be blocked"
+
+    def test_rebase_skip_allowed(self):
+        """git rebase --skip should be allowed."""
+        cmd = "git rebase --skip"
+        blocked = False
+        for pattern, _ in BLOCKED_PATTERNS:
+            if re.search(pattern, cmd):
+                blocked = True
+                break
+        assert not blocked, "git rebase --skip should NOT be blocked"
 
 
 class TestStashPatterns:
