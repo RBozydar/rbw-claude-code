@@ -97,6 +97,9 @@ SHELL_WRAPPER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Pattern for heredoc syntax: <<EOF, <<'EOF', <<"EOF", <<-EOF
+HEREDOC_PATTERN = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?")
+
 # Check for shell wrapper bypass attempts
 if SHELL_WRAPPER_PATTERN.search(command):
     # Extract the inner command using shlex for proper quote handling
@@ -135,6 +138,21 @@ if SHELL_WRAPPER_PATTERN.search(command):
             "Shell wrappers with git commands require manual approval.\n"
             f"Command: {command}\n"
             "Run git commands directly without shell wrappers."
+        )
+
+# Check for heredoc bypass attempts
+if HEREDOC_PATTERN.search(command):
+    # Heredocs can contain git commands that bypass quote-based detection
+    # Since we can't reliably extract heredoc content from the command string alone,
+    # we block any bash/sh with heredoc that mentions git
+    if re.search(
+        r"(ba)?sh\s+.*<<.*git\s+", command, re.DOTALL | re.IGNORECASE
+    ) or re.search(r"<<.*\n.*\bgit\s+", command, re.DOTALL | re.IGNORECASE):
+        c.output.exit_block(
+            "BLOCKED: Heredoc with git commands requires manual approval.\n"
+            f"Command: {command}\n"
+            "Heredocs can hide destructive git operations. "
+            "If this operation is truly needed, ask the user for explicit permission."
         )
 
 # Check if command matches any safe pattern

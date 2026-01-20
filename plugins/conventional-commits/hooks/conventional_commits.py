@@ -143,7 +143,9 @@ def has_dynamic_content(msg: str) -> bool:
     Allows markdown backticks (paired backticks like `code`) but blocks shell
     command substitution (unpaired or containing shell-like content).
     """
-    # Command substitution: $(...) - always dangerous
+    # Command substitution: $(...) - ALWAYS block, never valid in commit messages
+    # This prevents the triple backtick bypass: ```code`$(rm -rf /)`more```
+    # Checking this BEFORE removing triple backticks ensures we catch embedded $()
     if "$(" in msg:
         return True
 
@@ -154,9 +156,13 @@ def has_dynamic_content(msg: str) -> bool:
     # Backticks: check if they're markdown (paired) vs shell substitution
     if "`" in msg:
         # Triple backticks (```code```) are markdown code blocks - safe
+        # Since we already checked for $() above, anything inside triple backticks
+        # is just markdown formatting and not executable
         if "```" in msg:
             # Remove triple backtick blocks, then check what remains
-            remaining = re.sub(r"```[^`]*```", "", msg)
+            # Pattern: ``` followed by any characters (including single backticks) until closing ```
+            # We use a non-greedy match with .*? to match minimal content between triple backticks
+            remaining = re.sub(r"```.*?```", "", msg, flags=re.DOTALL)
             if "`" not in remaining:
                 return False
             msg = remaining

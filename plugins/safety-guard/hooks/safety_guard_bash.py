@@ -45,8 +45,9 @@ BLOCKED_PATTERNS = [
     # ==========================================================================
     # Allow sed -i.bak or sed -i'.bak' (with backup suffix) - these are safe
     # Block sed -i without suffix (no backup = destructive)
+    # Must catch both: sed -i 's/...' (with space) and sed -i's/...' (no space)
     (
-        r"\bsed\s+-i(?![.'\".])\s",
+        r"\bsed\s+-i(?:\s+(?!\.)|'s|s)",
         "sed -i without backup suffix is destructive (use sed -i.bak instead)",
     ),
     (
@@ -112,6 +113,44 @@ BLOCKED_PATTERNS = [
         r"python[23]?\s+-c\s+['\"].*pathlib.*\.(unlink|rmdir)",
         "Python one-liner with pathlib deletion detected",
     ),
+    # ==========================================================================
+    # Python one-liner obfuscation patterns
+    # ==========================================================================
+    (
+        r"python[23]?\s+-c\s+['\"].*__import__\(['\"]os['\"].*\.(remove|unlink|rmdir)",
+        "Python one-liner using __import__ with file deletion detected",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*__import__\(['\"]shutil['\"].*\.rmtree",
+        "Python one-liner using __import__ with recursive deletion detected",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*__import__\(['\"]pathlib['\"]",
+        "Python one-liner using __import__ with pathlib detected",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*__import__\(['\"]subprocess['\"]",
+        "Python one-liner using __import__ with subprocess detected",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*\bexec\s*\(",
+        "Python one-liner with exec() detected (potential obfuscation)",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*\beval\s*\(",
+        "Python one-liner with eval() detected (potential obfuscation)",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*subprocess\.",
+        "Python one-liner with subprocess module detected",
+    ),
+    (
+        r"python[23]?\s+-c\s+['\"].*(decode\(['\"]base64|b64decode|fromhex)",
+        "Python one-liner with encoding/decoding detected (potential obfuscation)",
+    ),
+    # ==========================================================================
+    # Perl/Ruby one-liners
+    # ==========================================================================
     (
         r"perl\s+-e\s+['\"].*unlink",
         "Perl one-liner with file deletion detected",
@@ -146,14 +185,17 @@ BLOCKED_PATTERNS = [
     (r"\beval\s+['\"].*dd\s+.*of=", "eval with dd detected"),
 ]
 
-# Check safe patterns first
-for pattern in SAFE_PATTERNS:
-    if re.search(pattern, command):
-        c.output.exit_success()
+# Check if command matches any safe pattern
+safe_match = any(re.search(pattern, command) for pattern in SAFE_PATTERNS)
 
-# Check blocked patterns
+# Check all blocked patterns
 for pattern, reason in BLOCKED_PATTERNS:
     if re.search(pattern, command):
+        # If the ENTIRE command is just a safe operation, allow it
+        # But if there are chained dangerous commands, block
+        if safe_match and not any(sep in command for sep in ["&&", "||", ";", "|"]):
+            # Safe pattern matched and no command chaining - this is a safe variant
+            continue
         c.output.exit_block(
             f"BLOCKED: {reason}\n"
             f"Command: {command}\n"

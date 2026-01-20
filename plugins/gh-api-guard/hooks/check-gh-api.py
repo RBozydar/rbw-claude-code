@@ -78,6 +78,12 @@ SHELL_WRAPPER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Pattern for heredoc with gh commands
+HEREDOC_GH_PATTERN = re.compile(
+    r"<<-?\s*['\"]?\w+['\"]?.*\bgh\s+",
+    re.DOTALL | re.IGNORECASE,
+)
+
 
 def extract_endpoint(parts: list[str]) -> str | None:
     """Extract the API endpoint from parsed command parts."""
@@ -169,6 +175,15 @@ def main() -> None:
         c.output.exit_block(
             "gh commands inside bash -c or eval require manual approval.\n"
             "Run gh commands directly without shell wrappers."
+        )
+        return
+
+    # Check for heredoc bypass
+    if HEREDOC_GH_PATTERN.search(command):
+        c.output.exit_block(
+            "Heredoc with gh commands requires manual approval.\n"
+            f"Command: {command}\n"
+            "Run gh commands directly without heredocs."
         )
         return
 
