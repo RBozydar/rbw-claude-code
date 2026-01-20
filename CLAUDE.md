@@ -23,6 +23,7 @@ tools and Python workflow plugins.
 | `safety-guard` | hook | Block destructive file ops & supply chain attacks |
 | `gh-api-guard` | hook | Allow only safe gh api commands |
 | `gemini-model-guard` | hook | Block Gemini 2.x models, enforce Gemini 3 |
+| `clean-code-guard` | hook | Block messy patterns (python -c, heredocs) |
 
 ## Structure
 

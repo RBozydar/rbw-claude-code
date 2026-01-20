@@ -80,6 +80,12 @@
       "description": "Block Gemini 2.x models, enforce Gemini 3 models only",
       "source": "./plugins/gemini-model-guard",
       "category": "development"
+    },
+    {
+      "name": "clean-code-guard",
+      "description": "Block messy patterns (python -c, heredocs), nudge toward clean alternatives",
+      "source": "./plugins/clean-code-guard",
+      "category": "development"
     }
   ]
 }

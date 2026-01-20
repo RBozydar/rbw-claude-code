@@ -48,32 +48,28 @@ Create a focused prompt that:
 
 ### 3. Execute Gemini CLI
 
-Run Gemini in sandbox mode with the specified model:
+Run Gemini in sandbox mode with the specified model. If you have context from a file, pipe it via stdin:
 
 ```bash
-gemini --sandbox --output-format text --model <model> "<prompt>"
+# Simple prompt (no file context)
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Should we use Redis or PostgreSQL for session storage in a Rails 8 app using Solid Queue?"
+
+# With file context - pipe via stdin
+cat CLAUDE.md | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Given this project context, suggest the best approach for implementing caching."
+
+# With multiple files as context
+cat src/models.py src/api.py | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review these files and suggest architectural improvements."
 ```
 
 **Important flags:**
-- `--sandbox` - Prevents any code modifications
-- `--output-format text` - Returns plain text (vs json/stream-json)
-- `--model <model>` - Model to use (default: `gemini-3-pro-preview`)
+- `--sandbox` or `-s` - Prevents any code modifications
+- `-o text` or `--output-format text` - Returns plain text
+- `-m <model>` or `--model <model>` - Model to use (default: `gemini-3-pro-preview`)
 
-**For complex prompts, use heredoc:**
-
-```bash
-gemini --sandbox --output-format text --model gemini-3-pro-preview "$(cat <<'EOF'
-Context: [codebase context]
-
-Question: [specific architectural question]
-
-Please provide:
-1. 2-3 alternative approaches
-2. Trade-offs for each approach
-3. Your recommendation with reasoning
-EOF
-)"
-```
+**Important:** Always pipe content via stdin. Never use heredocs or variable assignment.
 
 ### 4. Parse and Report
 
@@ -129,9 +125,8 @@ Extract the key insights from Gemini's response and structure them for compariso
 **Execution:**
 
 ```bash
-gemini --sandbox --output-format text "$(cat <<'EOF'
-Context: Rails 8 application using Solid Queue and Solid Cache.
-Currently evaluating session storage options.
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Context: Rails 8 application using Solid Queue and Solid Cache.
 
 Question: Should we use Redis or PostgreSQL for session storage?
 
@@ -141,9 +136,14 @@ Consider:
 - Performance characteristics
 - Failure modes
 
-Provide 2-3 options with trade-offs and a recommendation.
-EOF
-)"
+Provide 2-3 options with trade-offs and a recommendation."
+```
+
+**With project context from file:**
+
+```bash
+cat CLAUDE.md | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Given this project context, what's the best approach for session storage?"
 ```
 
 ## Error Handling

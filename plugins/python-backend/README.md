@@ -73,6 +73,13 @@ claude plugin add ./plugins/core
   - Error categorization
   - Quick fix suggestions
 
+### Skills (1)
+
+- `gemini-cli` - Gemini CLI usage guide
+  - Proper invocation patterns (stdin piping, not heredocs)
+  - Code review, plan review, and brainstorming examples
+  - Integration with wrapper script at `scripts/gemini-review.sh`
+
 ## Usage
 
 ### Code Review
