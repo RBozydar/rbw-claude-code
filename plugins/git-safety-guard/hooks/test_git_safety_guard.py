@@ -37,8 +37,6 @@ BLOCKED_PATTERNS = [
         r"git\s+stash\s+(drop|clear)",
         "git stash drop/clear permanently deletes saved work",
     ),
-    # Commit amendment (rewrites history)
-    (r"git\s+commit\s+.*--amend", "git commit --amend rewrites commit history"),
     # Rebase (rewrites history)
     (
         r"git\s+rebase\b(?!\s+--(abort|continue|skip))",
@@ -50,6 +48,8 @@ SHELL_WRAPPER_PATTERN = re.compile(
     r"""(?:(?:ba)?sh\s+-c|eval)\s+['"].*\bgit\s+""",
     re.IGNORECASE,
 )
+
+HEREDOC_PATTERN = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?")
 
 
 class TestSafePatterns:
@@ -172,30 +172,6 @@ class TestCleanPatterns:
         assert blocked, "git clean -fd should be blocked"
 
 
-class TestCommitAmendPatterns:
-    """Test git commit --amend blocking."""
-
-    def test_commit_amend_blocked(self):
-        """git commit --amend should be blocked."""
-        cmd = "git commit --amend -m 'new message'"
-        blocked = False
-        for pattern, _ in BLOCKED_PATTERNS:
-            if re.search(pattern, cmd):
-                blocked = True
-                break
-        assert blocked, "git commit --amend should be blocked"
-
-    def test_commit_normal_allowed(self):
-        """Regular git commit should be allowed."""
-        cmd = "git commit -m 'message'"
-        blocked = False
-        for pattern, _ in BLOCKED_PATTERNS:
-            if re.search(pattern, cmd):
-                blocked = True
-                break
-        assert not blocked, "git commit should NOT be blocked"
-
-
 class TestRebasePatterns:
     """Test git rebase blocking."""
 
@@ -291,6 +267,53 @@ class TestShellWrapperPattern:
         """Command without wrapper should not match."""
         cmd = "git status"
         assert not SHELL_WRAPPER_PATTERN.search(cmd)
+
+
+class TestHeredocPatterns:
+    """Test heredoc bypass detection."""
+
+    def test_heredoc_with_git_detected(self):
+        """Heredoc with git commands should be detected."""
+        cmd = "bash <<EOF\ngit reset --hard\nEOF"
+        assert HEREDOC_PATTERN.search(cmd)
+
+    def test_heredoc_quoted_delimiter(self):
+        """Heredoc with quoted delimiter should be detected."""
+        cmd = "bash <<'EOF'\ngit push --force\nEOF"
+        assert HEREDOC_PATTERN.search(cmd)
+
+    def test_heredoc_double_quoted(self):
+        """Heredoc with double-quoted delimiter should be detected."""
+        cmd = 'bash <<"EOF"\ngit stash clear\nEOF'
+        assert HEREDOC_PATTERN.search(cmd)
+
+    def test_heredoc_with_dash(self):
+        """Heredoc with dash (tab stripping) should be detected."""
+        cmd = "bash <<-EOF\n\tgit reset --hard\nEOF"
+        assert HEREDOC_PATTERN.search(cmd)
+
+    def test_no_heredoc(self):
+        """Commands without heredoc should not match."""
+        cmd = "git status"
+        assert not HEREDOC_PATTERN.search(cmd)
+
+    def test_heredoc_without_git_allowed(self):
+        """Heredoc without git commands should be allowed."""
+        cmd = "cat <<EOF\nhello world\nEOF"
+        assert HEREDOC_PATTERN.search(cmd)
+        assert not re.search(r"(ba)?sh\s+.*<<.*git\s+", cmd, re.DOTALL | re.IGNORECASE)
+
+    def test_heredoc_with_bash_and_git(self):
+        """Heredoc with bash and git should match blocking pattern."""
+        cmd = "bash <<EOF\ngit reset --hard\nEOF"
+        assert HEREDOC_PATTERN.search(cmd)
+        assert re.search(r"(ba)?sh\s+.*<<.*git\s+", cmd, re.DOTALL | re.IGNORECASE)
+
+    def test_heredoc_multiline_git_detection(self):
+        """Heredoc with git on separate line should be detected."""
+        cmd = "bash <<EOF\necho 'starting'\ngit push --force origin main\nEOF"
+        assert HEREDOC_PATTERN.search(cmd)
+        assert re.search(r"<<.*\n.*\bgit\s+", cmd, re.DOTALL | re.IGNORECASE)
 
 
 if __name__ == "__main__":

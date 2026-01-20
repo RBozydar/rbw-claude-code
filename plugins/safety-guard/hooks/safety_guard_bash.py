@@ -95,7 +95,7 @@ BLOCKED_PATTERNS = [
     # Supply chain attacks
     # ==========================================================================
     (
-        r"(curl|wget)\s+.*\|\s*(ba|z)?sh",
+        r"(curl|wget)\s+.{0,1000}?\|\s*(ba|z)?sh",
         "piping curl/wget to a shell is a supply chain attack vector",
     ),
     # ==========================================================================

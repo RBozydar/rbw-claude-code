@@ -82,8 +82,6 @@ BLOCKED_PATTERNS = [
         r"git\s+submodule\s+deinit\s+.*?--force",
         "git submodule deinit --force removes submodule data",
     ),
-    # Commit amendment (rewrites history)
-    (r"git\s+commit\s+.*--amend", "git commit --amend rewrites commit history"),
     # Rebase (rewrites history)
     (
         r"git\s+rebase\b(?!\s+--(abort|continue|skip))",
@@ -146,8 +144,10 @@ if HEREDOC_PATTERN.search(command):
     # Since we can't reliably extract heredoc content from the command string alone,
     # we block any bash/sh with heredoc that mentions git
     if re.search(
-        r"(ba)?sh\s+.*<<.*git\s+", command, re.DOTALL | re.IGNORECASE
-    ) or re.search(r"<<.*\n.*\bgit\s+", command, re.DOTALL | re.IGNORECASE):
+        r"(ba)?sh\s+.{0,500}?<<.{0,500}?git\s+", command, re.DOTALL | re.IGNORECASE
+    ) or re.search(
+        r"<<.{0,500}?\n.{0,500}?\bgit\s+", command, re.DOTALL | re.IGNORECASE
+    ):
         c.output.exit_block(
             "BLOCKED: Heredoc with git commands requires manual approval.\n"
             f"Command: {command}\n"

@@ -67,7 +67,7 @@ BLOCKED_SUBCOMMANDS = [
     (r"\bgh\s+cache\s+delete\b", "gh cache delete requires manual approval"),
     # GraphQL mutations (can do anything)
     (
-        r"\bgh\s+api\s+graphql\b.*\bmutation\b",
+        r"\bgh\s+api\s+graphql\b.{0,2000}?\bmutation\b",
         "GraphQL mutations require manual approval",
     ),
 ]

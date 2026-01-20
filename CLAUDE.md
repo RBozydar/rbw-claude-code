@@ -181,6 +181,21 @@ skills/<skill-name>/
   scripts/           # Executable scripts (optional)
 ```
 
+## Security Hooks
+
+The following hooks enforce security policies and prevent destructive operations:
+
+| Plugin | Blocks | Use Instead |
+|--------|--------|-------------|
+| `enforce-uv` | `python`, `pip install`, `poetry` | `uv run python`, `uv add` |
+| `safety-guard` | `rm -rf`, `dd of=`, `shred`, `sed -i` (without backup) | Use Edit tool, `sed -i.bak` |
+| `git-safety-guard` | `git reset --hard`, `git push --force`, `git clean -f`, `git stash drop/clear`, `git rebase` | Create new commits, use safe git operations |
+| `gh-api-guard` | Destructive `gh api` commands (POST, PUT, DELETE, PATCH) | Read-only `gh api` operations (GET) |
+| `protect-env` | Reading `.env`, `.env.*` files | Use environment variables directly |
+| `conventional-commits` | Non-conventional commit messages | `type(scope): description` format |
+
+These hooks block potentially destructive commands to prevent accidental data loss and enforce best practices. If you need to run a blocked command, ask the user for explicit permission.
+
 ## Adding a New Plugin
 
 1. Create directory: `plugins/<plugin-name>/`
