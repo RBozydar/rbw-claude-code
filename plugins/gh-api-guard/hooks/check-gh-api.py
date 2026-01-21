@@ -16,6 +16,10 @@ ALLOWED_API_PATTERNS = [
     r"^repos/[^/]+/[^/]+/pulls/\d+/comments$",
     # Issue/PR conversation comments
     r"^repos/[^/]+/[^/]+/issues/\d+/comments$",
+    # Single comment by ID (issues/comments/{id} works for both issue and PR comments)
+    r"^repos/[^/]+/[^/]+/issues/comments/\d+$",
+    # Single PR review comment by ID
+    r"^repos/[^/]+/[^/]+/pulls/comments/\d+$",
     # PR reviews
     r"^repos/[^/]+/[^/]+/pulls/\d+/reviews$",
     # Specific review comments

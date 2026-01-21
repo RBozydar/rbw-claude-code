@@ -58,36 +58,40 @@ git diff main...HEAD
 git diff -- path/to/file.rb
 ```
 
-### 2. Formulate Review Prompt
+### 2. Execute Review
 
-Create a review prompt with the diff:
+Use stdin piping for diffs, or `@` syntax for files/folders:
 
 ```bash
-DIFF=$(git diff)
-
-gemini --sandbox --output-format text --model gemini-3-pro-preview "$(cat <<EOF
-You are a senior code reviewer. Review this diff for:
+# Unstaged changes (pipe diff)
+git diff | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "You are a senior code reviewer. Review this diff for:
 1. Bugs and logic errors
 2. Security vulnerabilities
 3. Performance issues
 4. Code quality and maintainability
 5. Missing error handling
 
-Provide specific file:line references for each issue.
+Provide specific file:line references for each issue."
 
-Diff:
-$DIFF
-EOF
-)"
+# Staged changes
+git diff --cached | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this diff for bugs, security issues, and code quality problems."
+
+# Branch vs main
+git diff main...HEAD | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review all changes on this branch for production readiness."
+
+# Review specific files using @ syntax
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this code for bugs and security issues" @src/api.py @src/auth.py
+
+# Review entire folder
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this module for code quality" @src/services/
 ```
 
-### 3. Execute Review
-
-Run Gemini with the review prompt:
-
-```bash
-gemini --sandbox --output-format text "<review-prompt-with-diff>"
-```
+**Important:** Use stdin for diffs, `@` for files/folders. Never use heredocs or variable assignment.
 
 **Important flags:**
 - `--sandbox` - Prevents code modifications
@@ -143,38 +147,28 @@ Issues Gemini found that might not be in Claude's review:
 ### Review Unstaged Changes
 
 ```bash
-DIFF=$(git diff)
-gemini --sandbox --output-format text "Review this code diff for bugs, security issues, and code quality problems. Provide file:line references.
-
-$DIFF"
+git diff | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this code diff for bugs, security issues, and code quality problems. Provide file:line references."
 ```
 
 ### Review with Focus Areas
 
 ```bash
-DIFF=$(git diff --cached)
-gemini --sandbox --output-format text "$(cat <<EOF
-Review this diff focusing on:
+git diff --cached | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this diff focusing on:
 1. SQL injection vulnerabilities
 2. N+1 query patterns
 3. Missing error handling
 4. Breaking API changes
 
-Provide specific file:line references for each issue.
-
-Diff:
-$DIFF
-EOF
-)"
+Provide specific file:line references for each issue."
 ```
 
 ### Review Branch Changes
 
 ```bash
-DIFF=$(git diff main...HEAD)
-gemini --sandbox --output-format text "Review this branch diff for production readiness. Check for bugs, security issues, performance problems, and test coverage gaps.
-
-$DIFF"
+git diff main...HEAD | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this branch diff for production readiness. Check for bugs, security issues, performance problems, and test coverage gaps."
 ```
 
 ## Error Handling
@@ -204,10 +198,7 @@ If the diff exceeds reasonable size:
 
 ```bash
 # Review specific files if diff is too large
-DIFF=$(git diff -- app/models/user.rb)
-gemini --sandbox --output-format text "Review this diff:
-
-$DIFF"
+git diff -- app/models/user.rb | gemini --sandbox -o text "Review this diff for issues"
 ```
 
 ## Comparison with Claude Review

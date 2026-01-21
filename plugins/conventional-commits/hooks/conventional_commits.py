@@ -52,21 +52,28 @@ SAFE_ARGUMENT_COMMANDS = [
 ]
 
 # Blocked commit methods we cannot reliably validate
+# These patterns match git commit flags, not content inside -m messages
 BLOCKED_PATTERNS = [
     (
-        r"-F\s+\S+|--file[=\s]\S+",
+        r"git\s+commit\s+[^'\"]*(?:-F\s+\S+|--file[=\s]\S+)",
         "Use -m flag instead of -F/--file for commit messages",
     ),
     (
-        r"-C\s+\S+|--reuse-message[=\s]\S+",
+        r"git\s+commit\s+[^'\"]*(?:-C\s+\S+|--reuse-message[=\s]\S+)",
         "Use -m flag instead of -C/--reuse-message",
     ),
     (
-        r"-c\s+\S+|--reedit-message[=\s]\S+",
+        r"git\s+commit\s+[^'\"]*(?:-c\s+\S+|--reedit-message[=\s]\S+)",
         "Use -m flag instead of -c/--reedit-message",
     ),
-    (r"-t\s+\S+|--template[=\s]\S+", "Use -m flag instead of -t/--template"),
-    (r"--no-verify\b", "Cannot skip commit message verification with --no-verify"),
+    (
+        r"git\s+commit\s+[^'\"]*(?:-t\s+\S+|--template[=\s]\S+)",
+        "Use -m flag instead of -t/--template",
+    ),
+    (
+        r"git\s+commit\s+[^'\"]*--no-verify\b",
+        "Cannot skip commit message verification with --no-verify",
+    ),
     (r"\bgit\s+commit-tree\b", "Use 'git commit' instead of low-level commit-tree"),
 ]
 

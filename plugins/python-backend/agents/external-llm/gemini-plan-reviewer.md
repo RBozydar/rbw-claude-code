@@ -26,15 +26,16 @@ Parse model from prompt if specified (e.g., "using flash, review...")
 
 ### 1. Read the Plan
 
-If given a file path, read it. Gather relevant codebase context from CLAUDE.md.
+If given a file path, note it for piping to gemini. Optionally gather relevant codebase context from CLAUDE.md.
 
 ### 2. Execute Gemini Review
 
-```bash
-PLAN_CONTENT="[plan content here]"
+Use `@` syntax for files, or stdin piping:
 
-gemini --sandbox --output-format text --model gemini-3-pro-preview "$(cat <<EOF
-You are a senior software architect reviewing a plan/specification.
+```bash
+# Using @ syntax (preferred for files)
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "You are a senior software architect reviewing a plan/specification.
 
 Review for:
 1. Architectural soundness
@@ -44,13 +45,24 @@ Review for:
 5. Unclear specifications
 6. Security considerations
 
-Provide specific, actionable feedback.
+Provide specific, actionable feedback." @plans/my-feature.md
 
-Plan:
-$PLAN_CONTENT
-EOF
-)"
+# Or pipe via stdin
+cat plans/my-feature.md | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this plan for architectural issues and risks"
+
+# Review multiple related plans
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review these plans for consistency" @plans/feature-a.md @plans/feature-b.md
 ```
+
+**Or use the wrapper script:**
+
+```bash
+scripts/gemini-review.sh --plan plans/my-feature.md
+```
+
+**Important:** Use `@` for files/folders, stdin for generated content (diffs). Never use heredocs or variable assignment.
 
 ### 3. Report Results
 

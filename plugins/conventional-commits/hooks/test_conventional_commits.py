@@ -278,5 +278,63 @@ class TestBypassPrevention:
         assert "EOF" in cmd
 
 
+class TestBlockedPatternsNotMatchingMessageContent:
+    """Test that blocked patterns don't match content inside commit messages.
+
+    This tests the fix for a bug where patterns like '-c' (for --reedit-message)
+    would incorrectly match 'python -c' inside a commit message body.
+    """
+
+    def test_python_c_in_message_not_blocked(self):
+        """'python -c' inside a message should NOT trigger -c/--reedit-message block."""
+        import re
+        from conventional_commits import BLOCKED_PATTERNS
+
+        # This commit message mentions "python -c" in the body
+        commit_cmd = """git commit -m 'feat(clean-code-guard): add plugin
+
+- clean-code-guard plugin: blocks python -c multi-line scripts
+- Updated all gemini agents to use stdin piping'"""
+
+        # None of the blocked patterns should match this
+        for pattern, msg in BLOCKED_PATTERNS:
+            match = re.search(pattern, commit_cmd)
+            assert match is None, f"Pattern '{pattern}' incorrectly matched: {msg}"
+
+    def test_actual_reedit_message_flag_blocked(self):
+        """Actual -c flag for --reedit-message should still be blocked."""
+        import re
+        from conventional_commits import BLOCKED_PATTERNS
+
+        # The -c flag before any quoted message
+        commit_cmd = "git commit -c HEAD~1 -m 'feat: test'"
+
+        # Find the -c pattern
+        c_pattern = None
+        for pattern, msg in BLOCKED_PATTERNS:
+            if "reedit-message" in msg:
+                c_pattern = pattern
+                break
+
+        assert c_pattern is not None
+        assert re.search(c_pattern, commit_cmd) is not None
+
+    def test_template_flag_still_blocked(self):
+        """Actual -t flag should still be blocked."""
+        import re
+        from conventional_commits import BLOCKED_PATTERNS
+
+        commit_cmd = "git commit -t /tmp/template.txt -m 'feat: test'"
+
+        t_pattern = None
+        for pattern, msg in BLOCKED_PATTERNS:
+            if "template" in msg:
+                t_pattern = pattern
+                break
+
+        assert t_pattern is not None
+        assert re.search(t_pattern, commit_cmd) is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
