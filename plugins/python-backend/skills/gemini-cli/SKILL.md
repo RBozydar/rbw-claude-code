@@ -27,7 +27,11 @@ EOF
 ## Command Structure
 
 ```bash
+# Pipe content via stdin
 <content-source> | gemini [options] "prompt"
+
+# Or use @ to reference files/folders directly
+gemini [options] "prompt" @file.py @folder/
 ```
 
 ### Required Options
@@ -47,11 +51,33 @@ EOF
 
 ## Common Patterns
 
+### Using @ to Reference Files/Folders
+
+The `@` syntax lets you reference files and folders directly without piping:
+
+```bash
+# Single file
+gemini --sandbox -o text "Review this code" @src/module.py
+
+# Multiple files
+gemini --sandbox -o text "Check consistency between these" @src/models.py @src/views.py
+
+# Entire folder
+gemini --sandbox -o text "Review this module" @src/auth/
+
+# Mix files and folders
+gemini --sandbox -o text "Review the API implementation" @src/api/ @tests/test_api.py
+```
+
 ### Review a Plan/Spec File
 
 ```bash
+# Using stdin pipe
 cat plans/my-feature.md | gemini --sandbox -o text -m gemini-3-pro-preview \
   "Review this plan for architectural issues, missing requirements, and risks"
+
+# Using @ syntax
+gemini --sandbox -o text "Review this plan for issues" @plans/my-feature.md
 ```
 
 ### Review Git Diff
@@ -202,8 +228,9 @@ head -500 large-file.py | gemini --sandbox -o text "Review this code section"
 
 | Task | Command |
 |------|---------|
-| Review plan | `cat plan.md \| gemini --sandbox -o text "Review for issues"` |
+| Review plan | `gemini --sandbox -o text "Review for issues" @plan.md` |
+| Review file | `gemini --sandbox -o text "Check security" @file.py` |
+| Review folder | `gemini --sandbox -o text "Review module" @src/auth/` |
 | Review unstaged diff | `git diff \| gemini --sandbox -o text "Review for bugs"` |
 | Review staged diff | `git diff --cached \| gemini --sandbox -o text "Review"` |
-| Review file | `cat file.py \| gemini --sandbox -o text "Check security"` |
 | Review branch | `git diff main...HEAD \| gemini --sandbox -o text "Review"` |

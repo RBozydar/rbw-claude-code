@@ -60,10 +60,10 @@ git diff -- path/to/file.rb
 
 ### 2. Execute Review
 
-Pipe the diff directly to gemini via stdin:
+Use stdin piping for diffs, or `@` syntax for files/folders:
 
 ```bash
-# Unstaged changes
+# Unstaged changes (pipe diff)
 git diff | gemini --sandbox -o text -m gemini-3-pro-preview \
   "You are a senior code reviewer. Review this diff for:
 1. Bugs and logic errors
@@ -81,9 +81,17 @@ git diff --cached | gemini --sandbox -o text -m gemini-3-pro-preview \
 # Branch vs main
 git diff main...HEAD | gemini --sandbox -o text -m gemini-3-pro-preview \
   "Review all changes on this branch for production readiness."
+
+# Review specific files using @ syntax
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this code for bugs and security issues" @src/api.py @src/auth.py
+
+# Review entire folder
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this module for code quality" @src/services/
 ```
 
-**Important:** Always pipe content via stdin. Never use heredocs or variable assignment.
+**Important:** Use stdin for diffs, `@` for files/folders. Never use heredocs or variable assignment.
 
 **Important flags:**
 - `--sandbox` - Prevents code modifications

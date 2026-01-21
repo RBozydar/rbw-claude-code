@@ -30,10 +30,11 @@ If given a file path, note it for piping to gemini. Optionally gather relevant c
 
 ### 2. Execute Gemini Review
 
-Pipe the plan file directly to gemini via stdin:
+Use `@` syntax for files, or stdin piping:
 
 ```bash
-cat plans/my-feature.md | gemini --sandbox -o text -m gemini-3-pro-preview \
+# Using @ syntax (preferred for files)
+gemini --sandbox -o text -m gemini-3-pro-preview \
   "You are a senior software architect reviewing a plan/specification.
 
 Review for:
@@ -44,7 +45,15 @@ Review for:
 5. Unclear specifications
 6. Security considerations
 
-Provide specific, actionable feedback."
+Provide specific, actionable feedback." @plans/my-feature.md
+
+# Or pipe via stdin
+cat plans/my-feature.md | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review this plan for architectural issues and risks"
+
+# Review multiple related plans
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review these plans for consistency" @plans/feature-a.md @plans/feature-b.md
 ```
 
 **Or use the wrapper script:**
@@ -53,7 +62,7 @@ Provide specific, actionable feedback."
 scripts/gemini-review.sh --plan plans/my-feature.md
 ```
 
-**Important:** Always pipe content via stdin. Never use heredocs or variable assignment.
+**Important:** Use `@` for files/folders, stdin for generated content (diffs). Never use heredocs or variable assignment.
 
 ### 3. Report Results
 

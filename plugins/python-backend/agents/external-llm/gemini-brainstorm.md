@@ -48,20 +48,28 @@ Create a focused prompt that:
 
 ### 3. Execute Gemini CLI
 
-Run Gemini in sandbox mode with the specified model. If you have context from a file, pipe it via stdin:
+Run Gemini in sandbox mode. Use `@` to reference files/folders, or stdin for generated content:
 
 ```bash
 # Simple prompt (no file context)
 gemini --sandbox -o text -m gemini-3-pro-preview \
   "Should we use Redis or PostgreSQL for session storage in a Rails 8 app using Solid Queue?"
 
-# With file context - pipe via stdin
-cat CLAUDE.md | gemini --sandbox -o text -m gemini-3-pro-preview \
-  "Given this project context, suggest the best approach for implementing caching."
+# With file context using @ syntax (preferred)
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Given this project context, suggest the best approach for implementing caching." @CLAUDE.md
 
-# With multiple files as context
-cat src/models.py src/api.py | gemini --sandbox -o text -m gemini-3-pro-preview \
-  "Review these files and suggest architectural improvements."
+# Reference multiple files
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review these files and suggest architectural improvements." @src/models.py @src/api.py
+
+# Reference entire folder
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Analyze this module architecture and suggest improvements." @src/services/
+
+# Or pipe via stdin (for generated content like diffs)
+git diff | gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Review these changes and suggest improvements."
 ```
 
 **Important flags:**
@@ -69,7 +77,7 @@ cat src/models.py src/api.py | gemini --sandbox -o text -m gemini-3-pro-preview 
 - `-o text` or `--output-format text` - Returns plain text
 - `-m <model>` or `--model <model>` - Model to use (default: `gemini-3-pro-preview`)
 
-**Important:** Always pipe content via stdin. Never use heredocs or variable assignment.
+**Important:** Use `@` for files/folders, stdin for generated content. Never use heredocs or variable assignment.
 
 ### 4. Parse and Report
 
@@ -139,11 +147,15 @@ Consider:
 Provide 2-3 options with trade-offs and a recommendation."
 ```
 
-**With project context from file:**
+**With project context using @ syntax:**
 
 ```bash
-cat CLAUDE.md | gemini --sandbox -o text -m gemini-3-pro-preview \
-  "Given this project context, what's the best approach for session storage?"
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Given this project context, what's the best approach for session storage?" @CLAUDE.md
+
+# Include multiple context files
+gemini --sandbox -o text -m gemini-3-pro-preview \
+  "Given the existing architecture, suggest session storage approach." @CLAUDE.md @src/config/
 ```
 
 ## Error Handling

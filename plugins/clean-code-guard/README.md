@@ -2,6 +2,17 @@
 
 Hook plugin that blocks messy code execution patterns and nudges toward clean alternatives.
 
+## Escape Hatch
+
+Add `# clean-code-guard: disable` comment to bypass all checks:
+
+```bash
+# clean-code-guard: disable
+CONTENT=$(cat file.md); gemini "$CONTENT"  # Allowed with escape hatch
+```
+
+Use when you have a legitimate use case that the patterns incorrectly flag.
+
 ## What It Blocks
 
 ### 1. Multi-line `python -c` Scripts
@@ -68,8 +79,20 @@ Add to your project's `.claude/settings.json`:
 }
 ```
 
+## Limitations
+
+**Variable assignment pattern is intentionally broad:**
+- May false-positive if a variable is assigned much earlier and gemini is called later with a different variable
+- Use escape hatch if you encounter false positives
+
+**Regex patterns have edge cases:**
+- Non-greedy matching may not handle all nested quote scenarios
+- Direct heredoc pattern may match literal strings containing the pattern
+
+When in doubt, use the escape hatch and document why.
+
 ## Related
 
-- `templates/rules/clean-code-execution.md` - Rule template for CLAUDE.md
+- `templates/rules/clean-execution.md` - Rule template for CLAUDE.md
 - `plugins/python-backend/skills/gemini-cli/SKILL.md` - Gemini CLI usage guide
 - `scripts/gemini-review.sh` - Wrapper script for clean gemini invocations

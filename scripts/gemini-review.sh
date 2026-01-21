@@ -117,7 +117,7 @@ Provide specific, actionable feedback."
         ;;
 
     diff)
-        DIFF_CMD="git diff $STAGED"
+        DIFF_CMD="git diff ${STAGED:-}"
         DIFF_OUTPUT=$($DIFF_CMD)
 
         if [[ -z "$DIFF_OUTPUT" ]]; then
