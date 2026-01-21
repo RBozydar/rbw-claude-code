@@ -28,6 +28,10 @@ from cchooks import PreToolUseContext, create_context
 # Threshold for "simple" one-liner python -c scripts (characters)
 PYTHON_C_LENGTH_THRESHOLD = 100
 
+# Maximum command length to process (ReDoS protection)
+# Commands longer than this are skipped to prevent catastrophic backtracking
+MAX_COMMAND_LENGTH = 10000
+
 # Escape hatch pattern - if present, skip all checks
 DISABLE_PATTERN = re.compile(r"#\s*clean-code-guard:\s*disable", re.IGNORECASE)
 
@@ -134,6 +138,10 @@ def main() -> None:
         c.output.exit_success()
 
     command = c.tool_input.get("command", "")
+
+    # ReDoS protection: skip very long commands to prevent catastrophic backtracking
+    if len(command) > MAX_COMMAND_LENGTH:
+        c.output.exit_success()
 
     # Check for escape hatch
     if DISABLE_PATTERN.search(command):
