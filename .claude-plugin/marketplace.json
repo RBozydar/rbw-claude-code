@@ -1,6 +1,6 @@
 {
   "name": "rbw-claude-code",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Python development and productivity plugins for Claude Code",
   "owner": {
     "name": "RBozydar"
@@ -11,13 +11,13 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Universal AI-powered development tools: 14 agents, 14 commands, 11 skills for code review, research, and workflow automation",
+      "description": "Universal AI-powered development tools: 22 agents, 17 commands, 13 skills for code review, research, and workflow automation",
       "source": "./plugins/core",
       "category": "development"
     },
     {
       "name": "python-backend",
-      "description": "Python-specific tools: 5 reviewers (including Gemini) and 2 commands for pytest and type checking",
+      "description": "Python-specific tools: 7 agents, 2 commands, 1 skill for Python code review, testing, and type checking",
       "source": "./plugins/python-backend",
       "category": "development"
     },

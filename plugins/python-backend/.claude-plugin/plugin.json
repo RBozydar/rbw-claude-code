@@ -1,7 +1,7 @@
 {
   "name": "python-backend",
-  "version": "1.0.1",
-  "description": "Python-specific development tools: 5 specialized reviewers (including Gemini) and 2 commands for pytest and type checking",
+  "version": "1.1.0",
+  "description": "Python-specific development tools: 7 agents, 2 commands, 1 skill for Python code review, testing, and type checking",
   "author": {
     "name": "RBozydar",
     "url": "https://github.com/RBozydar"
