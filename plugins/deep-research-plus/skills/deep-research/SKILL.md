@@ -1,16 +1,17 @@
 ---
 name: deep-research
-description: Perform comprehensive research using the diffusion research loop - parallel worker agents, iterative gap detection, and structured synthesis. Use when you need thorough, multi-perspective research with citations.
+description: Perform comprehensive research using the diffusion research loop with domain specialization. Supports general web research and specialized domains (geopolitical with GDELT). Auto-detects domain from query or accepts explicit --domain flag. Use when you need thorough, multi-perspective research with citations.
 ---
 
 <objective>
-Execute deep, comprehensive research on any topic using a multi-agent diffusion loop:
-1. Break down the query into research dimensions
-2. Spawn parallel worker agents to research each dimension independently
-3. Synthesize findings into a coherent draft
-4. Use gap detection agent to identify missing coverage
-5. Iterate until coverage is sufficient
-6. Produce a final report with full citations
+Execute deep, comprehensive research on any topic using a multi-agent diffusion loop with domain-aware specialization:
+1. Classify query and detect appropriate domain (general, geopolitical, etc.)
+2. Break down the query into research dimensions using domain config
+3. Spawn parallel worker agents appropriate for the domain
+4. Synthesize findings into a coherent draft
+5. Use domain-specific gap detection to identify missing coverage
+6. Iterate until coverage is sufficient
+7. Produce a final report with full citations in domain-appropriate format
 </objective>
 
 <essential_principles>
@@ -20,44 +21,82 @@ This skill implements **Self-Balancing Test-Time Diffusion** - starting with a n
 
 ### Key Design Principles
 
-1. **Worker Isolation**: Each research worker receives ONLY their assigned topic. They cannot see:
+1. **Domain Awareness**: Different research domains require different tools, agents, and evaluation criteria. The skill auto-detects domain or accepts explicit specification.
+
+2. **Worker Isolation**: Each research worker receives ONLY their assigned topic. They cannot see:
    - Other workers' findings
    - The current draft
    - The full research brief
    This prevents herd behavior and ensures diverse perspectives.
 
-2. **Gap Detection Objectivity**: Use a separate gap-detector agent (not yourself) to evaluate coverage. This avoids the bias of judging your own work.
+3. **Gap Detection Objectivity**: Use a separate gap-detector agent (not yourself) to evaluate coverage. This avoids the bias of judging your own work. Each domain has specialized gap detection dimensions.
 
-3. **Conservative Iteration**: Continue researching if:
+4. **Conservative Iteration**: Continue researching if:
    - Coverage < 70% of core questions
    - Any critical question is unanswered
    Stop when diminishing returns are reached.
 
-4. **Quality Over Quantity**: 3-5 well-sourced findings per worker beats 10 weakly-sourced ones.
+5. **Quality Over Quantity**: 3-5 well-sourced findings per worker beats 10 weakly-sourced ones.
 </essential_principles>
+
+<domains>
+## Available Domains
+
+### General (Default)
+- **Triggers**: Any query not matching other domains
+- **Prefix**: `core`
+- **Agents**: `deep-research:core:research-worker`, `deep-research:core:gap-detector`
+- **Tools**: WebSearch, WebFetch
+- **Config**: `domains/general.md`
+
+### Geopolitical
+- **Triggers**: conflict, war, sanctions, bilateral relations, media coverage, GDELT, CAMEO
+- **Prefix**: `geo`
+- **Agents**: Specialized analysts (conflict, sanctions, actors, sentiment, trends)
+- **Tools**: GDELT MCP tools (gdelt_events, gdelt_gkg, gdelt_actors, etc.) + WebSearch
+- **Config**: `domains/geopolitical.md`
+
+## Domain Detection
+
+The skill automatically detects domain based on query keywords:
+
+```
+IF query contains (conflict, war, military, violence, escalation, sanctions,
+   embargo, OFAC, bilateral, alliance, media coverage, sentiment, GDELT, CAMEO):
+   → Use GEOPOLITICAL domain
+ELSE:
+   → Use GENERAL domain
+```
+
+Override with explicit flag: `/deep-research --domain=geopolitical "query here"`
+</domains>
 
 <algorithm>
 ## The Research Loop
 
 ```
-PHASE 0: REFINEMENT (Interactive)
+PHASE 0: DOMAIN CLASSIFICATION & REFINEMENT (Interactive)
 ├── 0.1 Parse user query
-├── 0.2 Generate DRAFT research brief
-├── 0.3 Present brief to user via AskUserQuestion
+├── 0.2 Detect domain (general | geopolitical | ...)
+├── 0.3 Load domain config (agents, tools, gap dimensions, output format)
+├── 0.4 Generate DRAFT research brief using domain expertise
+├── 0.5 Present brief to user via AskUserQuestion
+│   ├── "Is this domain correct?"
 │   ├── "Are these dimensions correct?"
 │   ├── "Any areas to add or remove?"
 │   └── "What depth/focus do you need?"
-├── 0.4 Refine brief based on feedback
-└── 0.5 Confirm and proceed
+├── 0.6 Refine brief based on feedback
+└── 0.7 Confirm and proceed
 
 PHASE 1: INITIALIZATION
 ├── 1.1 Finalize research brief from refinement
-└── 1.2 Generate initial speculative draft (noisy starting point)
+├── 1.2 Select domain-appropriate agents
+└── 1.3 Generate initial speculative draft (noisy starting point)
 
 PHASE 2: DIFFUSION LOOP (max 3 iterations)
 ├── 2.1 SPAWN WORKERS
 │   ├── Identify 2-5 research topics from brief/gaps
-│   ├── Launch research-worker agents in PARALLEL
+│   ├── Launch domain-specific worker agents in PARALLEL
 │   └── Collect findings (wait for all to complete)
 │
 ├── 2.2 SYNTHESIZE
@@ -66,14 +105,14 @@ PHASE 2: DIFFUSION LOOP (max 3 iterations)
 │   └── Structure with citations
 │
 ├── 2.3 GAP DETECTION
-│   ├── Launch gap-detector agent with: query, brief, draft
+│   ├── Launch domain-specific gap-detector with: query, brief, draft
 │   ├── Receive coverage score and gap topics
 │   └── Decision: CONTINUE (spawn more workers) or COMPLETE
 │
 └── 2.4 ITERATE or EXIT
 
 PHASE 3: FINAL REPORT
-├── 3.1 Polish synthesis into final report
+├── 3.1 Polish synthesis using domain output template
 ├── 3.2 Compile all sources with descriptions
 └── 3.3 Add executive summary
 ```
@@ -82,37 +121,60 @@ PHASE 3: FINAL REPORT
 
 **Interactive (default):** Main Claude orchestrates, can ask questions and steer mid-research.
 
-**Background:** Spawn an orchestrator subagent for autonomous "fire and forget" research. Use when user wants to continue other work. See workflows/background-research.md.
+**Background:** Spawn `deep-research:core:research-orchestrator` for autonomous research. Use when user wants to continue other work.
 </algorithm>
 
 <intake>
 What would you like me to research?
 
 Provide your research question or topic. I will:
-1. Break it down into researchable dimensions
-2. Deploy parallel research agents
-3. Synthesize findings with citations
-4. Iterate until comprehensive coverage
+1. Auto-detect the appropriate domain (or you can specify `--domain=geopolitical`)
+2. Break it down into researchable dimensions
+3. Deploy parallel research agents with domain expertise
+4. Synthesize findings with citations
+5. Iterate until comprehensive coverage
 
-**Example queries:**
+**General Research Examples:**
 - "What are the latest developments in quantum computing for drug discovery?"
 - "Compare the architectural approaches of major LLM providers"
 - "How are companies implementing AI governance frameworks?"
+
+**Geopolitical Research Examples** (auto-detected):
+- "What is the current state of the Russia-Ukraine conflict?"
+- "How effective have semiconductor sanctions on China been?"
+- "Map the relationship network around the Gulf Cooperation Council"
+- "How is Western vs BRICS media covering the Israel-Palestine situation?"
 </intake>
 
 <execution_guide>
-## How to Execute This Skill
+## Phase 0: Domain Classification & Refinement
 
-### Phase 0: Refinement (Interactive)
+### Step 1: Detect Domain
 
-After receiving the query, generate a DRAFT brief and validate with the user.
+Analyze the query for domain signals:
 
-**Step 1: Generate Draft Brief**
+```markdown
+## Domain Classification
 
+**Your Query:** [User's original question]
+
+**Detected Domain:** [general | geopolitical]
+
+**Domain Signals Found:**
+- [Signal 1]: [keyword or pattern that triggered detection]
+- [Signal 2]: ...
+
+**Domain Config Loaded:** domains/[domain].md
+```
+
+### Step 2: Generate Draft Brief (Domain-Aware)
+
+**For General Domain:**
 ```markdown
 ## Draft Research Brief
 
-**Your Query:** [User's original question]
+**Query:** [User's original question]
+**Domain:** General
 
 **Proposed Dimensions:**
 1. [Dimension 1] - [Why it matters]
@@ -125,11 +187,48 @@ After receiving the query, generate a DRAFT brief and validate with the user.
 - [Question 3] (Supporting)
 ```
 
-**Step 2: Validate with User via AskUserQuestion**
+**For Geopolitical Domain:**
+```markdown
+## Draft Research Brief
+
+**Query:** [User's original question]
+**Domain:** Geopolitical
+**Analysis Type:** [Conflict | Sanctions | Actors | Narrative | Multi-Dimensional]
+
+**Geographic Scope:** [Countries/regions]
+**Temporal Scope:** [Time period]
+**Key Actors:** [Primary actors to track]
+
+**Proposed Dimensions:**
+1. [Dimension 1] - [Why it matters for this analysis]
+2. [Dimension 2] - [Why it matters]
+3. [Dimension 3] - [Why it matters]
+
+**Key Questions I Plan to Answer:**
+- [Question 1] (Core)
+- [Question 2] (Core)
+- [Question 3] (Supporting)
+
+**Specialist Agents to Deploy:**
+1. [Agent 1] for [Focus area]
+2. [Agent 2] for [Focus area]
+```
+
+### Step 3: Validate with User
 
 ```
 AskUserQuestion(
   questions: [
+    {
+      header: "Domain",
+      question: "Is this the right research domain for your query?",
+      options: [
+        { label: "Yes, proceed", description: "Domain and approach look correct" },
+        { label: "Switch to general", description: "Use general web research instead" },
+        { label: "Switch to geopolitical", description: "Use GDELT + specialized agents" }
+      ],
+      multiSelect: false
+    },
     {
       header: "Dimensions",
       question: "Are these research dimensions correct for your needs?",
@@ -150,64 +249,28 @@ AskUserQuestion(
         { label: "Exhaustive", description: "Maximum depth, all angles, ~10 min" }
       ],
       multiSelect: false
-    },
-    {
-      header: "Focus",
-      question: "Any specific focus areas or constraints?",
-      options: [
-        { label: "No constraints", description: "Research broadly across all dimensions" },
-        { label: "Recent only", description: "Focus on developments from last 1-2 years" },
-        { label: "Practical focus", description: "Prioritize actionable/implementation info" },
-        { label: "Academic focus", description: "Prioritize research papers and studies" }
-      ],
-      multiSelect: true
     }
   ]
 )
 ```
 
-**Step 3: Refine Based on Feedback**
+### Step 4: Refine Based on Feedback
 
+- If user switches domain → reload domain config, regenerate brief
 - If user selects "Add more" → ask what to add
 - If user selects "Remove some" → ask what to remove
-- If user selects "Rethink entirely" → regenerate brief with new approach
 - Adjust depth and focus based on selections
 - Proceed to Phase 1 once confirmed
 
-### Phase 1: Generate Research Brief
+---
 
-After refinement, finalize the research brief:
+## Phase 1: Spawn Domain-Appropriate Workers
 
-```markdown
-## Research Brief
-
-**Query:** [User's original question]
-
-**Core Dimensions:**
-1. [Dimension 1] - [Why it matters]
-2. [Dimension 2] - [Why it matters]
-3. [Dimension 3] - [Why it matters]
-
-**Key Questions:**
-- [Question 1] (Core)
-- [Question 2] (Core)
-- [Question 3] (Supporting)
-- [Question 4] (Supporting)
-- [Question 5] (Contextual)
-
-**Initial Topics for Workers:**
-1. [Topic for Worker 1]
-2. [Topic for Worker 2]
-3. [Topic for Worker 3]
-```
-
-### Phase 2a: Spawn Workers
-
-Use the Task tool to spawn research-worker agents **in parallel**:
+### General Domain Workers
 
 ```
 Task(
-  subagent_type: "deep_research:research-worker",
+  subagent_type: "deep-research:core:research-worker",
   prompt: "Research this topic: [TOPIC]
 
 Context: This is part of a larger research effort on: [MAIN QUERY]
@@ -215,16 +278,85 @@ Context: This is part of a larger research effort on: [MAIN QUERY]
 Focus on: [SPECIFIC ASPECTS TO COVER]
 
 Return structured findings with citations.",
-  description: "Research: [short topic]",
-  run_in_background: false  # Wait for results
+  description: "Research: [short topic]"
+)
+```
+
+### Geopolitical Domain Workers
+
+See `domains/geopolitical.md` for detailed agent prompts. Key patterns:
+
+**Conflict Analysis:**
+```
+Task(
+  subagent_type: "deep-research:geo:conflict-analyst",
+  prompt: "Analyze conflict dynamics for: [TOPIC]
+
+  Focus on: CAMEO events, Goldstein trends, actor relationships
+  Use: gdelt_events, gdelt_actors, gdelt_gkg
+  Return: Structured findings with GDELT citations",
+  description: "Conflict analysis: [topic]"
+)
+```
+
+**Sanctions Research:**
+```
+Task(
+  subagent_type: "deep-research:geo:sanctions-researcher",
+  prompt: "Research sanctions for: [TOPIC]
+
+  Focus on: Active regimes, enforcement, evasion patterns
+  Use: gdelt_gkg, gdelt_doc, gdelt_trends
+  Return: Findings with quantitative data",
+  description: "Sanctions research: [topic]"
+)
+```
+
+**Actor Mapping:**
+```
+Task(
+  subagent_type: "deep-research:geo:actor-mapper",
+  prompt: "Map actor relationships for: [TOPIC]
+
+  Focus on: Actor types, Goldstein patterns, alliance structures
+  Use: gdelt_events, gdelt_actors
+  Return: Network analysis with metrics",
+  description: "Actor mapping: [topic]"
+)
+```
+
+**Narrative Analysis:**
+```
+Task(
+  subagent_type: "deep-research:geo:sentiment-tracker",
+  prompt: "Analyze media sentiment for: [TOPIC]
+
+  Focus on: Tone, regional differences, narrative themes
+  Use: gdelt_gkg, gdelt_doc
+  Return: Quantified sentiment analysis",
+  description: "Sentiment analysis: [topic]"
+)
+
+Task(
+  subagent_type: "deep-research:geo:trend-analyst",
+  prompt: "Analyze coverage trends for: [TOPIC]
+
+  Focus on: Volume timeline, inflection points, patterns
+  Use: gdelt_trends, gdelt_events
+  Return: Trend analysis with forecasting",
+  description: "Trend analysis: [topic]"
 )
 ```
 
 **CRITICAL**: Spawn ALL workers in a SINGLE message with multiple Task tool calls. This enables true parallel execution.
 
-### Phase 2b: Synthesize Findings
+---
 
-After workers return, synthesize into a draft:
+## Phase 2: Synthesis and Gap Detection
+
+### Synthesize Findings
+
+After workers return, merge into a draft:
 
 ```markdown
 ## Research Draft (Iteration N)
@@ -246,13 +378,12 @@ Sources:
 [Note any obvious gaps before formal gap detection]
 ```
 
-### Phase 2c: Gap Detection
+### Gap Detection (Domain-Specific)
 
-Spawn the gap-detector agent:
-
+**General Domain:**
 ```
 Task(
-  subagent_type: "deep_research:gap-detector",
+  subagent_type: "deep-research:core:gap-detector",
   prompt: "Evaluate research coverage:
 
 ORIGINAL QUERY:
@@ -271,7 +402,34 @@ Assess coverage and identify gaps for follow-up.",
 )
 ```
 
-### Phase 2d: Iterate or Complete
+**Geopolitical Domain:**
+```
+Task(
+  subagent_type: "deep-research:geo:gap-detector-geo",
+  prompt: "Evaluate geopolitical research coverage:
+
+ORIGINAL QUERY:
+[Query]
+
+RESEARCH BRIEF:
+[Brief]
+
+CURRENT FINDINGS:
+[Draft]
+
+ITERATION: [N]
+
+Assess coverage across:
+- Core dimensions (3x weight): Temporal, Actor, Data Source
+- Supporting dimensions (2x weight): Quantification, Geographic, Perspective
+- Contextual dimensions (1x weight): Precedents, Expert Sources, Timeline
+
+Provide weighted coverage score and specific gaps for follow-up.",
+  description: "Evaluate geopolitical coverage"
+)
+```
+
+### Iterate or Complete
 
 If gap-detector returns CONTINUE:
 - Extract the gap topics
@@ -283,46 +441,17 @@ If gap-detector returns COMPLETE:
 
 **Maximum 3 iterations** to prevent infinite loops.
 
-### Phase 3: Final Report
-
-Structure the final output:
-
-```markdown
-# Research Report: [Title]
-
-## Executive Summary
-
-[3-5 bullet points of key findings]
-
-## Key Findings
-
-### [Finding 1]
-
-[Detailed explanation with context]
-
-**Sources:** [1], [2]
-
-### [Finding 2]
-
-[Detailed explanation...]
-
-## Analysis
-
-[Cross-cutting insights, patterns, implications]
-
-## Limitations
-
-[What couldn't be determined, areas of uncertainty]
-
-## Sources
-
-[1] [Title](URL) - [Description]
-[2] [Title](URL) - [Description]
-...
-
 ---
-*Research conducted using diffusion research methodology with [N] parallel workers over [M] iterations.*
-```
+
+## Phase 3: Final Report
+
+Use domain-specific output template from the domain config file.
+
+**General Domain:** See `domains/general.md` for output format
+
+**Geopolitical Domain:** See `domains/geopolitical.md` for output format (includes GDELT metrics, actor matrices, Goldstein analysis)
+
+Save to: `research_output/[topic-slug]_[date].md`
 </execution_guide>
 
 <worker_management>
@@ -340,7 +469,7 @@ Task 2: "Research: drug discovery AI methods"
 Task 3: "Research: current clinical trials"
 ```
 
-### Worker Prompt Template
+### General Worker Prompt Template
 
 ```
 You are researching: [SPECIFIC TOPIC]
@@ -370,64 +499,6 @@ If a worker returns an error or incomplete results:
 - Do not block other workers
 </worker_management>
 
-<output_format>
-## Final Report Structure
-
-The report should be saved to a file and include:
-
-1. **Metadata Header**
-   - Query
-   - Date
-   - Iterations performed
-   - Workers spawned
-
-2. **Executive Summary** (bullet points, 100-200 words)
-
-3. **Key Findings** (3-7 major findings with sources)
-
-4. **Detailed Analysis** (cross-cutting themes, implications)
-
-5. **Methodology Note** (brief explanation of research process)
-
-6. **Complete Source List** (all URLs with descriptions)
-
-Save to: `research_output/[topic-slug]_[date].md`
-</output_format>
-
-<success_criteria>
-Research is complete when:
-- All core questions from the brief are addressed
-- Coverage score >= 70% (from gap detector)
-- Key findings are well-sourced (2+ citations each)
-- Contradictions are noted and explained
-- Maximum 3 iterations reached
-
-Research is NOT complete just because:
-- The draft "reads well"
-- You feel satisfied with the findings
-- Workers stopped returning new information
-
-Always use the gap-detector agent for objective evaluation.
-</success_criteria>
-
-<quick_start>
-## Quick Start
-
-1. User provides research query
-2. Generate DRAFT research brief
-3. **Use AskUserQuestion to validate dimensions, depth, focus**
-4. Refine brief based on feedback
-5. Spawn 2-4 research-worker agents in parallel
-6. Synthesize findings into draft
-7. Spawn gap-detector agent
-8. If gaps found: spawn more workers for gap topics, repeat
-9. If complete: generate final report
-
-**Time expectation:** 2-5 minutes depending on depth and iterations
-
-**Skip refinement:** If user explicitly says "just do it" or "skip questions", proceed directly with your best judgment on the brief.
-</quick_start>
-
 <mid_research_steering>
 ## Mid-Research Steering
 
@@ -440,6 +511,7 @@ During the diffusion loop, watch for user messages that indicate steering:
 | "Go deeper on Z" | Spawn additional worker specifically for Z |
 | "That's enough" | Skip remaining iterations, move to final report |
 | "Add dimension W" | Update brief, spawn worker for W |
+| "Switch to geopolitical" | Reload geopolitical domain config, adjust agents |
 
 Use AskUserQuestion if steering intent is ambiguous:
 
@@ -458,3 +530,72 @@ AskUserQuestion(
 )
 ```
 </mid_research_steering>
+
+<output_specifications>
+## Output File Location
+
+Save reports to: `research_output/[topic-slug]_[date].md`
+
+Example: `research_output/quantum-computing-healthcare_2024-01-15.md`
+
+For geopolitical: `research_output/geo/[topic-slug]_[date].md`
+
+## Required Sections (All Reports)
+
+1. **Metadata Header**
+   - Query
+   - Domain used
+   - Date
+   - Iterations performed
+   - Workers spawned
+
+2. **Executive Summary** (bullet points, 100-200 words)
+
+3. **Key Findings** (3-7 major findings with sources)
+
+4. **Detailed Analysis** (cross-cutting themes, implications)
+
+5. **Methodology Note** (brief explanation of research process)
+
+6. **Complete Source List** (all URLs with descriptions)
+
+Additional domain-specific sections are defined in each domain config.
+</output_specifications>
+
+<success_criteria>
+## Research Completion Criteria
+
+Research is complete when:
+- All core questions from the brief are addressed
+- Coverage score >= 70% (from gap detector)
+- Key findings are well-sourced (2+ citations each)
+- Contradictions are noted and explained
+- Maximum 3 iterations reached
+
+Research is NOT complete just because:
+- The draft "reads well"
+- You feel satisfied with the findings
+- Workers stopped returning new information
+
+Always use the domain-appropriate gap-detector agent for objective evaluation.
+</success_criteria>
+
+<quick_start>
+## Quick Start
+
+1. User provides research query
+2. **Detect domain** (general or geopolitical)
+3. Load domain config
+4. Generate DRAFT research brief
+5. **Use AskUserQuestion to validate domain, dimensions, depth**
+6. Refine brief based on feedback
+7. Spawn 2-4 domain-appropriate worker agents in parallel
+8. Synthesize findings into draft
+9. Spawn domain-specific gap-detector agent
+10. If gaps found: spawn more workers for gap topics, repeat
+11. If complete: generate final report using domain output template
+
+**Time expectation:** 2-10 minutes depending on domain, depth, and iterations
+
+**Skip refinement:** If user explicitly says "just do it" or "skip questions", proceed directly with your best judgment on the brief.
+</quick_start>
