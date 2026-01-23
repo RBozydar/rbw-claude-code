@@ -20,13 +20,22 @@ This command takes a work document (plan, specification, or todo file) and execu
 
 ### Phase 1: Quick Start
 
-1. **Read Plan and Clarify**
+1. **Read Plan and Import Tasks**
 
    - Read the work document completely
+   - **Extract `task_list_id` from YAML frontmatter** (if present)
    - Review any references or links provided in the plan
    - If anything is unclear or ambiguous, ask clarifying questions now
    - Get user approval to proceed
    - **Do not skip this** - better to ask questions now than build the wrong thing
+
+   **If plan has `task_list_id`:**
+   ```
+   skill: import-tasks [task_list_id from frontmatter]
+   ```
+   This imports tasks from the planning session into your current session, preserving descriptions and dependencies.
+
+   **If plan has no `task_list_id`:** Tasks will be created in Step 3 (backward compatibility with older plans)
 
 2. **Setup Environment**
 
@@ -55,31 +64,125 @@ This command takes a work document (plan, specification, or todo file) and execu
    - You're working on a single feature
    - You prefer staying in the main repository
 
-3. **Create Todo List**
-   - Use TodoWrite to break plan into actionable tasks
-   - Include dependencies between tasks
+3. **Create Task List** (if not imported from plan)
+
+   **Skip this step if you imported tasks using the `import-tasks` skill in Step 1.**
+
+   For plans without a `task_list_id`, use **TaskCreate** to break the plan into actionable tasks:
+
+   ```
+   # Create tasks for each major work item
+   TaskCreate: "Implement user model" (activeForm: "Implementing user model")
+   TaskCreate: "Add authentication service" (activeForm: "Adding auth service")
+   TaskCreate: "Write integration tests" (activeForm: "Writing tests")
+
+   # Set up dependencies with TaskUpdate
+   TaskUpdate: task #3 addBlockedBy [#1, #2]  # Tests depend on model + service
+   ```
+
+   **Task best practices:**
+   - Include dependencies between tasks using `addBlockedBy`/`addBlocks`
    - Prioritize based on what needs to be done first
    - Include testing and quality check tasks
    - Keep tasks specific and completable
+   - Use `activeForm` for clear progress indication (present continuous: "Implementing...")
+
+4. **Parallel Execution with Subagents** (Optional - for large plans)
+
+   For large plans with independent work streams, spawn subagents to work in parallel on the same TaskList:
+
+   ```bash
+   # Get the current TaskList ID
+   task_list_id=$(ls -t ~/.claude/tasks/ | head -1)
+   echo "TaskList ID: $task_list_id"
+   ```
+
+   **Spawning coordinated subagents:**
+
+   ```
+   # For Python projects - use python-coder agent
+   Task(python-coder): "Work on tasks #2 and #3. Import from TaskList $task_list_id first."
+
+   # For other projects - use general-purpose agent
+   Task(general-purpose): "Work on tasks #4 and #5. Import from TaskList $task_list_id first."
+   ```
+
+   **Key coordination patterns:**
+   - Subagents import the TaskList using `skill: import-tasks [id]`
+   - When one agent completes a task, others can see unblocked work
+   - Use `TaskUpdate` with `addBlockedBy` to prevent race conditions
+   - Subagents should claim tasks with `TaskUpdate: status=in_progress` before starting
+
+   **Language-specific agent selection:**
+   | Project Type | Agent to Use |
+   |--------------|--------------|
+   | Python (Django, FastAPI, Flask) | `python-coder` |
+   | TypeScript/JavaScript | `general-purpose` |
+   | Mixed/Other | `general-purpose` |
 
 ### Phase 2: Execute
 
 1. **Task Execution Loop**
 
-   For each task in priority order:
+   Use **TaskList** to see available work, then execute each task:
 
    ```
-   while (tasks remain):
-     - Mark task as in_progress in TodoWrite
+   while (TaskList shows pending tasks):
+     # 1. Check for available (unblocked) tasks
+     TaskList  # Shows tasks with status and blockers
+
+     # 2. Claim and start the next available task
+     TaskUpdate: task #{id} status=in_progress
+
+     # 3. Execute the task
      - Read any referenced files from the plan
      - Look for similar patterns in codebase
      - Implement following existing conventions
      - Write tests for new functionality
      - Run tests after changes
-     - Mark task as completed
+
+     # 4. Complete the task
+     TaskUpdate: task #{id} status=completed
+
+     # 5. Update plan document
+     - Mark off the corresponding checkbox in the plan file ([ ] → [x])
+     - Evaluate for incremental commit (see below)
    ```
 
-2. **Follow Existing Patterns**
+   **Task status workflow:** `pending` → `in_progress` → `completed`
+
+   **IMPORTANT**: Always update the original plan document by checking off completed items. Use the Edit tool to change `- [ ]` to `- [x]` for each task you finish. This keeps the plan as a living document showing progress and ensures no checkboxes are left unchecked.
+
+2. **Incremental Commits**
+
+   After completing each task, evaluate whether to create an incremental commit:
+
+   | Commit when... | Don't commit when... |
+   |----------------|---------------------|
+   | Logical unit complete (model, service, component) | Small part of a larger unit |
+   | Tests pass + meaningful progress | Tests failing |
+   | About to switch contexts (backend → frontend) | Purely scaffolding with no behavior |
+   | About to attempt risky/uncertain changes | Would need a "WIP" commit message |
+
+   **Heuristic:** "Can I write a commit message that describes a complete, valuable change? If yes, commit. If the message would be 'WIP' or 'partial X', wait."
+
+   **Commit workflow:**
+   ```bash
+   # 1. Verify tests pass (use project's test command)
+   # Examples: pytest, npm test, go test, etc.
+
+   # 2. Stage only files related to this logical unit (not `git add .`)
+   git add <files related to this logical unit>
+
+   # 3. Commit with conventional message
+   git commit -m "feat(scope): description of this unit"
+   ```
+
+   **Handling merge conflicts:** If conflicts arise during rebasing or merging, resolve them immediately. Incremental commits make conflict resolution easier since each commit is small and focused.
+
+   **Note:** Incremental commits use clean conventional messages without attribution footers. The final Phase 4 commit/PR includes the full attribution.
+
+3. **Follow Existing Patterns**
 
    - The plan should reference similar code - read those files first
    - Match naming conventions exactly
@@ -87,7 +190,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Follow project coding standards (see CLAUDE.md)
    - When in doubt, grep for similar implementations
 
-3. **Use Specialized Coding Agents**
+4. **Use Specialized Coding Agents**
 
    When implementing code, delegate to the appropriate specialized coding agent with full context:
 
@@ -122,7 +225,7 @@ This command takes a work document (plan, specification, or todo file) and execu
 
    The agent enforces SOLID principles, asyncio patterns, and production-quality standards automatically - you just need to tell it WHAT to build and WHERE.
 
-4. **Test Continuously**
+5. **Test Continuously**
 
    - Run relevant tests after each significant change
    - Don't wait until the end to test
@@ -135,7 +238,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Go: `go test ./...`
    - Generic: Check `package.json`, `pyproject.toml`, `Makefile`, or CI config for test commands
 
-5. **Figma Design Sync** (if applicable)
+6. **Figma Design Sync** (if applicable)
 
    For UI work with Figma designs:
 
@@ -144,10 +247,11 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Fix visual differences identified
    - Repeat until implementation matches design
 
-6. **Track Progress**
-   - Keep TodoWrite updated as you complete tasks
-   - Note any blockers or unexpected discoveries
-   - Create new tasks if scope expands
+7. **Track Progress**
+   - Use **TaskList** to check overall progress
+   - Use **TaskUpdate** to mark tasks completed or add blockers
+   - Use **TaskCreate** to add new tasks if scope expands
+   - Note any blockers with `TaskUpdate: addBlockedBy`
    - Keep user informed of major milestones
 
 ### Phase 3: Quality Check
@@ -191,7 +295,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    Present findings to user and address critical issues.
 
 3. **Final Validation**
-   - All TodoWrite tasks marked completed
+   - All tasks marked completed (verify with `TaskList`)
    - All tests pass
    - Linting passes
    - Code follows existing patterns
@@ -289,7 +393,7 @@ This command takes a work document (plan, specification, or todo file) and execu
 Before creating PR, verify:
 
 - [ ] All clarifying questions asked and answered
-- [ ] All TodoWrite tasks marked completed
+- [ ] All tasks marked completed (`TaskList` shows no pending tasks)
 - [ ] Tests pass
 - [ ] Linting passes
 - [ ] Code follows existing patterns
@@ -315,6 +419,7 @@ For most features: tests + linting + following patterns is sufficient.
 - **Skipping clarifying questions** - Ask now, not after building wrong thing
 - **Ignoring plan references** - The plan has links for a reason
 - **Testing at the end** - Test continuously or suffer later
-- **Forgetting TodoWrite** - Track progress or lose track of what's done
+- **Forgetting to track tasks** - Use TaskList/TaskUpdate to track progress
 - **80% done syndrome** - Finish the feature, don't move on early
 - **Over-reviewing simple changes** - Save reviewer agents for complex work
+- **Not using subagents for large plans** - Parallelize with shared TaskList for faster execution

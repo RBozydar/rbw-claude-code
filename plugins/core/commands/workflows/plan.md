@@ -8,7 +8,7 @@ argument-hint: "[feature description, bug report, or improvement idea]"
 
 ## Introduction
 
-**Note: The current year is 2025.** Use this when dating plans and searching for recent documentation.
+**Note: The current year is 2026.** Use this when dating plans and searching for recent documentation.
 
 Transform feature descriptions, bug reports, or improvement ideas into well-structured markdown files issues that follow project conventions and best practices. This command provides flexible detail levels to match your needs.
 
@@ -22,25 +22,123 @@ Do not proceed until you have a clear feature description from the user.
 
 ## Main Tasks
 
-### 1. Repository Research & Context Gathering
+### 0. Idea Refinement
+
+**Check for brainstorm output first:**
+
+Before asking questions, look for recent brainstorm documents in `docs/brainstorms/` that match this feature:
+
+```bash
+ls -la docs/brainstorms/*.md 2>/dev/null | head -10
+```
+
+**Relevance criteria:** A brainstorm is relevant if:
+- The topic (from filename or YAML frontmatter) semantically matches the feature description
+- Created within the last 14 days
+- If multiple candidates match, use the most recent one
+
+**If a relevant brainstorm exists:**
+1. Read the brainstorm document
+2. Announce: "Found brainstorm from [date]: [topic]. Using as context for planning."
+3. Extract key decisions, chosen approach, and open questions
+4. **Skip the idea refinement questions below** - the brainstorm already answered WHAT to build
+5. Use brainstorm decisions as input to the research phase
+
+**If multiple brainstorms could match:**
+Use **AskUserQuestion tool** to ask which brainstorm to use, or whether to proceed without one.
+
+**If no brainstorm found (or not relevant), run idea refinement:**
+
+Refine the idea through collaborative dialogue using the **AskUserQuestion tool**:
+
+- Ask questions one at a time to understand the idea fully
+- Prefer multiple choice questions when natural options exist
+- Focus on understanding: purpose, constraints and success criteria
+- Continue until the idea is clear OR user says "proceed"
+
+**Get alternative perspectives:**
+
+Run gemini-brainstorm in parallel during refinement to get architectural perspectives from a different LLM:
+
+- Task gemini-brainstorm(feature_description) - Alternative architectural perspectives
+
+**Gather signals for research decision.** During refinement, note:
+
+- **User's familiarity**: Do they know the codebase patterns? Are they pointing to examples?
+- **User's intent**: Speed vs thoroughness? Exploration vs execution?
+- **Topic risk**: Security, payments, external APIs warrant more caution
+- **Uncertainty level**: Is the approach clear or open-ended?
+
+**Skip option:** If the feature description is already detailed, offer:
+"Your description is clear. Should I proceed with research, or would you like to refine it further?"
+
+### 1. Local Research (Always Runs - Parallel)
 
 <thinking>
-First, I need to understand the project's conventions and existing patterns, leveraging all available resources and use paralel subagents to do this.
+First, I need to understand the project's conventions, existing patterns, and any documented learnings. This is fast and local - it informs whether external research is needed.
 </thinking>
 
-Run these research agents in parallel:
+Run these agents **in parallel** to gather local context:
 
 - Task repo-research-analyst(feature_description)
-- Task best-practices-researcher(feature_description)
-- Task framework-docs-researcher(feature_description)
-- Task gemini-brainstorm(feature_description) - Alternative architectural perspectives from a different LLM
+- Task learnings-researcher(feature_description)
+
+**What to look for:**
+- **Repo research:** existing patterns, CLAUDE.md guidance, technology familiarity, pattern consistency
+- **Learnings:** documented solutions in `docs/solutions/` that might apply (gotchas, patterns, lessons learned)
 
 **Reference Collection:**
 
 - [ ] Document all research findings with specific file paths (e.g., `app/services/example_service.rb:42`)
-- [ ] Include URLs to external documentation and best practices guides
+- [ ] **Include relevant institutional learnings** from `docs/solutions/` (key insights, gotchas to avoid)
 - [ ] Create a reference list of similar issues or PRs (e.g., `#123`, `#456`)
 - [ ] Note any team conventions discovered in `CLAUDE.md` or team documentation
+
+These findings inform the next step.
+
+### 1.5. Research Decision
+
+Based on signals from Step 0 and findings from Step 1, decide whether external research is needed.
+
+**High-risk topics → always research.** Security, payments, external APIs, data privacy. The cost of missing something is too high. This takes precedence over speed signals.
+
+**Strong local context → skip external research.** Codebase has good patterns, CLAUDE.md has guidance, user knows what they want. External research adds little value.
+
+**Uncertainty or unfamiliar territory → research.** User is exploring, codebase has no examples, new technology. External perspective is valuable.
+
+**Get explicit user confirmation using AskUserQuestion tool:**
+
+Present the research decision with options:
+- **Option 1: Skip external research** - "Local context is strong, proceed to planning"
+- **Option 2: Run external research** - "Research best practices and framework docs first"
+- **Option 3: Research specific topic** - "Research only [specific area]"
+
+Examples of what to present:
+- "Your codebase has solid patterns for this. Skip external research and proceed to planning?"
+- "This involves payment processing. I recommend researching current best practices first. Proceed with research?"
+
+**Do not proceed until user confirms.**
+
+### 1.5b. External Research (Conditional)
+
+**Only run if user selected external research in Step 1.5.**
+
+Run these agents in parallel:
+
+- Task best-practices-researcher(feature_description)
+- Task framework-docs-researcher(feature_description)
+
+### 1.6. Consolidate Research
+
+After all research steps complete, consolidate findings:
+
+- Document relevant file paths from repo research (e.g., `app/services/example_service.rb:42`)
+- **Include relevant institutional learnings** from `docs/solutions/` (key insights, gotchas to avoid)
+- Note external documentation URLs and best practices (if external research was done)
+- List related issues or PRs discovered
+- Capture CLAUDE.md conventions
+
+**Optional validation:** Briefly summarize findings and ask if anything looks off or missing before proceeding to planning.
 
 ### 2. Deep Analysis (For Complex Issues)
 
@@ -121,7 +219,44 @@ After planning the issue structure, run SpecFlow Analyzer to validate and refine
 - [ ] Incorporate any identified gaps or edge cases into the issue
 - [ ] Update acceptance criteria based on SpecFlow findings
 
-### 5. Choose Implementation Detail Level
+### 5. Create TaskList
+
+After SpecFlow analysis, create the executable TaskList that will drive implementation:
+
+1. **Create tasks from acceptance criteria:**
+
+   ```
+   # Create a task for each major work item identified
+   TaskCreate: "Implement [component/feature]" (activeForm: "Implementing...")
+   TaskCreate: "Add tests for [component]" (activeForm: "Testing...")
+   TaskCreate: "Update documentation" (activeForm: "Documenting...")
+   ```
+
+2. **Set up dependencies:**
+
+   ```
+   # Tests depend on implementation
+   TaskUpdate: task #2 addBlockedBy [#1]
+   # Docs depend on tests passing
+   TaskUpdate: task #3 addBlockedBy [#2]
+   ```
+
+3. **Get the TaskList ID:**
+
+   ```bash
+   task_list_id=$(ls -t ~/.claude/tasks/ | head -1)
+   echo "TaskList ID: $task_list_id"
+   ```
+
+4. **Include TaskList ID in plan file** (see Output Format below)
+
+**Task creation guidelines:**
+- One task per logical unit of work (model, service, component, test suite)
+- Include clear `activeForm` for progress visibility
+- Set dependencies to prevent race conditions
+- Keep tasks specific and completable in a single focused session
+
+### 6. Choose Implementation Detail Level
 
 Select how comprehensive you want the issue to be, simpler is mostly better.
 
@@ -360,7 +495,7 @@ For non-trivial code changes, use unified diff format to specify exact locations
 - Design documents: [links]
 ```
 
-### 6. Issue Creation & Formatting
+### 7. Issue Creation & Formatting
 
 <thinking>
 Apply best practices for clarity and actionability, making the issue easy to scan and understand
@@ -416,7 +551,7 @@ end
 - [ ] Emphasize comprehensive testing given rapid implementation
 - [ ] Document any AI-generated code that needs human review
 
-### 7. Final Review & Submission
+### 8. Final Review & Submission
 
 **Pre-submission Checklist:**
 
@@ -430,7 +565,31 @@ end
 
 ## Output Format
 
-Write the plan to `plans/<issue_title>.md`
+Write the plan to `plans/<issue_title>.md` with YAML frontmatter containing the TaskList ID:
+
+```markdown
+---
+title: [Issue Title]
+type: [feat|fix|refactor]
+date: YYYY-MM-DD
+task_list_id: [UUID from Step 5]
+---
+
+[Plan content...]
+```
+
+**TaskList section to include in plan:**
+
+```markdown
+## Tasks
+
+Run `/workflows:work` with this plan to execute. Tasks are stored in `~/.claude/tasks/[task_list_id]/`.
+
+To work on these tasks from another session:
+```
+skill: import-tasks [task_list_id]
+```
+```
 
 ## Post-Generation Options
 
@@ -440,17 +599,28 @@ After writing the plan file, use the **AskUserQuestion tool** to present these o
 
 **Options:**
 1. **Open plan in editor** - Open the plan file for review
-2. **Run `/plan_review`** - Get feedback from reviewers (DHH, Kieran, Simplicity)
-3. **Start `/workflows:work`** - Begin implementing this plan locally
-4. **Start `/workflows:work` on remote** - Begin implementing in Claude Code on the web (use `&` to run in background)
-5. **Create Issue** - Create issue in project tracker (GitHub/Linear)
-6. **Simplify** - Reduce detail level
+2. **Run `/deepen-plan`** - Enhance each section with parallel research agents (best practices, performance, edge cases)
+3. **Run `/plan_review`** - Get feedback from reviewers (Kieran, Simplicity, etc.)
+4. **Start `/workflows:work`** - Begin implementing this plan locally
+5. **Start `/workflows:work` on remote** - Begin implementing in Claude Code on the web (use `&` to run in background)
+6. **Parallel execution with subagents** - Spawn multiple agents to work on tasks in parallel
+7. **Create Issue** - Create issue in project tracker (GitHub/Linear)
+8. **Simplify** - Reduce detail level
 
 Based on selection:
 - **Open plan in editor** → Run `open plans/<issue_title>.md` to open the file in the user's default editor
+- **`/deepen-plan`** → Call the /deepen-plan command with the plan file path to enhance with research
 - **`/plan_review`** → Call the /plan_review command with the plan file path
 - **`/workflows:work`** → Call the /workflows:work command with the plan file path
 - **`/workflows:work` on remote** → Run `/workflows:work plans/<issue_title>.md &` to start work in background for Claude Code web
+- **Parallel execution with subagents** → Spawn subagents with the TaskList ID:
+  ```
+  # For Python projects
+  Task(python-coder): "Import tasks from [task_list_id] and work on tasks #1-3"
+
+  # For other projects
+  Task(general-purpose): "Import tasks from [task_list_id] and work on tasks #4-6"
+  ```
 - **Create Issue** → See "Issue Creation" section below
 - **Simplify** → Ask "What should I simplify?" then regenerate simpler version
 - **Other** (automatically provided) → Accept free text for rework or specific changes
