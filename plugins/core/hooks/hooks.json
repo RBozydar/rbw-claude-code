@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/check-hooks-sync.sh\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-hooks-sync.sh",
             "timeout": 5
           }
         ]

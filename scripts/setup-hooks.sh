@@ -113,14 +113,15 @@ if [[ "$CHECK_MODE" != "true" ]]; then
     echo ""
 fi
 
-# Detect marketplace path
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MARKETPLACE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Use the installed marketplace location
+MARKETPLACE_ROOT="$HOME/.claude/plugins/marketplaces/rbw-claude-code"
+MARKETPLACE_ROOT_RELATIVE="~/.claude/plugins/marketplaces/rbw-claude-code"
 
-# Verify we're in the right directory
+# Verify marketplace is installed
 if [[ ! -f "$MARKETPLACE_ROOT/.claude-plugin/marketplace.json" ]]; then
-    echo -e "${RED}Error: Cannot find marketplace.json${NC}"
-    echo "Please run this script from the rbw-claude-code repository"
+    echo -e "${RED}Error: Marketplace not installed${NC}"
+    echo "Expected location: $MARKETPLACE_ROOT_RELATIVE"
+    echo "Install the marketplace first via Claude Code"
     exit 1
 fi
 
@@ -168,16 +169,8 @@ if [[ "$CHECK_MODE" != "true" ]]; then
     echo ""
 fi
 
-# Compute relative path prefix for hooks
-# If marketplace is under ~/.claude, use ~/ relative path; otherwise use absolute
-CLAUDE_HOME="$HOME/.claude"
-if [[ "$MARKETPLACE_ROOT" == "$CLAUDE_HOME"* ]]; then
-    # Marketplace is under ~/.claude, compute relative path
-    RELATIVE_PREFIX="~/.claude${MARKETPLACE_ROOT#$CLAUDE_HOME}"
-else
-    # Not under ~/.claude, use absolute path
-    RELATIVE_PREFIX="$MARKETPLACE_ROOT"
-fi
+# Use relative path prefix for portable hooks
+RELATIVE_PREFIX="$MARKETPLACE_ROOT_RELATIVE"
 
 # Process each hooks.json and collect resolved hooks
 RESOLVED_HOOKS=()
@@ -188,13 +181,8 @@ for hooks_file in "${HOOKS_FILES[@]}"; do
     PLUGIN_DIR="$(dirname "$(dirname "$hooks_file")")"
     PLUGIN_NAME="$(basename "$PLUGIN_DIR")"
 
-    # Compute the path to use for this plugin
-    if [[ "$MARKETPLACE_ROOT" == "$CLAUDE_HOME"* ]]; then
-        # Use relative path with ~/
-        PLUGIN_PATH="~/.claude${PLUGIN_DIR#$CLAUDE_HOME}"
-    else
-        PLUGIN_PATH="$PLUGIN_DIR"
-    fi
+    # Compute the relative path for this plugin
+    PLUGIN_PATH="$MARKETPLACE_ROOT_RELATIVE/plugins/$PLUGIN_NAME"
 
     # Resolve ${CLAUDE_PLUGIN_ROOT} to the computed path
     resolved=$(jq --arg root "$PLUGIN_PATH" \
