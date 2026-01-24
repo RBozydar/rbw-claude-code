@@ -179,8 +179,9 @@ for hooks_file in "${HOOKS_FILES[@]}"; do
     PLUGIN_DIR="$(dirname "$(dirname "$hooks_file")")"
     PLUGIN_NAME="$(basename "$PLUGIN_DIR")"
 
-    # Compute the relative path for this plugin
-    PLUGIN_PATH="$MARKETPLACE_ROOT_RELATIVE/plugins/$PLUGIN_NAME"
+    # Compute the relative path for this plugin (preserve full directory structure)
+    RELATIVE_PLUGIN_PATH="${PLUGIN_DIR#$MARKETPLACE_ROOT/}"
+    PLUGIN_PATH="$MARKETPLACE_ROOT_RELATIVE/$RELATIVE_PLUGIN_PATH"
 
     # Resolve ${CLAUDE_PLUGIN_ROOT} to the computed path
     resolved=$(jq --arg root "$PLUGIN_PATH" \
