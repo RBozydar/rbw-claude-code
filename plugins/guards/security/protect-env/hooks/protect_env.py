@@ -17,6 +17,15 @@ ENV_FILE_PATTERNS = [
     r"/\.env\.[^/\s]+",  # .env.* at any path level
 ]
 
+# Safe template files that don't contain secrets
+SAFE_ENV_PATTERNS = [
+    r"\.env\.example$",
+    r"\.env\.sample$",
+    r"\.env\.template$",
+    r"\.env\.dist$",
+    r"\.env\.defaults$",
+]
+
 # Bash commands that read file contents
 FILE_READING_COMMANDS = [
     "cat",
@@ -66,8 +75,20 @@ BLOCK_MESSAGE = (
 )
 
 
+def is_safe_env_file(path: str) -> bool:
+    """Check if path is a safe template file (e.g., .env.example)."""
+    for pattern in SAFE_ENV_PATTERNS:
+        if re.search(pattern, path, re.IGNORECASE):
+            return True
+    return False
+
+
 def matches_env_file(path: str) -> bool:
     """Check if a path matches any env file pattern."""
+    # Allow safe template files
+    if is_safe_env_file(path):
+        return False
+
     for pattern in ENV_FILE_PATTERNS:
         if re.search(pattern, path):
             return True
@@ -149,6 +170,9 @@ def check_bash_command(tool_input: dict) -> str | None:
     env_in_command = re.findall(
         r'(?:^|[\s\'"/])([^\s\'">|&;]*\.env(?:\.[^\s\'">|&;]*)?)', command
     )
+
+    # Filter out safe template files
+    env_in_command = [f for f in env_in_command if not is_safe_env_file(f)]
 
     if env_in_command:
         # Check if any file-reading command is used with the .env file
