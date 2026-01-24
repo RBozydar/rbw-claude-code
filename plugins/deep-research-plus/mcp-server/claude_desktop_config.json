@@ -3,11 +3,12 @@
     "gdelt-research": {
       "command": "uv",
       "args": [
-        "--directory",
-        "/home/rbw/repo/rbw-claude-code/plugins/geopolitical-research/mcp-server",
         "run",
+        "--with",
+        "gdelt-py[mcp]",
         "python",
-        "server.py"
+        "-m",
+        "py_gdelt.mcp_server.server"
       ]
     }
   }
