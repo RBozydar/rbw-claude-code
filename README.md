@@ -3,6 +3,8 @@
 A Claude Code plugin marketplace for Python development with AI-powered code
 review, workflow automation, and productivity tools.
 
+> This project started as a fork of [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin).
+
 ## Installation
 
 Add this marketplace to Claude Code:
