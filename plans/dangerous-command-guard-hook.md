@@ -31,7 +31,7 @@ Rather than blocking these commands entirely, this hook inspects the command arg
            "hooks": [
              {
                "type": "command",
-               "command": "\"$HOME/.claude/hooks/dangerous_command_guard.py\"",
+               "command": "$HOME/.claude/hooks/dangerous_command_guard.py",
                "timeout": 5
              }
            ]

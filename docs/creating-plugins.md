@@ -27,7 +27,7 @@ cat > plugins/my-plugin/settings.json << 'EOF'
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_DIR/hooks/my_hook.py\"",
+            "command": "$CLAUDE_PLUGIN_DIR/hooks/my_hook.py",
             "timeout": 30
           }
         ]

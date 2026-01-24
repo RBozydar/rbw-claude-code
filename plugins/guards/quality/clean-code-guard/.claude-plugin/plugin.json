@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/check-clean-patterns.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-clean-patterns.py",
             "timeout": 5
           }
         ]

@@ -47,7 +47,7 @@ In your plugin's `settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_DIR/hooks/my_hook.py\"",
+            "command": "$CLAUDE_PLUGIN_DIR/hooks/my_hook.py",
             "timeout": 30
           }
         ]
@@ -59,7 +59,7 @@ In your plugin's `settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_DIR/hooks/format.py\"",
+            "command": "$CLAUDE_PLUGIN_DIR/hooks/format.py",
             "timeout": 60
           }
         ]

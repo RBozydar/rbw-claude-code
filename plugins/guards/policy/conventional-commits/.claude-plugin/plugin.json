@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/conventional_commits.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/conventional_commits.py",
             "timeout": 5
           }
         ]
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/post_validate_commit.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post_validate_commit.py",
             "timeout": 10
           }
         ]

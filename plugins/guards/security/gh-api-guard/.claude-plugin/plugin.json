@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/check-gh-api.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-gh-api.py",
             "timeout": 5
           }
         ]

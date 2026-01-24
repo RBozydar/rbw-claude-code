@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/check-gemini-model.py\"",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-gemini-model.py",
             "timeout": 5
           }
         ]
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/post-check-gemini.py\"",
+            "command": "{CLAUDE_PLUGIN_ROOT}/hooks/post-check-gemini.py",
             "timeout": 5
           }
         ]
