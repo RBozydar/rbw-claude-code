@@ -269,7 +269,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    poetry run ruff check .
 
    # Run type checking
-   mypy .  # or pyright
+   mypy .  
    ```
 
    **For other languages:**
@@ -284,6 +284,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - **security-sentinel**: Scan for security vulnerabilities
    - **kieran-python-reviewer**: Verify Python conventions (Python projects)
    - **skeptical-simplicity-reviewer**: Challenge over-engineering
+   - **agent-native-reviewer**: Make sure the work done is agent compatible
 
    Run reviewers in parallel with Task tool:
 

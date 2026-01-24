@@ -192,8 +192,11 @@ Think like a product manager - what would make this issue clear and actionable? 
 
 **Title & Categorization:**
 
-- [ ] Draft clear, searchable issue title using conventional format (e.g., `feat:`, `fix:`, `docs:`)
+- [ ] Draft clear, searchable issue title using conventional format (e.g., `feat: Add user authentication`, `fix: Cart total calculation`)
 - [ ] Determine issue type: enhancement, bug, refactor
+- [ ] Convert title to filename: add today's date prefix, strip prefix colon, kebab-case, add `-plan` suffix
+  - Example: `feat: Add User Authentication` → `2026-01-21-feat-add-user-authentication-plan.md`
+  - Keep it descriptive (3-5 words after prefix) so plans are findable by context
 
 **Stakeholder Analysis:**
 
@@ -273,6 +276,14 @@ Select how comprehensive you want the issue to be, simpler is mostly better.
 **Structure:**
 
 ````markdown
+---
+title: [Issue Title]
+type: [feat|fix|refactor]
+date: YYYY-MM-DD
+---
+
+# [Issue Title]
+
 [Brief problem/feature description]
 
 ## Acceptance Criteria
@@ -334,6 +345,14 @@ For non-trivial code changes, use unified diff format to specify exact locations
 **Structure:**
 
 ```markdown
+---
+title: [Issue Title]
+type: [feat|fix|refactor]
+date: YYYY-MM-DD
+---
+
+# [Issue Title]
+
 ## Overview
 
 [Comprehensive description]
@@ -390,6 +409,14 @@ For non-trivial code changes, use unified diff format to specify exact locations
 **Structure:**
 
 ```markdown
+---
+title: [Issue Title]
+type: [feat|fix|refactor]
+date: YYYY-MM-DD
+---
+
+# [Issue Title]
+
 ## Overview
 
 [Executive summary]
@@ -565,7 +592,21 @@ end
 
 ## Output Format
 
-Write the plan to `plans/<issue_title>.md` with YAML frontmatter containing the TaskList ID:
+**Filename:** Use the date and kebab-case filename from Step 2 Title & Categorization.
+
+```
+docs/plans/YYYY-MM-DD-<type>-<descriptive-name>-plan.md
+```
+Examples:
+- ✅ `docs/plans/2026-01-15-feat-user-authentication-flow-plan.md`
+- ✅ `docs/plans/2026-02-03-fix-checkout-race-condition-plan.md`
+- ✅ `docs/plans/2026-03-10-refactor-api-client-extraction-plan.md`
+- ❌ `docs/plans/2026-01-15-feat-thing-plan.md` (not descriptive - what "thing"?)
+- ❌ `docs/plans/2026-01-15-feat-new-feature-plan.md` (too vague - what feature?)
+- ❌ `docs/plans/2026-01-15-feat: user auth-plan.md` (invalid characters - colon and space)
+- ❌ `docs/plans/feat-user-auth-plan.md` (missing date prefix)
+
+Write the plan to filename from Step 2 Title & Categorization with YAML frontmatter containing the TaskList ID:
 
 ```markdown
 ---
@@ -595,7 +636,7 @@ skill: import-tasks [task_list_id]
 
 After writing the plan file, use the **AskUserQuestion tool** to present these options:
 
-**Question:** "Plan ready at `plans/<issue_title>.md`. What would you like to do next?"
+**Question:** "Plan ready at `docs/plans/YYYY-MM-DD-<type>-<name>-plan.md`. What would you like to do next?"
 
 **Options:**
 1. **Open plan in editor** - Open the plan file for review
@@ -608,11 +649,11 @@ After writing the plan file, use the **AskUserQuestion tool** to present these o
 8. **Simplify** - Reduce detail level
 
 Based on selection:
-- **Open plan in editor** → Run `open plans/<issue_title>.md` to open the file in the user's default editor
+- **Open plan in editor** → Run `open docs/plans/<plan_filename>.md` to open the file in the user's default editor
 - **`/deepen-plan`** → Call the /deepen-plan command with the plan file path to enhance with research
 - **`/plan_review`** → Call the /plan_review command with the plan file path
 - **`/workflows:work`** → Call the /workflows:work command with the plan file path
-- **`/workflows:work` on remote** → Run `/workflows:work plans/<issue_title>.md &` to start work in background for Claude Code web
+- **`/workflows:work` on remote** → Run `/workflows:work docs/plans/<plan_filename>.md &` to start work in background for Claude Code web
 - **Parallel execution with subagents** → Spawn subagents with the TaskList ID:
   ```
   # For Python projects
@@ -639,20 +680,14 @@ When user selects "Create Issue", detect their project tracker from CLAUDE.md:
    ```bash
    # Extract title from plan filename (kebab-case to Title Case)
    # Read plan content for body
-   gh issue create --title "feat: [Plan Title]" --body-file plans/<issue_title>.md
+   gh issue create --title "feat: [Plan Title]" --body-file docs/plans/<plan_filename>.md
    ```
 
-3. **If Linear:**
-   ```bash
-   # Use linear CLI if available, or provide instructions
-   # linear issue create --title "[Plan Title]" --description "$(cat plans/<issue_title>.md)"
-   ```
-
-4. **If no tracker configured:**
+3. **If no tracker configured:**
    Ask user: "Which project tracker do you use? (GitHub/Linear/Other)"
    - Suggest adding `project_tracker: github` or `project_tracker: linear` to their CLAUDE.md
 
-5. **After creation:**
+4. **After creation:**
    - Display the issue URL
    - Ask if they want to proceed to `/workflows:work` or `/plan_review`
 
