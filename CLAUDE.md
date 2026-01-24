@@ -9,21 +9,29 @@ tools and Python workflow plugins.
 
 ## Available Plugins
 
+### Feature Plugins
+
 | Plugin | Type | Description |
 |--------|------|-------------|
 | `core` | agents/commands/skills | Universal AI development tools |
 | `python-backend` | agents/commands | Python-specific reviewers and commands |
-| `enforce-uv` | hook | Block bare python/pip commands |
-| `conventional-commits` | hook | Validate commit message format |
-| `python-format` | hook | Auto-format with ruff |
-| `python-typecheck` | hook | Type check after edits |
-| `test-reminder` | hook | Remind about missing tests |
-| `protect-env` | hook | Block reading .env files |
-| `git-safety-guard` | hook | Block destructive git commands |
-| `safety-guard` | hook | Block destructive file ops & supply chain attacks |
-| `gh-api-guard` | hook | Allow only safe gh api commands |
-| `gemini-model-guard` | hook | Block Gemini 2.x models, enforce Gemini 3 |
-| `clean-code-guard` | hook | Block messy patterns (python -c, heredocs) |
+| `deep-research-plus` | agents/skills | Advanced research with GDELT integration |
+
+### Guard Plugins (`plugins/guards/`)
+
+| Category | Plugin | Description |
+|----------|--------|-------------|
+| **security** | `safety-guard` | Block destructive file ops & supply chain attacks |
+| **security** | `git-safety-guard` | Block destructive git commands |
+| **security** | `gh-api-guard` | Allow only safe gh api commands |
+| **security** | `protect-env` | Block reading .env files |
+| **quality** | `python-format` | Auto-format with ruff |
+| **quality** | `python-typecheck` | Type check after edits |
+| **quality** | `test-reminder` | Remind about missing tests |
+| **quality** | `clean-code-guard` | Block messy patterns (python -c, heredocs) |
+| **policy** | `enforce-uv` | Block bare python/pip commands |
+| **policy** | `conventional-commits` | Validate commit message format |
+| **policy** | `gemini-model-guard` | Block Gemini 2.x models, enforce Gemini 3 |
 
 ## Structure
 
@@ -43,9 +51,22 @@ plugins/
       review/                      # Python reviewers
       external-llm/                # Gemini agents
     commands/                      # /pytest-runner, /type-check
-  <hook-plugin>/                   # Hook-based plugins
-    .claude-plugin/plugin.json     # Plugin config with inline hooks
-    hooks/                         # Hook scripts
+  deep-research-plus/              # Advanced research plugin
+  guards/                          # All enforcement/hook plugins
+    security/                      # Destructive operation prevention
+      safety-guard/
+      git-safety-guard/
+      gh-api-guard/
+      protect-env/
+    quality/                       # Code quality enforcement
+      python-format/
+      python-typecheck/
+      test-reminder/
+      clean-code-guard/
+    policy/                        # Tool/workflow policies
+      enforce-uv/
+      conventional-commits/
+      gemini-model-guard/
 ```
 
 ## Plugin Types
@@ -199,7 +220,10 @@ These hooks block potentially destructive commands to prevent accidental data lo
 
 ## Adding a New Plugin
 
-1. Create directory: `plugins/<plugin-name>/`
+For feature plugins: `plugins/<plugin-name>/`
+For guard plugins: `plugins/guards/<category>/<plugin-name>/` (security, quality, or policy)
+
+1. Create the plugin directory
 2. Create `.claude-plugin/plugin.json`:
 
    ```json

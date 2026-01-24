@@ -24,68 +24,68 @@
     {
       "name": "enforce-uv",
       "description": "Block bare python/pip/pytest commands, enforce uv usage",
-      "source": "./plugins/enforce-uv",
-      "category": "development"
+      "source": "./plugins/guards/policy/enforce-uv",
+      "category": "guards/policy"
     },
     {
       "name": "conventional-commits",
       "description": "Validate git commit messages follow conventional format",
-      "source": "./plugins/conventional-commits",
-      "category": "productivity"
-    },
-    {
-      "name": "python-format",
-      "description": "Auto-format Python files with ruff after edits",
-      "source": "./plugins/python-format",
-      "category": "development"
-    },
-    {
-      "name": "python-typecheck",
-      "description": "Run type checking after Python file edits",
-      "source": "./plugins/python-typecheck",
-      "category": "development"
-    },
-    {
-      "name": "test-reminder",
-      "description": "Remind to add tests when creating new Python files",
-      "source": "./plugins/test-reminder",
-      "category": "development"
-    },
-    {
-      "name": "protect-env",
-      "description": "Prevent reading .env files to protect secrets",
-      "source": "./plugins/protect-env",
-      "category": "security"
-    },
-    {
-      "name": "git-safety-guard",
-      "description": "Block destructive git commands to prevent data loss",
-      "source": "./plugins/git-safety-guard",
-      "category": "security"
-    },
-    {
-      "name": "safety-guard",
-      "description": "Block destructive file operations, env file reading, and supply chain attacks",
-      "source": "./plugins/safety-guard",
-      "category": "security"
-    },
-    {
-      "name": "gh-api-guard",
-      "description": "Allow only safe read-only gh api commands",
-      "source": "./plugins/gh-api-guard",
-      "category": "security"
+      "source": "./plugins/guards/policy/conventional-commits",
+      "category": "guards/policy"
     },
     {
       "name": "gemini-model-guard",
       "description": "Block Gemini 2.x models, enforce Gemini 3 models only",
-      "source": "./plugins/gemini-model-guard",
-      "category": "development"
+      "source": "./plugins/guards/policy/gemini-model-guard",
+      "category": "guards/policy"
+    },
+    {
+      "name": "python-format",
+      "description": "Auto-format Python files with ruff after edits",
+      "source": "./plugins/guards/quality/python-format",
+      "category": "guards/quality"
+    },
+    {
+      "name": "python-typecheck",
+      "description": "Run type checking after Python file edits",
+      "source": "./plugins/guards/quality/python-typecheck",
+      "category": "guards/quality"
+    },
+    {
+      "name": "test-reminder",
+      "description": "Remind to add tests when creating new Python files",
+      "source": "./plugins/guards/quality/test-reminder",
+      "category": "guards/quality"
     },
     {
       "name": "clean-code-guard",
       "description": "Block messy patterns (python -c, heredocs), nudge toward clean alternatives",
-      "source": "./plugins/clean-code-guard",
-      "category": "development"
+      "source": "./plugins/guards/quality/clean-code-guard",
+      "category": "guards/quality"
+    },
+    {
+      "name": "safety-guard",
+      "description": "Block destructive file operations, env file reading, and supply chain attacks",
+      "source": "./plugins/guards/security/safety-guard",
+      "category": "guards/security"
+    },
+    {
+      "name": "git-safety-guard",
+      "description": "Block destructive git commands to prevent data loss",
+      "source": "./plugins/guards/security/git-safety-guard",
+      "category": "guards/security"
+    },
+    {
+      "name": "gh-api-guard",
+      "description": "Allow only safe read-only gh api commands",
+      "source": "./plugins/guards/security/gh-api-guard",
+      "category": "guards/security"
+    },
+    {
+      "name": "protect-env",
+      "description": "Prevent reading .env files to protect secrets",
+      "source": "./plugins/guards/security/protect-env",
+      "category": "guards/security"
     }
   ]
 }

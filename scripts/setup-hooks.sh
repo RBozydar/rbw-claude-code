@@ -149,14 +149,12 @@ if [[ "$CHECK_MODE" != "true" ]]; then
     echo ""
 fi
 
-# Discover all hooks.json files
+# Discover all hooks.json files (using find for recursive search)
 [[ "$CHECK_MODE" != "true" ]] && echo -e "${BLUE}Discovering hooks...${NC}"
 HOOKS_FILES=()
-for hooks_file in "$MARKETPLACE_ROOT"/plugins/*/hooks/hooks.json; do
-    if [[ -f "$hooks_file" ]]; then
-        HOOKS_FILES+=("$hooks_file")
-    fi
-done
+while IFS= read -r -d '' hooks_file; do
+    HOOKS_FILES+=("$hooks_file")
+done < <(find "$MARKETPLACE_ROOT/plugins" -name "hooks.json" -path "*/hooks/*" -print0 2>/dev/null)
 
 if [[ ${#HOOKS_FILES[@]} -eq 0 ]]; then
     echo -e "${RED}No hooks.json files found in plugins${NC}"
