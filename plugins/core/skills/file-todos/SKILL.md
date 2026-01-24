@@ -249,3 +249,10 @@ grep -r "payment" todos/
 - Temporary tracking for single conversation
 - Not persisted to disk
 - Different from both systems above
+
+**TaskList (built-in tools):**
+- Session-based execution tracking via TaskCreate/TaskUpdate/TaskList/TaskGet
+- Stored in `~/.claude/tasks/[session-uuid]/`
+- Enables `/workflows:work` integration and cross-session coordination
+- See `tasklist-conventions` skill for patterns
+- **Recommended combination**: Use file-todos for detailed documentation, TaskList for execution tracking

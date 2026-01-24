@@ -61,11 +61,12 @@ Run ALL or most of these agents at the same time:
 4. Task security-sentinel(PR content)
 5. Task performance-oracle(PR content)
 6. Task agent-native-reviewer(PR content) - Verify new features are agent-accessible
+7. Task baseline-code-reviewer(PR content) - 17 atomic code smell categories
+8. Task slop-detector(PR content) - AI-generated code patterns: unnecessary comments, defensive over-engineering, type workarounds
 
 **Deep Code Quality Reviewers (run for thorough reviews):**
-7. Task baseline-code-reviewer(PR content) - 17 atomic code smell categories
-8. Task coherence-reviewer(PR content) - Repetition, naming consistency, zombie code
-9. Task drift-reviewer(PR content) - Module structure, cross-file comprehension, abstraction opportunities
+1. Task coherence-reviewer(PR content) - Repetition, naming consistency, zombie code
+2. Task drift-reviewer(PR content) - Module structure, cross-file comprehension, abstraction opportunities
 
 **Research Agents:**
 10. Task git-history-analyzer(PR content)
@@ -82,11 +83,11 @@ These agents are run based on the programming language detected in the PR:
 **If PR contains Python files (*.py, pyproject.toml, requirements.txt):**
 - Task kieran-python-reviewer(PR content) - Python code review with type hints, Pythonic patterns
 - Task skeptical-simplicity-reviewer(PR content) - Anti-overengineering critique
-- Task ml-expert-reviewer(PR content) - If ML/DS/LLM code detected (notebooks, model code, prompts)
+- Task ml-expert-reviewer(PR content) - If ML/DS/LLM code detected (notebooks, model code, prompts, dealing with LLMs)
 
 **Detection for ML/DS code:**
 - `*.ipynb` files present
-- Imports of: torch, tensorflow, sklearn, pandas, numpy, transformers, openai, anthropic
+- Imports of: torch, tensorflow, sklearn, pandas, numpy, transformers, openai, anthropic, litellm
 - Files in directories named: models/, ml/, ai/, llm/, data/
 
 </language_agents>
@@ -124,7 +125,42 @@ These agents are run ONLY when the PR matches specific criteria. Check the PR fi
 **What these agents check:**
 - `refactor-analyst-agent`: Architecture, modules, abstraction opportunities, types, error handling, conditionals, naming, extraction, testability, modernization, readability
 
+**If PR is a bug fix:**
+
+- Task bug-reproduction-validator(PR content) - Validates the fix actually resolves the reported issue
+
+**When to run bug validation:**
+- PR title/body mentions: fix, bug, issue, resolve, closes #
+- PR references a bug report or issue number
+- PR description describes unexpected behavior being corrected
+
+**What this agent checks:**
+- `bug-reproduction-validator`: Attempts to reproduce the original bug, validates the fix addresses root cause, checks for regression potential
+
 </conditional_agents>
+
+#### Second Opinion (Optional - for high-stakes reviews):
+
+<second_opinion>
+
+For critical PRs or when you want diverse perspectives, get a second opinion from a different LLM:
+
+**When to run:**
+- Security-sensitive changes (authentication, authorization, data access)
+- High-risk refactors affecting core functionality
+- PRs that will be difficult to revert
+- When Claude's review feels uncertain or incomplete
+
+**Run:**
+- Task gemini-reviewer(PR content) - Second opinion from Gemini to catch Claude's blind spots
+
+**What this provides:**
+- Different model's perspective on the same code
+- Potential issues Claude might miss due to training differences
+- Consensus validation (both models agree = higher confidence)
+- Conflict identification (models disagree = needs human attention)
+
+</second_opinion>
 
 ### 4. Ultra-Thinking Deep Dive Phases
 
@@ -225,9 +261,9 @@ Complete system context map with component interactions
 
 Run the Task code-simplicity-reviewer() to see if we can simplify the code.
 
-### 5. Findings Synthesis and Todo Creation Using file-todos Skill
+### 5. Findings Synthesis, Documentation, and Execution Tracking
 
-<critical_requirement> ALL findings MUST be stored in the todos/ directory using the file-todos skill. Create todo files immediately after synthesis - do NOT present findings for user approval first. Use the skill for structured todo management. </critical_requirement>
+<critical_requirement> ALL findings MUST be stored in the todos/ directory using the file-todos skill AND tracked in TaskList for execution. Create todo files immediately after synthesis - do NOT present findings for user approval first. Use file-todos for detailed documentation and TaskList for execution tracking with `/workflows:work` integration. </critical_requirement>
 
 #### Step 1: Synthesize All Findings
 
@@ -240,7 +276,7 @@ Remove duplicates, prioritize by severity and impact.
 
 - [ ] Collect findings from all parallel agents
 - [ ] Categorize by type: security, performance, architecture, quality, etc.
-- [ ] Assign severity levels: P1 CRITICAL, P2 IMPORTANT, P3 NICE-TO-HAVE
+- [ ] Assign severity levels: 🔴 CRITICAL (P1), 🟡 IMPORTANT (P2), 🔵 NICE-TO-HAVE (P3)
 - [ ] Remove duplicate or overlapping findings
 - [ ] Estimate effort for each finding (Small/Medium/Large)
 
@@ -249,6 +285,41 @@ Remove duplicates, prioritize by severity and impact.
 #### Step 2: Create Todo Files Using file-todos Skill
 
 <critical_instruction> Use the file-todos skill to create todo files for ALL findings immediately. Do NOT present findings one-by-one asking for user approval. Create all todo files in parallel using the skill, then summarize results to user. </critical_instruction>
+**Implementation Options:**
+
+**Option A: Direct File Creation (Fast)**
+
+- Create todo files directly using Write tool
+- All findings in parallel for speed
+- Use standard template from `.claude/skills/file-todos/assets/todo-template.md`
+- Follow naming convention: `{issue_id}-pending-{priority}-{description}.md`
+
+**Option B: Sub-Agents in Parallel (Recommended for Scale)** For large PRs with 15+ findings, use sub-agents to create finding files in parallel:
+
+```bash
+# Launch multiple finding-creator agents in parallel
+Task() - Create todos for first finding
+Task() - Create todos for second finding
+Task() - Create todos for third finding
+etc. for each finding.
+```
+
+Sub-agents can:
+
+- Process multiple findings simultaneously
+- Write detailed todo files with all sections filled
+- Organize findings by severity
+- Create comprehensive Proposed Solutions
+- Add acceptance criteria and work logs
+- Complete much faster than sequential processing
+
+**Execution Strategy:**
+
+1. Synthesize all findings into categories (P1/P2/P3)
+2. Group findings by severity
+3. Launch 3 parallel sub-agents (one per severity level)
+4. Each sub-agent creates its batch of todos using the file-todos skill
+5. Consolidate results and present summary
 
 **Process (Using file-todos Skill):**
 
@@ -266,6 +337,13 @@ Remove duplicates, prioritize by severity and impact.
    skill: file-todos
    ```
 
+   The skill provides:
+
+   - Template location: `.claude/skills/file-todos/assets/todo-template.md`
+   - Naming convention: `{issue_id}-{status}-{priority}-{description}.md`
+   - YAML frontmatter structure: status, priority, issue_id, tags, dependencies
+   - All required sections: Problem Statement, Findings, Solutions, etc.
+
 3. Create todo files in parallel:
 
    ```bash
@@ -280,6 +358,22 @@ Remove duplicates, prioritize by severity and impact.
    003-pending-p2-concurrency-limit.md
    004-pending-p3-unused-parameter.md
    ```
+
+5. Follow template structure from file-todos skill: `.claude/skills/file-todos/assets/todo-template.md`
+
+**Todo File Structure (from template):**
+
+Each todo must include:
+
+- **YAML frontmatter**: status, priority, issue_id, tags, dependencies
+- **Problem Statement**: What's broken/missing, why it matters
+- **Findings**: Discoveries from agents with evidence/location
+- **Proposed Solutions**: 2-3 options, each with pros/cons/effort/risk
+- **Recommended Action**: (Filled during triage, leave blank initially)
+- **Technical Details**: Affected files, components, database changes
+- **Acceptance Criteria**: Testable checklist items
+- **Work Log**: Dated record with actions and learnings
+- **Resources**: Links to PR, issues, documentation, similar patterns
 
 **File naming convention:**
 
@@ -306,21 +400,59 @@ Examples:
 
 **Tagging:** Always add `code-review` tag, plus: `security`, `performance`, `architecture`, `python`, `quality`, etc.
 
+#### Step 2.5: Create TaskList for Execution Tracking
+
+After creating file-todos for documentation, create a TaskList for execution tracking. This enables `/workflows:work` integration and cross-session coordination.
+
+**Why both file-todos AND TaskList?**
+- **file-todos**: Detailed documentation (Problem Statement, Solutions, Work Log) - committed to repo
+- **TaskList**: Execution tracking with dependencies and status - enables `/workflows:work`
+
+**Create tasks from findings:**
+
+```
+# For each finding, create a task linking to its todo file
+TaskCreate:
+  subject: "Fix [finding description]"
+  description: "Address [brief description]. See todos/[todo-filename].md for full context."
+  activeForm: "Fixing [finding description]"
+```
+
+**Set up dependencies based on priority:**
+
+```
+# P1 findings should be completed first
+# P2/P3 findings can be blocked by related P1 work
+
+TaskUpdate: #[p2_task] addBlockedBy [#related_p1_task]
+```
+
+**Get TaskList ID for cross-session work:**
+
+```bash
+task_list_id=$(ls -t ~/.claude/tasks/ | head -1)
+echo "TaskList ID: $task_list_id"
+```
+
+**Include in summary for `/workflows:work` integration.**
+
+See `tasklist-conventions` skill for detailed patterns.
+
 #### Step 3: Summary Report
 
 After creating all todo files, present comprehensive summary:
 
 ```markdown
-## Code Review Complete
+## ✅ Code Review Complete
 
 **Review Target:** PR #XXXX - [PR Title] **Branch:** [branch-name]
 
 ### Findings Summary:
 
 - **Total Findings:** [X]
-- **P1 CRITICAL:** [count] - BLOCKS MERGE
-- **P2 IMPORTANT:** [count] - Should Fix
-- **P3 NICE-TO-HAVE:** [count] - Enhancements
+- **🔴 CRITICAL (P1):** [count] - BLOCKS MERGE
+- **🟡 IMPORTANT (P2):** [count] - Should Fix
+- **🔵 NICE-TO-HAVE (P3):** [count] - Enhancements
 
 ### Created Todo Files:
 
@@ -338,6 +470,25 @@ After creating all todo files, present comprehensive summary:
 
 - `005-pending-p3-{finding}.md` - {description}
 
+### TaskList for Execution:
+
+**TaskList ID:** `[task_list_id]`
+
+Tasks created: [count]
+- #1: Fix [P1 finding] (blocked by: none)
+- #2: Fix [P1 finding] (blocked by: none)
+- #3: Resolve [P2 finding] (blocked by: #1, #2)
+- ...
+
+**To work on findings:**
+```bash
+# In this session
+/workflows:work
+
+# In another session
+skill: import-tasks [task_list_id]
+```
+
 ### Review Agents Used:
 
 **Core:**
@@ -347,11 +498,20 @@ After creating all todo files, present comprehensive summary:
 - architecture-strategist
 - pattern-recognition-specialist
 - agent-native-reviewer
+- baseline-code-reviewer
+- slop-detector
 
 **Deep Quality (if run):**
-- baseline-code-reviewer
 - coherence-reviewer
 - drift-reviewer
+
+**Conditional (if applicable):**
+- data-migration-expert (migrations)
+- refactor-analyst-agent (refactors)
+- bug-reproduction-validator (bug fixes)
+
+**Second Opinion (if run):**
+- gemini-reviewer
 
 **Language-Specific:**
 - [language-specific agents used]
@@ -359,10 +519,63 @@ After creating all todo files, present comprehensive summary:
 ### Next Steps:
 
 1. **Address P1 Findings**: CRITICAL - must be fixed before merge
-2. **Triage All Todos**: `ls todos/*-pending-*.md` or `/triage`
-3. **Work on Approved Todos**: `/resolve_todo_parallel`
+
+   - Review each P1 todo in detail
+   - Implement fixes or request exemption
+   - Verify fixes before merging PR
+
+2. **Execute via TaskList** (Recommended):
+   ```bash
+   # Work through tasks with progress tracking
+   /workflows:work
+
+   # Or in another session, import tasks first
+   skill: import-tasks [task_list_id]
+   ```
+
+3. **Triage All Todos** (Optional):
+   ```bash
+   ls todos/*-pending-*.md  # View all pending todos
+   /triage                  # Use slash command for interactive triage
+   ```
+
+4. **Work on Approved Todos**:
+
+   ```bash
+   /resolve_todo_parallel  # Fix all approved items efficiently
+   ```
+
+5. **Track Progress**:
+   - TaskList: Use `TaskList` to see status, `TaskUpdate` to mark complete
+   - file-todos: Rename file when status changes: pending → ready → complete
+   - Update Work Log as you work
+   - Commit todos: `git add todos/ && git commit -m "refactor: add code review findings"`
+
+### Severity Breakdown:
+
+**🔴 P1 (Critical - Blocks Merge):**
+
+- Security vulnerabilities
+- Data corruption risks
+- Breaking changes
+- Critical architectural issues
+
+**🟡 P2 (Important - Should Fix):**
+
+- Performance issues
+- Significant architectural concerns
+- Major code quality problems
+- Reliability issues
+
+**🔵 P3 (Nice-to-Have):**
+
+- Minor improvements
+- Code cleanup
+- Optimization opportunities
+- Documentation updates
+
 ```
 
 ### Important: P1 Findings Block Merge
 
-Any **P1 (CRITICAL)** findings must be addressed before merging the PR. Present these prominently and ensure they're resolved before accepting the PR.
+Any **🔴 P1 (CRITICAL)** findings must be addressed before merging the PR. Present these prominently and ensure they're resolved before accepting the PR.
