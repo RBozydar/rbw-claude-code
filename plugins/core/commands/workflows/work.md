@@ -269,7 +269,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    poetry run ruff check .
 
    # Run type checking
-   mypy .  # or pyright
+   mypy .  
    ```
 
    **For other languages:**
@@ -284,6 +284,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - **security-sentinel**: Scan for security vulnerabilities
    - **kieran-python-reviewer**: Verify Python conventions (Python projects)
    - **skeptical-simplicity-reviewer**: Challenge over-engineering
+   - **agent-native-reviewer**: Make sure the work done is agent compatible
 
    Run reviewers in parallel with Task tool:
 
@@ -301,6 +302,31 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Code follows existing patterns
    - Figma designs match (if applicable)
    - No console errors or warnings
+
+4. **Pre-Ship Decision**
+
+   After quality checks pass, use the **AskUserQuestion tool** to present options:
+
+   **Question:** "Quality checks complete. Ready to ship?"
+
+   **Options:**
+   1. **Run `/workflows:review`** (Recommended for complex changes) - Multi-agent exhaustive review with ultra-thinking and worktrees
+   2. **Ship it** - Proceed directly to commit and PR
+   3. **Run specific reviewers** - Choose which reviewer agents to run
+
+   Based on selection:
+   - **`/workflows:review`** → Call the /workflows:review command for thorough multi-agent analysis
+   - **Ship it** → Proceed to Phase 4
+   - **Run specific reviewers** → Ask which reviewers to run (code-simplicity, security-sentinel, performance-oracle, etc.), run them, address findings, then return to this decision point
+
+   **When to recommend `/workflows:review`:**
+   - Changes touch 10+ files
+   - Security-sensitive code (auth, permissions, data access)
+   - Performance-critical paths
+   - Complex business logic or algorithms
+   - Significant refactoring
+
+   For simpler changes, "Ship it" is usually sufficient since core quality checks already passed.
 
 ### Phase 4: Ship It
 

@@ -21,6 +21,13 @@ Brainstorming can be skipped when:
 - The user knows exactly what they want
 - The task is a straightforward bug fix or well-defined change
 
+### Explicit Skip Signals
+- User says "just do it" or "proceed"
+- Requirements include acceptance criteria
+- User references a specific existing pattern
+- Task is a bug fix with clear reproduction steps
+- User provides a detailed spec or design document
+
 ## Core Process
 
 ### Phase 0: Assess Requirement Clarity
@@ -164,6 +171,33 @@ Keep sections short—200-300 words maximum. After each section of output, pause
 
 This prevents wasted effort on misaligned designs.
 
+## Exploration vs Convergence
+
+Brainstorming has two distinct modes:
+
+### Exploration Mode (Divergent)
+- Goal: Generate many options without judgment
+- When: Early in brainstorming, unclear requirements, new domains
+- Techniques:
+  - "What else could we do?"
+  - Challenge assumptions
+  - Consider radical alternatives
+  - Use Gemini for external perspectives
+  - Run Devil's Advocate to stress-test emerging ideas
+
+### Convergence Mode (Focused)
+- Goal: Narrow to a decision
+- When: Options are clear, trade-offs understood
+- Techniques:
+  - Compare against success criteria
+  - Apply constraints as filters
+  - Use weighted decision matrices for complex choices
+
+### Mode Transitions
+- Signal exploration → convergence: "We have enough options. Let's evaluate."
+- Signal convergence → exploration: "We're missing something. Let's step back."
+- Always confirm mode transitions with the user
+
 ## Anti-Patterns to Avoid
 
 | Anti-Pattern | Better Approach |
@@ -174,6 +208,12 @@ This prevents wasted effort on misaligned designs.
 | Ignoring existing codebase patterns | Research what exists first |
 | Making assumptions without validating | State assumptions explicitly and confirm |
 | Creating lengthy design documents | Keep it concise—details go in the plan |
+| Proposing solutions before understanding constraints | Explore constraints early, before generating options |
+| Skipping success criteria discussion | Ask "How will you know this is working?" early |
+| Not validating with external perspectives | Use Gemini, Devil's Advocate, or team input for alternative viewpoints |
+| Anchoring on first solution without exploring alternatives | Always present 2-3 options before recommending |
+| Mixing exploration and convergence phases | Keep modes distinct; signal transitions explicitly |
+| Not checking for existing solutions | Search learnings, past brainstorms, and codebase patterns first |
 
 ## Integration with Planning
 
