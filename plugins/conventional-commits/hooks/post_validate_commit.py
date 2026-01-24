@@ -95,7 +95,7 @@ def main() -> None:
 
     # Check if the command succeeded (exit code 0)
     # If it failed, no commit was created
-    stdout = c.tool_output.get("stdout", "")
+    stdout = c.tool_response.get("stdout", "")
 
     # Look for signs that a commit was actually created
     commit_created_indicators = [

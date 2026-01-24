@@ -33,7 +33,7 @@ def main() -> None:
     if c.tool_name != "Bash":
         c.output.exit_success()
 
-    output = c.tool_output.get("stdout", "") + c.tool_output.get("stderr", "")
+    output = c.tool_response.get("stdout", "") + c.tool_response.get("stderr", "")
 
     # Quick check: if "gemini" not in output, skip
     if "gemini" not in output.lower():
