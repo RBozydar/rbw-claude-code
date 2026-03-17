@@ -20,7 +20,7 @@ This command takes a work document (plan, specification, or todo file) and execu
 
 ### Phase 1: Quick Start
 
-1. **Read Plan and Import Tasks**
+1. **Read Plan, Clarify and Import Tasks**
 
    - Read the work document completely
    - **Extract `task_list_id` from YAML frontmatter** (if present)
@@ -231,6 +231,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Don't wait until the end to test
    - Fix failures immediately
    - Add new tests for new functionality
+   - **Unit tests with mocks prove logic in isolation. Integration tests with real objects prove the layers work together.** If your change touches callbacks, middleware, or error handling — you need both.
 
    **Test Commands by Language:**
    - Python: `pytest`, `poetry run pytest`, or `uv run pytest`
