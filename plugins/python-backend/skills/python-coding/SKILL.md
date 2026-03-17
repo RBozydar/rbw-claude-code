@@ -1,5 +1,5 @@
 ---
-name: python-coder
+name: python-coding
 description: This skill provides comprehensive Python development standards covering SOLID principles, asyncio patterns, type hints, testing, and production-quality code. Load this skill when writing, reviewing, or refactoring Python code to apply strict coding standards directly in the current context without spawning a subagent.
 ---
 
