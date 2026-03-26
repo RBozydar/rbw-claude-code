@@ -17,172 +17,189 @@ from pathlib import Path
 
 SKILL_TEMPLATE = """---
 name: {skill_name}
-description: [TODO: Complete and informative explanation of what the skill does and when to use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
+description: [TODO: Describe when this skill should trigger. Mention the kinds of requests, files, systems, or failure modes that should cause Claude to use it. Do not write a vague summary.]
 ---
 
 # {skill_title}
 
 ## Overview
 
-[TODO: 1-2 sentences explaining what this skill enables]
+[TODO: In 1-3 sentences, explain what capability this skill gives Claude and what non-obvious value it adds. Focus on the delta from Claude's default behavior.]
 
-## Structuring This Skill
+## Trigger Examples
 
-[TODO: Choose the structure that best fits this skill's purpose. Common patterns:
+[TODO: Add 3-6 concrete examples of requests that should trigger this skill.
+Examples:
+- "..."
+- "..."
+- "..."
+]
 
-**1. Workflow-Based** (best for sequential processes)
-- Works well when there are clear step-by-step procedures
-- Example: DOCX skill with "Workflow Decision Tree" → "Reading" → "Creating" → "Editing"
-- Structure: ## Overview → ## Workflow Decision Tree → ## Step 1 → ## Step 2...
+## Skill Category
 
-**2. Task-Based** (best for tool collections)
-- Works well when the skill offers different operations/capabilities
-- Example: PDF skill with "Quick Start" → "Merge PDFs" → "Split PDFs" → "Extract Text"
-- Structure: ## Overview → ## Quick Start → ## Task Category 1 → ## Task Category 2...
+[TODO: Choose the primary category for this skill and delete the others.
+- Library and API reference
+- Product verification
+- Data fetching and analysis
+- Business process and team automation
+- Code scaffolding and templates
+- Code quality and review
+- CI/CD and deployment
+- Runbooks
+- Infrastructure operations
 
-**3. Reference/Guidelines** (best for standards or specifications)
-- Works well for brand guidelines, coding standards, or requirements
-- Example: Brand styling with "Brand Guidelines" → "Colors" → "Typography" → "Features"
-- Structure: ## Overview → ## Guidelines → ## Specifications → ## Usage...
+If the skill spans multiple categories, state the primary one and keep the skill focused.]
 
-**4. Capabilities-Based** (best for integrated systems)
-- Works well when the skill provides multiple interrelated features
-- Example: Product Management with "Core Capabilities" → numbered capability list
-- Structure: ## Overview → ## Core Capabilities → ### 1. Feature → ### 2. Feature...
+## Workflow / Decision Structure
 
-Patterns can be mixed and matched as needed. Most skills combine patterns (e.g., start with task-based, add workflow for complex operations).
+[TODO: Replace this with the main operating structure for the skill.
+Pick the structure that best fits the task:
 
-Delete this entire "Structuring This Skill" section when done - it's just guidance.]
+1. Workflow-based
+   - Best for sequential procedures
+   - Example shape: Overview -> Decision Tree -> Step 1 -> Step 2
 
-## [TODO: Replace with the first main section based on chosen structure]
+2. Task-based
+   - Best for a collection of operations or capabilities
+   - Example shape: Quick Start -> Task A -> Task B -> Task C
 
-[TODO: Add content here. See examples in existing skills:
-- Code samples for technical skills
-- Decision trees for complex workflows
-- Concrete examples with realistic user requests
-- References to scripts/templates/references as needed]
+3. Reference/guidelines
+   - Best for standards, requirements, or domain conventions
+   - Example shape: Overview -> Core Rules -> Exceptions -> Examples
 
-## Resources
+4. Capabilities-based
+   - Best when the skill bundles several related powers
+   - Example shape: Overview -> Capability 1 -> Capability 2 -> Capability 3
 
-This skill includes example resource directories that demonstrate how to organize different types of bundled resources:
+Keep the structure helpful, but avoid railroading Claude into an overly rigid tool sequence unless safety or correctness requires it.]
 
-### scripts/
-Executable code (Python/Bash/etc.) that can be run directly to perform specific operations.
+## Bundled Resources
 
-**Examples from other skills:**
-- PDF skill: `fill_fillable_fields.py`, `extract_form_field_info.py` - utilities for PDF manipulation
-- DOCX skill: `document.py`, `utilities.py` - Python modules for document processing
+[TODO: List every bundled resource this skill ships and explain when to use it.
+Examples:
+- `scripts/fetch_data.py` - Use when retrieving canonical metrics from the warehouse
+- `references/api.md` - Read when endpoint details or request shapes are needed
+- `assets/template.md` - Copy or adapt when generating the final deliverable
+- `config.json` - Read for install-specific IDs, enum values, or environment names
 
-**Appropriate for:** Python scripts, shell scripts, or any executable code that performs automation, data processing, or specific operations.
+Delete this section if the skill truly has no bundled resources, but most strong skills should at least consider scripts, references, assets, or config.]
 
-**Note:** Scripts may be executed without loading into context, but can still be read by Claude for patching or environment adjustments.
+## Gotchas
 
-### references/
-Documentation and reference material intended to be loaded into context to inform Claude's process and thinking.
+[TODO: Add the highest-signal mistakes, edge cases, and footguns.
+This is often the most valuable section in the entire skill.
+Include things Claude would otherwise get wrong, such as:
+- misleading defaults
+- unsupported approaches
+- environment-specific constraints
+- schema quirks
+- common failure patterns
 
-**Examples from other skills:**
-- Product management: `communication.md`, `context_building.md` - detailed workflow guides
-- BigQuery: API reference documentation and query examples
-- Finance: Schema documentation, company policies
+Start with at least one real gotcha.]
 
-**Appropriate for:** In-depth documentation, API references, database schemas, comprehensive guides, or any detailed information that Claude should reference while working.
+## Verification
 
-### assets/
-Files not intended to be loaded into context, but rather used within the output Claude produces.
+[TODO: Explain how Claude should verify success.
+Prefer concrete checks over vague advice.
+Examples:
+- run a script with assertions
+- inspect output files
+- compare against expected state
+- capture screenshots, logs, or videos
+- verify downstream side effects
 
-**Examples from other skills:**
-- Brand styling: PowerPoint template files (.pptx), logo files
-- Frontend builder: HTML/React boilerplate project directories
-- Typography: Font files (.ttf, .woff2)
+If verification is not applicable, say why.]
 
-**Appropriate for:** Templates, boilerplate code, document templates, images, icons, fonts, or any files meant to be copied or used in the final output.
+## Progressive Disclosure Notes
 
----
+[TODO: Keep SKILL.md lean.
+Move long API details, schemas, examples, or policy documents into `references/`.
+Put deterministic helper logic into `scripts/`.
+Put templates and boilerplate into `assets/`.
+Mention where detailed information lives so Claude can load it on demand.]
 
-**Any unneeded directories can be deleted.** Not every skill requires all three types of resources.
+## Iteration Notes
+
+[TODO: Describe how this skill should improve after real use.
+Examples:
+- add new gotchas when Claude fails in practice
+- add scripts when helper logic keeps being rewritten
+- refine the description if the skill under-triggers or over-triggers
+- move bulky details out of SKILL.md if context usage gets noisy]
 """
 
 EXAMPLE_SCRIPT = '''#!/usr/bin/env python3
 """
 Example helper script for {skill_name}
 
-This is a placeholder script that can be executed directly.
-Replace with actual implementation or delete if not needed.
+Replace this placeholder with a real helper when deterministic execution,
+repeatability, or lower token usage would help.
 
-Example real scripts from other skills:
-- pdf/scripts/fill_fillable_fields.py - Fills PDF form fields
-- pdf/scripts/convert_pdf_to_images.py - Converts PDF pages to images
+Good candidates for scripts:
+- repeated data fetching or transformation logic
+- assertions and verification helpers
+- file conversion or scaffolding steps
+- CLI wrappers for awkward or verbose commands
 """
 
+
 def main():
-    print("This is an example script for {skill_name}")
-    # TODO: Add actual script logic here
-    # This could be data processing, file conversion, API calls, etc.
+    print("TODO: replace scripts/example.py with a real helper or delete it")
+
 
 if __name__ == "__main__":
     main()
 '''
 
-EXAMPLE_REFERENCE = """# Reference Documentation for {skill_title}
+EXAMPLE_REFERENCE = """# Reference Notes for {skill_title}
 
-This is a placeholder for detailed reference documentation.
-Replace with actual reference content or delete if not needed.
+Use reference docs for detailed information that should not live in SKILL.md.
+This file should hold material Claude may need to consult on demand, such as:
+- API details
+- schemas
+- command references
+- internal conventions
+- long examples
+- policy notes
 
-Example real reference docs from other skills:
-- product-management/references/communication.md - Comprehensive guide for status updates
-- product-management/references/context_building.md - Deep-dive on gathering context
-- bigquery/references/ - API references and query examples
+## Suggested contents
 
-## When Reference Docs Are Useful
+- Overview of the system or domain
+- Important IDs, enums, or identifiers
+- Concrete examples
+- Known incompatibilities or caveats
+- Search hints if the file becomes large
 
-Reference docs are ideal for:
-- Comprehensive API documentation
-- Detailed workflow guides
-- Complex multi-step processes
-- Information too lengthy for main SKILL.md
-- Content that's only needed for specific use cases
+## Keep in mind
 
-## Structure Suggestions
-
-### API Reference Example
-- Overview
-- Authentication
-- Endpoints with examples
-- Error codes
-- Rate limits
-
-### Workflow Guide Example
-- Prerequisites
-- Step-by-step instructions
-- Common patterns
-- Troubleshooting
-- Best practices
+Do not duplicate the entire contents of this file back into SKILL.md.
+SKILL.md should point here when detailed reference information is needed.
 """
 
-EXAMPLE_ASSET = """# Example Asset File
+EXAMPLE_ASSET = """# Example Asset Placeholder
 
-This placeholder represents where asset files would be stored.
-Replace with actual asset files (templates, images, fonts, etc.) or delete if not needed.
+Replace this placeholder with a real asset or delete it.
 
-Asset files are NOT intended to be loaded into context, but rather used within
-the output Claude produces.
+Useful assets include:
+- templates
+- starter projects
+- boilerplate files
+- logos or images
+- sample data
+- example output documents
 
-Example asset files from other skills:
-- Brand guidelines: logo.png, slides_template.pptx
-- Frontend builder: hello-world/ directory with HTML/React boilerplate
-- Typography: custom-font.ttf, font-family.woff2
-- Data: sample_data.csv, test_dataset.json
+Assets are usually meant to be copied, referenced, or modified during the task,
+not pasted into SKILL.md.
+"""
 
-## Common Asset Types
-
-- Templates: .pptx, .docx, boilerplate directories
-- Images: .png, .jpg, .svg, .gif
-- Fonts: .ttf, .otf, .woff, .woff2
-- Boilerplate code: Project directories, starter files
-- Icons: .ico, .svg
-- Data files: .csv, .json, .xml, .yaml
-
-Note: This is a text placeholder. Actual assets can be any file type.
+EXAMPLE_CONFIG = """{
+  "example_note": "Store user- or team-specific constants here when needed.",
+  "examples": {
+    "slack_channel": "C0123456789",
+    "dashboard_uid": "abc123",
+    "environment": "staging"
+  }
+}
 """
 
 
@@ -202,15 +219,12 @@ def init_skill(skill_name, path):
     Returns:
         Path to created skill directory, or None if error
     """
-    # Determine skill directory path
     skill_dir = Path(path).resolve() / skill_name
 
-    # Check if directory already exists
     if skill_dir.exists():
         print(f"❌ Error: Skill directory already exists: {skill_dir}")
         return None
 
-    # Create skill directory
     try:
         skill_dir.mkdir(parents=True, exist_ok=False)
         print(f"✅ Created skill directory: {skill_dir}")
@@ -218,11 +232,10 @@ def init_skill(skill_name, path):
         print(f"❌ Error creating directory: {e}")
         return None
 
-    # Create SKILL.md from template
     skill_title = title_case_skill_name(skill_name)
     skill_content = SKILL_TEMPLATE.format(
         skill_name=skill_name,
-        skill_title=skill_title
+        skill_title=skill_title,
     )
 
     skill_md_path = skill_dir / 'SKILL.md'
@@ -233,9 +246,7 @@ def init_skill(skill_name, path):
         print(f"❌ Error creating SKILL.md: {e}")
         return None
 
-    # Create resource directories with example files
     try:
-        # Create scripts/ directory with example script
         scripts_dir = skill_dir / 'scripts'
         scripts_dir.mkdir(exist_ok=True)
         example_script = scripts_dir / 'example.py'
@@ -243,29 +254,32 @@ def init_skill(skill_name, path):
         example_script.chmod(0o755)
         print("✅ Created scripts/example.py")
 
-        # Create references/ directory with example reference doc
         references_dir = skill_dir / 'references'
         references_dir.mkdir(exist_ok=True)
-        example_reference = references_dir / 'api_reference.md'
+        example_reference = references_dir / 'reference_notes.md'
         example_reference.write_text(EXAMPLE_REFERENCE.format(skill_title=skill_title))
-        print("✅ Created references/api_reference.md")
+        print("✅ Created references/reference_notes.md")
 
-        # Create assets/ directory with example asset placeholder
         assets_dir = skill_dir / 'assets'
         assets_dir.mkdir(exist_ok=True)
         example_asset = assets_dir / 'example_asset.txt'
         example_asset.write_text(EXAMPLE_ASSET)
         print("✅ Created assets/example_asset.txt")
+
+        config_path = skill_dir / 'config.json'
+        config_path.write_text(EXAMPLE_CONFIG)
+        print("✅ Created config.json")
     except Exception as e:
         print(f"❌ Error creating resource directories: {e}")
         return None
 
-    # Print next steps
     print(f"\n✅ Skill '{skill_name}' initialized successfully at {skill_dir}")
     print("\nNext steps:")
-    print("1. Edit SKILL.md to complete the TODO items and update the description")
-    print("2. Customize or delete the example files in scripts/, references/, and assets/")
-    print("3. Run the validator when ready to check the skill structure")
+    print("1. Rewrite the description so it clearly describes when the skill should trigger")
+    print("2. Replace placeholder sections with real workflow guidance and at least one gotcha")
+    print("3. Customize or delete the example files in scripts/, references/, assets/, and config.json")
+    print("4. Keep SKILL.md lean; move bulky details into references/ and helper logic into scripts/")
+    print("5. Run the validator when ready to check the skill structure")
 
     return skill_dir
 
