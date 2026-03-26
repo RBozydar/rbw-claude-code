@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Universal AI-powered development tools: 22 agents, 17 commands, 13 skills for code review, research, and workflow automation",
+      "description": "Universal AI-powered development tools: 29 agents, 18 commands, 16 skills for code review, research, workflow automation, and instruction hygiene",
       "source": "./plugins/core",
       "category": "development"
     },

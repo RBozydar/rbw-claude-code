@@ -14,7 +14,7 @@ claude plugin add ./plugins/core
 
 ## Components
 
-### Agents (14)
+### Agents (selected)
 
 **Review Agents (7):**
 - `code-simplicity-reviewer` - Reviews code for unnecessary complexity
@@ -36,7 +36,7 @@ claude plugin add ./plugins/core
 - `bug-reproduction-validator` - Validates bug reproductions
 - `pr-comment-resolver` - Resolves PR review comments
 
-### Commands (13)
+### Commands (selected)
 
 **Workflow Commands:**
 - `/workflows:plan` - Transform features into structured plans
@@ -55,7 +55,7 @@ claude plugin add ./plugins/core
 - `/create-agent-skill` - Create Claude Code skills
 - `/plan_review` - Multi-agent plan review
 
-### Skills (7)
+### Skills (selected)
 
 - `agent-native-architecture` - Building AI agents with prompt-native patterns
 - `create-agent-skills` - Guide for creating Claude Code skills
@@ -63,7 +63,10 @@ claude plugin add ./plugins/core
 - `git-worktree` - Manage Git worktrees for isolated development
 - `git-ship` - Complete git workflow: commit, push, PR, CI wait, merge
 - `file-todos` - File-based todo tracking system
+- `instruction-hygiene` - Audit and trim bloated CLAUDE.md, skills, and context setups
 - `skill-creator` - Creating new Claude Code skills
+
+The full core plugin currently ships 29 agents, 18 commands, and 16 skills.
 
 ### MCP Servers (1)
 

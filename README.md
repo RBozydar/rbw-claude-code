@@ -90,7 +90,7 @@ You can also manually check sync status:
 
 | Plugin | Description |
 |--------|-------------|
-| [core](plugins/core) | Universal AI development tools: 14 agents, 13 commands, 6 skills |
+| [core](plugins/core) | Universal AI development tools: 29 agents, 18 commands, 16 skills |
 | [python-backend](plugins/python-backend) | Python-specific tools: 5 reviewers, 2 commands |
 
 ### Automation Hooks
@@ -149,6 +149,7 @@ The `core` plugin provides language-agnostic AI-powered development tools:
 | `core:file-todos` | File-based todo tracking in todos/ directory |
 | `core:git-ship` | Complete git workflow: commit, push, PR, CI, merge |
 | `core:git-worktree` | Manage Git worktrees for parallel development |
+| `core:instruction-hygiene` | Audit and trim bloated CLAUDE.md/skill/context setups with recurring hygiene checks |
 | `core:skill-creator` | Guide for creating effective skills |
 
 ## Python Backend Plugin

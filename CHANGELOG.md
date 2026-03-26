@@ -2,6 +2,13 @@
 
 All notable changes to rbw-claude-code will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+#### Core Plugin
+- **instruction-hygiene skill** - Audits full Claude instruction setups, flags redundant/conflicting rules, drafts trimmed `CLAUDE.md` files, and generates recurring setup hygiene prompts
+
 ## [1.5.0] - 2025-01-24
 
 ### Added
