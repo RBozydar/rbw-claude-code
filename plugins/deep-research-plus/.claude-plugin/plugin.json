@@ -1,6 +1,6 @@
 {
   "name": "deep-research-plus",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Advanced research plugin combining deep web research with GDELT-powered geopolitical analysis. Includes general research agents, specialized geopolitical analysts, and MCP server for structured GDELT queries. Diffusion-based deep research using parallel subagents, iterative gap detection, and comprehensive synthesis. Implements the ThinkDepth research loop natively in Claude Code.",
   "author": {
     "name": "RBozydar",

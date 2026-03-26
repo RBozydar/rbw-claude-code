@@ -1,6 +1,6 @@
 {
   "name": "python-backend",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Python-specific development tools: 7 agents, 2 commands, 1 skill for Python code review, testing, and type checking",
   "author": {
     "name": "RBozydar",
