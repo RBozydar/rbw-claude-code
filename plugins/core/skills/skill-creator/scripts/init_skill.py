@@ -76,12 +76,13 @@ Keep the structure helpful, but avoid railroading Claude into an overly rigid to
 ## Bundled Resources
 
 [TODO: List every bundled resource this skill ships and explain when to use it.
-Examples:
-- `scripts/fetch_data.py` - Use when retrieving canonical metrics from the warehouse
-- `references/api.md` - Read when endpoint details or request shapes are needed
-- `assets/template.md` - Copy or adapt when generating the final deliverable
-- `config.json` - Read for install-specific IDs, enum values, or environment names
+The scaffold created alongside this file currently includes:
+- `scripts/example.py` - Replace with a real helper script or delete it
+- `references/reference_notes.md` - Replace with real reference material or delete it
+- `assets/example_asset.txt` - Replace with a real asset or delete it
+- `config.json` - Keep only if this skill needs install-specific IDs, enums, or environment names
 
+Update this list to match the actual files that remain in the skill folder.
 Delete this section if the skill truly has no bundled resources, but most strong skills should at least consider scripts, references, assets, or config.]
 
 ## Gotchas
