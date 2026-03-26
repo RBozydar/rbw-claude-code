@@ -1,27 +1,24 @@
 ---
 name: gemini-cli
-description: This skill teaches proper Gemini CLI usage patterns. Use stdin piping instead of shell variable gymnastics. Covers code review, plan review, and general prompts.
+description: This skill should be used when invoking the Gemini CLI for code review, plan review, or any prompt-based task. It provides correct invocation patterns emphasizing stdin piping and @ syntax over shell variable gymnastics.
 ---
 
-# Gemini CLI Usage Guide
-
-This skill ensures clean, readable Gemini CLI invocations without shell gymnastics.
+Ensure clean, readable Gemini CLI invocations without shell gymnastics.
 
 ## Core Principle
 
-**Always pipe content via stdin. Never use heredocs or shell variable assignment.**
+Always pipe content via stdin or use `@` syntax. Never use heredocs or shell variable assignment.
 
 ```bash
-# GOOD - Clean and readable
+# CORRECT - Clean stdin pipe
 cat file.md | gemini --sandbox -o text "Review this for issues"
 
-# BAD - Shell gymnastics
+# CORRECT - @ syntax for file references
+gemini --sandbox -o text "Review this code" @src/module.py
+
+# WRONG - Shell gymnastics
 CONTENT=$(cat file.md)
-gemini --sandbox "$(cat <<'EOF'
-Review this:
-$CONTENT
-EOF
-)"
+gemini --sandbox "Review: $CONTENT"
 ```
 
 ## Command Structure
@@ -30,7 +27,7 @@ EOF
 # Pipe content via stdin
 <content-source> | gemini [options] "prompt"
 
-# Or use @ to reference files/folders directly
+# Reference files/folders directly
 gemini [options] "prompt" @file.py @folder/
 ```
 
@@ -38,9 +35,9 @@ gemini [options] "prompt" @file.py @folder/
 
 | Option | Purpose |
 |--------|---------|
-| `--sandbox` or `-s` | Always use - prevents code modifications |
-| `-o text` or `--output-format text` | Plain text output |
-| `-m MODEL` or `--model MODEL` | Model selection |
+| `--sandbox` or `-s` | Required -- prevents code modifications |
+| `-o text` | Plain text output (required for parsing) |
+| `-m MODEL` | Model selection |
 
 ### Available Models
 
@@ -51,36 +48,23 @@ gemini [options] "prompt" @file.py @folder/
 
 ## Common Patterns
 
-### Using @ to Reference Files/Folders
-
-The `@` syntax lets you reference files and folders directly without piping:
+### File and Folder References with @
 
 ```bash
 # Single file
 gemini --sandbox -o text "Review this code" @src/module.py
 
 # Multiple files
-gemini --sandbox -o text "Check consistency between these" @src/models.py @src/views.py
+gemini --sandbox -o text "Check consistency" @src/models.py @src/views.py
 
 # Entire folder
 gemini --sandbox -o text "Review this module" @src/auth/
 
 # Mix files and folders
-gemini --sandbox -o text "Review the API implementation" @src/api/ @tests/test_api.py
+gemini --sandbox -o text "Review the API" @src/api/ @tests/test_api.py
 ```
 
-### Review a Plan/Spec File
-
-```bash
-# Using stdin pipe
-cat plans/my-feature.md | gemini --sandbox -o text -m gemini-3-pro-preview \
-  "Review this plan for architectural issues, missing requirements, and risks"
-
-# Using @ syntax
-gemini --sandbox -o text "Review this plan for issues" @plans/my-feature.md
-```
-
-### Review Git Diff
+### Git Diff Review
 
 ```bash
 # Unstaged changes
@@ -93,19 +77,7 @@ git diff --cached | gemini --sandbox -o text "Review these staged changes"
 git diff main...HEAD | gemini --sandbox -o text "Review all changes on this branch"
 ```
 
-### Review a Code File
-
-```bash
-cat src/module.py | gemini --sandbox -o text "Check this code for N+1 queries and security issues"
-```
-
-### Multiple Files
-
-```bash
-cat src/models.py src/views.py | gemini --sandbox -o text "Review these related files for consistency"
-```
-
-### With Focus Areas
+### Focused Review with Prompt Detail
 
 ```bash
 git diff | gemini --sandbox -o text "Review this diff focusing on:
@@ -114,113 +86,61 @@ git diff | gemini --sandbox -o text "Review this diff focusing on:
 3. Performance issues"
 ```
 
-## Wrapper Script
+## Anti-Patterns
 
-For convenience, use the wrapper script at `scripts/gemini-review.sh`:
-
-```bash
-# Review a plan
-scripts/gemini-review.sh --plan plans/my-feature.md
-
-# Review diff
-scripts/gemini-review.sh --diff --staged
-
-# Review file with custom prompt
-scripts/gemini-review.sh --file src/api.py "Check for security issues"
-
-# With focus areas
-scripts/gemini-review.sh --diff --focus "security,performance"
-
-# With different model
-scripts/gemini-review.sh --plan plans/big-feature.md --model gemini-3-flash-preview
-```
-
-## What NOT to Do
-
-### Never Use Heredocs
+### Deprecated `-p` Flag
 
 ```bash
-# BAD
-gemini --sandbox "$(cat <<'EOF'
-Your prompt here
-EOF
-)"
-```
-
-### Never Assign to Variables First
-
-```bash
-# BAD
-DIFF=$(git diff)
-PLAN=$(cat plan.md)
-gemini --sandbox "$DIFF $PLAN"
-```
-
-### Never Use Deprecated -p Flag
-
-```bash
-# BAD - deprecated
+# WRONG - deprecated
 gemini -p "prompt" --sandbox
 
-# GOOD - positional prompt
+# CORRECT - positional prompt
 gemini --sandbox "prompt"
 ```
 
-### Never Skip Sandbox Mode
+### Variable Assignment
 
 ```bash
-# BAD - no sandbox
+# WRONG
+DIFF=$(git diff)
+gemini --sandbox "$DIFF"
+
+# CORRECT
+git diff | gemini --sandbox -o text "Review"
+```
+
+### Missing Sandbox
+
+```bash
+# WRONG - no sandbox
 gemini "Review this code"
 
-# GOOD - always sandbox
+# CORRECT
 gemini --sandbox "Review this code"
 ```
 
 ## Integration with Agents
 
-When using gemini from Claude Code agents:
+When invoking gemini from Claude Code agents:
 
-1. **Always use stdin piping** - readable and clean
-2. **Always use `--sandbox`** - safety first
-3. **Use `-o text`** - plain text for parsing
-4. **Use appropriate model** - pro for quality, flash for speed
-
-Example agent invocation:
+1. Always use stdin piping or `@` syntax
+2. Always include `--sandbox`
+3. Always include `-o text` for parseable output
+4. Select model based on task: pro for quality, flash for speed
 
 ```bash
 git diff --cached | gemini --sandbox -o text -m gemini-3-pro-preview \
-  "You are a senior code reviewer. Review this diff for:
-1. Bugs and logic errors
-2. Security vulnerabilities
-3. Performance issues
+  "Review this diff for bugs, security vulnerabilities, and performance issues.
 Provide specific file:line references."
 ```
 
 ## Error Handling
 
-### No Input
+The error "No input provided via stdin" indicates missing piped content. When using stdin mode, always pipe content before the gemini command. When referencing files directly, use `@` syntax instead.
 
-If you see "No input provided via stdin", ensure you're piping content:
-
-```bash
-# Wrong - no pipe
-gemini --sandbox "Review this"
-
-# Right - with content
-echo "hello" | gemini --sandbox "Review this"
-cat file.md | gemini --sandbox "Review this"
-```
-
-### Large Files
-
-For very large files, consider:
-
-1. Review specific sections
-2. Use flash model for speed
-3. Summarize before detailed review
+For large files, review specific sections or use the flash model:
 
 ```bash
-# Review just the first 500 lines
 head -500 large-file.py | gemini --sandbox -o text "Review this code section"
 ```
 

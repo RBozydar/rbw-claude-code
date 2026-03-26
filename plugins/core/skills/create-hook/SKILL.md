@@ -1,40 +1,17 @@
 ---
 name: create-hook
-description: Create Claude Code hooks with proper patterns, security best practices, and configuration. Use this skill when building PreToolUse, PostToolUse, SessionStart, or other hook types for plugins.
+description: This skill should be used when building PreToolUse, PostToolUse, SessionStart, or other hook types for Claude Code plugins. It provides patterns, security best practices, and configuration guidance.
 ---
 
 # Hook Development Guide
 
-This skill provides comprehensive guidance for creating Claude Code hooks. Hooks intercept events in the Claude Code lifecycle and can validate, modify, or block operations.
+Create Claude Code hooks that intercept events in the lifecycle and can validate, modify, or block operations.
 
 ## Hook Types
 
-### 1. Command Hooks (Recommended)
-
-Execute a script for deterministic checks. Best for pattern matching, validation, and blocking.
-
-```json
-{
-  "type": "command",
-  "command": "${CLAUDE_PLUGIN_ROOT}/hooks/my-hook.py",
-  "timeout": 10
-}
-```
-
-### 2. Prompt Hooks
-
-Use LLM reasoning for context-aware decisions. More expensive but can understand intent.
-
-```json
-{
-  "type": "prompt",
-  "prompt": "Check if this operation is safe given the project context..."
-}
-```
-
-### 3. Agent Hooks (v2.1.0+)
-
-Leverage agent capabilities for complex workflows requiring multiple steps.
+1. **Command Hooks** (recommended) -- Execute a script for deterministic checks
+2. **Prompt Hooks** -- Use LLM reasoning for context-aware decisions
+3. **Agent Hooks** (v2.1.0+) -- Leverage agent capabilities for complex workflows
 
 ## Hook Events
 
@@ -51,9 +28,9 @@ Leverage agent capabilities for complex workflows requiring multiple steps.
 | `Notification` | System notifications | React to events |
 | `PermissionRequest` | Permission dialogs (v2.1.0) | Custom permission handling |
 
-## Configuration Structure
+## Configuration
 
-### Plugin hooks.json Format
+### hooks.json Format
 
 ```json
 {
@@ -69,130 +46,45 @@ Leverage agent capabilities for complex workflows requiring multiple steps.
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/format-on-save.py",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/init.sh",
-            "timeout": 5
-          }
-        ]
-      }
     ]
   }
 }
 ```
 
-### Matchers
-
-- `"Bash"` - Match specific tool by name
-- `"Edit"` - Match Edit tool
-- `"Read"` - Match Read tool
-- `"*"` - Match all tools/events
-- Tool names are case-sensitive
+**Matchers:** `"Bash"`, `"Edit"`, `"Read"` (case-sensitive tool names), or `"*"` for all.
 
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `CLAUDE_PLUGIN_ROOT` | Plugin directory (use for portable paths) |
+| `CLAUDE_PLUGIN_ROOT` | Plugin directory (always use for portable paths) |
 | `CLAUDE_PROJECT_DIR` | Current project root |
 | `CLAUDE_ENV_FILE` | Persist variables from SessionStart |
 
-**Critical:** Always use `${CLAUDE_PLUGIN_ROOT}` in hook commands for portability.
+## Writing Command Hooks
 
-## Writing Command Hooks (Python)
+Copy and customize a template from `templates/`:
 
-### Basic Structure
+| Template | Purpose |
+|----------|---------|
+| `templates/pretooluse-bash.py` | PreToolUse hook for Bash commands |
+| `templates/pretooluse-read.py` | PreToolUse hook for file reads |
+| `templates/posttooluse-edit.py` | PostToolUse hook for formatting |
+| `templates/sessionstart.sh` | SessionStart initialization |
 
-```python
-#!/usr/bin/env -S uv run --script
-# /// script
-# dependencies = ["cchooks"]
-# ///
-"""Hook description."""
-
-from cchooks import PreToolUseContext, create_context
-
-c = create_context()
-assert isinstance(c, PreToolUseContext)
-
-# Check if this is the right tool
-if c.tool_name != "Bash":
-    c.output.exit_success()
-
-# Get tool input
-command = c.tool_input.get("command", "")
-
-# Your validation logic here
-if is_dangerous(command):
-    c.output.exit_block("Reason for blocking")
-
-c.output.exit_success()
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/skills/create-hook/templates/pretooluse-bash.py \
+   plugins/my-hook/hooks/my-hook.py
+chmod +x plugins/my-hook/hooks/my-hook.py
 ```
 
-### Context Types
+### Essential Patterns
 
-- `PreToolUseContext` - Before tool execution
-- `PostToolUseContext` - After tool execution
-- Other contexts follow same pattern
-
-### Exit Methods
+**Always check safe patterns before blocking (allowlist-first):**
 
 ```python
-# Allow operation to proceed
-c.output.exit_success()
-
-# Block operation with message
-c.output.exit_block("Descriptive reason for blocking")
-
-# Modify tool input (PreToolUse only)
-c.output.exit_modify({"command": modified_command})
-```
-
-## Best Practices
-
-### Security
-
-1. **Quote all bash variables** to prevent injection
-2. **Validate inputs** before processing
-3. **Use safe patterns** with allowlists before blocklists
-4. **Set reasonable timeouts** to prevent hangs
-
-### Performance
-
-1. **Exit early** when hook doesn't apply (`if c.tool_name != "X": exit_success()`)
-2. **Use compiled regex** for pattern matching
-3. **Keep hooks focused** - one responsibility per hook
-
-### Patterns
-
-#### Safe Patterns First
-
-```python
-# Check safe patterns before blocking
-SAFE_PATTERNS = [
-    r"rm\s+-rf\s+/tmp/",
-]
-
-BLOCKED_PATTERNS = [
-    (r"rm\s+-rf\s+", "rm -rf is destructive"),
-]
+SAFE_PATTERNS = [r"rm\s+-rf\s+/tmp/"]
+BLOCKED_PATTERNS = [(r"rm\s+-rf\s+", "rm -rf is destructive")]
 
 for pattern in SAFE_PATTERNS:
     if re.search(pattern, command):
@@ -203,141 +95,50 @@ for pattern, reason in BLOCKED_PATTERNS:
         c.output.exit_block(reason)
 ```
 
-#### Informative Block Messages
+**Exit methods:**
+- `c.output.exit_success()` -- allow operation
+- `c.output.exit_block("reason")` -- block with message
+- `c.output.exit_modify({"command": modified})` -- modify input (PreToolUse only)
 
+**Early exit when hook doesn't apply:**
 ```python
-c.output.exit_block(
-    f"BLOCKED: {reason}\n"
-    f"Command: {command}\n"
-    "If this operation is truly needed, ask the user for permission."
-)
-```
-
-## Templates
-
-Ready-to-use templates are available:
-
-- `templates/pretooluse-bash.py` - PreToolUse hook for Bash commands
-- `templates/pretooluse-read.py` - PreToolUse hook for file reads
-- `templates/posttooluse-edit.py` - PostToolUse hook for formatting
-- `templates/sessionstart.sh` - SessionStart initialization
-
-Copy and customize for your plugin:
-
-```bash
-cp ${CLAUDE_PLUGIN_ROOT}/skills/create-hook/templates/pretooluse-bash.py \
-   your-plugin/hooks/your-hook.py
+if c.tool_name != "Bash":
+    c.output.exit_success()
 ```
 
 ## Creating a New Hook Plugin
 
-### 1. Create Directory Structure
+1. Create directory structure:
+   ```bash
+   mkdir -p plugins/my-hook/.claude-plugin plugins/my-hook/hooks
+   ```
 
-```bash
-mkdir -p plugins/my-hook/.claude-plugin
-mkdir -p plugins/my-hook/hooks
-```
+2. Create `plugins/my-hook/.claude-plugin/plugin.json`:
+   ```json
+   {"name": "my-hook", "version": "1.0.0", "description": "What this hook does"}
+   ```
 
-### 2. Create plugin.json
+3. Create `plugins/my-hook/hooks/hooks.json` with event matchers (see Configuration above)
 
-```json
-{
-  "name": "my-hook",
-  "version": "1.0.0",
-  "description": "What this hook does"
-}
-```
+4. Copy and customize a template from this skill's `templates/` directory
 
-### 3. Create hooks/hooks.json
+5. Validate: `claude plugin validate .`
 
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/my-hook.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+## Debugging
 
-### 4. Create Hook Script
-
-```python
-#!/usr/bin/env -S uv run --script
-# /// script
-# dependencies = ["cchooks"]
-# ///
-"""My hook description."""
-
-from cchooks import PreToolUseContext, create_context
-
-c = create_context()
-assert isinstance(c, PreToolUseContext)
-
-if c.tool_name != "Bash":
-    c.output.exit_success()
-
-command = c.tool_input.get("command", "")
-
-# Add your logic here
-
-c.output.exit_success()
-```
-
-### 5. Make Executable
-
-```bash
-chmod +x plugins/my-hook/hooks/my-hook.py
-```
-
-### 6. Validate
-
-```bash
-claude plugin validate .
-```
-
-## Common Hook Patterns
-
-### Block Destructive Commands
-
-See `plugins/safety-guard/hooks/safety_guard_bash.py`
-
-### Enforce Coding Standards
-
-See `plugins/conventional-commits/hooks/conventional_commits.py`
-
-### Format on Save
-
-See `plugins/python-format/hooks/format_python.py`
-
-### Protect Sensitive Files
-
-See `plugins/protect-env/hooks/protect_env.py`
-
-## Debugging Hooks
-
-### Test Hook Directly
+Test hooks directly by piping JSON input:
 
 ```bash
 echo '{"tool_name": "Bash", "tool_input": {"command": "rm -rf /"}}' | \
   python plugins/my-hook/hooks/my-hook.py
 ```
 
-### Check Hook Output
+Validate hooks.json: `cat plugins/my-hook/hooks/hooks.json | jq .`
 
-Hooks should output JSON. Check stdout/stderr for errors.
+## Reference Examples
 
-### Validate JSON
-
-```bash
-cat plugins/my-hook/hooks/hooks.json | jq .
-```
+Existing hooks in this repository:
+- Block destructive commands: `plugins/guards/security/safety-guard/`
+- Enforce commit format: `plugins/guards/policy/conventional-commits/`
+- Format on save: `plugins/guards/quality/python-format/`
+- Protect sensitive files: `plugins/guards/security/protect-env/`

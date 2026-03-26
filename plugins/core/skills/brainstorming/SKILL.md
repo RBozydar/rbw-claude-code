@@ -1,32 +1,25 @@
 ---
 name: brainstorming
-description: This skill should be used before implementing features, building components, or making changes. It guides exploring user intent, approaches, and design decisions before planning. Triggers on "let's brainstorm", "help me think through", "what should we build", "explore approaches", ambiguous feature requests, or when the user's request has multiple valid interpretations that need clarification.
+description: This skill should be used before implementing features, building components, or making changes when requirements need clarification. It guides exploring user intent, approaches, and design decisions before planning. Triggers on "let's brainstorm", "help me think through", "what should we build", "explore approaches", ambiguous feature requests, or when multiple valid interpretations exist.
 ---
 
 # Brainstorming
 
-This skill provides detailed process knowledge for effective brainstorming sessions that clarify **WHAT** to build before diving into **HOW** to build it.
+Clarify **WHAT** to build before diving into **HOW** to build it.
 
-## When to Use This Skill
+## When to Use
 
-Brainstorming is valuable when:
+**Brainstorm when:**
 - Requirements are unclear or ambiguous
 - Multiple approaches could solve the problem
-- Trade-offs need to be explored with the user
-- The user hasn't fully articulated what they want
-- The feature scope needs refinement
+- Trade-offs need exploration
+- Feature scope needs refinement
 
-Brainstorming can be skipped when:
-- Requirements are explicit and detailed
-- The user knows exactly what they want
-- The task is a straightforward bug fix or well-defined change
-
-### Explicit Skip Signals
-- User says "just do it" or "proceed"
+**Skip when:**
 - Requirements include acceptance criteria
+- Task is a straightforward bug fix
+- User says "just do it" or provides a detailed spec
 - User references a specific existing pattern
-- Task is a bug fix with clear reproduction steps
-- User provides a detailed spec or design document
 
 ## Core Process
 
@@ -34,87 +27,44 @@ Brainstorming can be skipped when:
 
 Before diving into questions, assess whether brainstorming is needed.
 
-**Signals that requirements are clear:**
-- User provided specific acceptance criteria
-- User referenced existing patterns to follow
-- User described exact behavior expected
-- Scope is constrained and well-defined
+**Clear requirements signals:** specific acceptance criteria, referenced patterns, exact expected behavior, constrained scope.
 
-**Signals that brainstorming is needed:**
-- User used vague terms ("make it better", "add something like")
-- Multiple reasonable interpretations exist
-- Trade-offs haven't been discussed
-- User seems unsure about the approach
+**Brainstorming needed signals:** vague terms ("make it better"), multiple interpretations, undiscussed trade-offs.
 
-If requirements are clear, suggest: "Your requirements seem clear. Consider proceeding directly to planning or implementation."
+If requirements are clear, suggest proceeding directly to planning or implementation.
 
 ### Phase 1: Understand the Idea
 
-Ask questions **one at a time** to understand the user's intent. Avoid overwhelming with multiple questions.
+Ask questions **one at a time** to understand intent. Avoid overwhelming with multiple questions.
 
-**Question Techniques:**
+**Question techniques:**
+1. **Prefer multiple choice** -- "Should notifications be: (a) email, (b) in-app, or (c) both?"
+2. **Start broad, then narrow** -- core purpose → users → constraints
+3. **Validate assumptions explicitly** -- "Assuming users are logged in. Correct?"
+4. **Ask about success criteria early** -- "How will success be measured?"
 
-1. **Prefer multiple choice when natural options exist**
-   - Good: "Should the notification be: (a) email only, (b) in-app only, or (c) both?"
-   - Avoid: "How should users be notified?"
+**Key topics:** Purpose/motivation, Users/context, Constraints/timeline, Success criteria, Edge cases, Existing patterns in the codebase.
 
-2. **Start broad, then narrow**
-   - First: What is the core purpose?
-   - Then: Who are the users?
-   - Finally: What constraints exist?
-
-3. **Validate assumptions explicitly**
-   - "I'm assuming users will be logged in. Is that correct?"
-
-4. **Ask about success criteria early**
-   - "How will you know this feature is working well?"
-
-**Key Topics to Explore:**
-
-| Topic | Example Questions |
-|-------|-------------------|
-| Purpose | What problem does this solve? What's the motivation? |
-| Users | Who uses this? What's their context? |
-| Constraints | Any technical limitations? Timeline? Dependencies? |
-| Success | How will you measure success? What's the happy path? |
-| Edge Cases | What shouldn't happen? Any error states to consider? |
-| Existing Patterns | Are there similar features in the codebase to follow? |
-
-**Exit Condition:** Continue until the idea is clear OR user says "proceed" or "let's move on"
+**Exit condition:** Continue until the idea is clear OR user says "proceed."
 
 ### Phase 2: Explore Approaches
 
-After understanding the idea, propose 2-3 concrete approaches.
-
-**Structure for Each Approach:**
+Propose 2-3 concrete approaches:
 
 ```markdown
 ### Approach A: [Name]
-
 [2-3 sentence description]
 
-**Pros:**
-- [Benefit 1]
-- [Benefit 2]
-
-**Cons:**
-- [Drawback 1]
-- [Drawback 2]
-
-**Best when:** [Circumstances where this approach shines]
+**Pros:** [Benefits]
+**Cons:** [Drawbacks]
+**Best when:** [Circumstances]
 ```
 
-**Guidelines:**
-- Lead with a recommendation and explain why
-- Be honest about trade-offs
-- Consider YAGNI—simpler is usually better
-- Reference codebase patterns when relevant
+Lead with a recommendation. Be honest about trade-offs. Consider YAGNI -- simpler is usually better.
 
 ### Phase 3: Capture the Design
 
-Summarize key decisions in a structured format.
-
-**Design Doc Structure:**
+Summarize key decisions:
 
 ```markdown
 ---
@@ -125,106 +75,65 @@ topic: <kebab-case-topic>
 # <Topic Title>
 
 ## What We're Building
-[Concise description—1-2 paragraphs max]
+[1-2 paragraphs]
 
 ## Why This Approach
-[Brief explanation of approaches considered and why this one was chosen]
+[Approaches considered and rationale]
 
 ## Key Decisions
-- [Decision 1]: [Rationale]
-- [Decision 2]: [Rationale]
+- [Decision]: [Rationale]
 
 ## Open Questions
-- [Any unresolved questions for the planning phase]
+- [Unresolved questions]
 
 ## Next Steps
 → `/workflows:plan` for implementation details
 ```
 
-**Output Location:** `docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md`
+**Output location:** `docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md`
 
 ### Phase 4: Handoff
 
-Present clear options for what to do next:
-
-1. **Proceed to planning** → Run `/workflows:plan`
-2. **Refine further** → Continue exploring the design
-3. **Done for now** → User will return later
+Present options:
+1. **Proceed to planning** -- run `/workflows:plan`
+2. **Refine further** -- continue exploring
+3. **Done for now** -- return later
 
 ## YAGNI Principles
 
-During brainstorming, actively resist complexity:
-
-- **Don't design for hypothetical future requirements**
-- **Choose the simplest approach that solves the stated problem**
-- **Prefer boring, proven patterns over clever solutions**
-- **Ask "Do we really need this?" when complexity emerges**
-- **Defer decisions that don't need to be made now**
+- Do not design for hypothetical future requirements
+- Choose the simplest approach that solves the stated problem
+- Prefer boring, proven patterns over clever solutions
+- Defer decisions that do not need to be made now
 
 ## Incremental Validation
 
-Keep sections short—200-300 words maximum. After each section of output, pause to validate understanding:
-
-- "Does this match what you had in mind?"
-- "Any adjustments before we continue?"
-- "Is this the direction you want to go?"
-
-This prevents wasted effort on misaligned designs.
+Keep sections short (200-300 words max). After each section, pause to validate: "Does this match what you had in mind?" This prevents wasted effort on misaligned designs.
 
 ## Exploration vs Convergence
 
-Brainstorming has two distinct modes:
+**Exploration mode (divergent):** Generate many options without judgment. Use when requirements are unclear or early in brainstorming. Challenge assumptions, consider radical alternatives. Use the `gemini-brainstorm` agent for external perspectives and the `devils-advocate-brainstormer` agent to stress-test emerging ideas.
 
-### Exploration Mode (Divergent)
-- Goal: Generate many options without judgment
-- When: Early in brainstorming, unclear requirements, new domains
-- Techniques:
-  - "What else could we do?"
-  - Challenge assumptions
-  - Consider radical alternatives
-  - Use Gemini for external perspectives
-  - Run Devil's Advocate to stress-test emerging ideas
+**Convergence mode (focused):** Narrow to a decision. Use when options are clear and trade-offs understood. Compare against success criteria, apply constraints as filters.
 
-### Convergence Mode (Focused)
-- Goal: Narrow to a decision
-- When: Options are clear, trade-offs understood
-- Techniques:
-  - Compare against success criteria
-  - Apply constraints as filters
-  - Use weighted decision matrices for complex choices
+Always confirm mode transitions with the user.
 
-### Mode Transitions
-- Signal exploration → convergence: "We have enough options. Let's evaluate."
-- Signal convergence → exploration: "We're missing something. Let's step back."
-- Always confirm mode transitions with the user
-
-## Anti-Patterns to Avoid
+## Anti-Patterns
 
 | Anti-Pattern | Better Approach |
 |--------------|-----------------|
 | Asking 5 questions at once | Ask one at a time |
-| Jumping to implementation details | Stay focused on WHAT, not HOW |
-| Proposing overly complex solutions | Start simple, add complexity only if needed |
-| Ignoring existing codebase patterns | Research what exists first |
-| Making assumptions without validating | State assumptions explicitly and confirm |
-| Creating lengthy design documents | Keep it concise—details go in the plan |
-| Proposing solutions before understanding constraints | Explore constraints early, before generating options |
-| Skipping success criteria discussion | Ask "How will you know this is working?" early |
-| Not validating with external perspectives | Use Gemini, Devil's Advocate, or team input for alternative viewpoints |
-| Anchoring on first solution without exploring alternatives | Always present 2-3 options before recommending |
-| Mixing exploration and convergence phases | Keep modes distinct; signal transitions explicitly |
-| Not checking for existing solutions | Search learnings, past brainstorms, and codebase patterns first |
+| Jumping to implementation | Stay focused on WHAT, not HOW |
+| Overly complex solutions | Start simple, add complexity only if needed |
+| Ignoring codebase patterns | Research what exists first |
+| Assumptions without validation | State and confirm assumptions |
+| Lengthy design documents | Keep concise -- details go in the plan |
+| Skipping success criteria | Ask early how success will be measured |
+| Anchoring on first solution | Present 2-3 options before recommending |
 
 ## Integration with Planning
 
-Brainstorming answers **WHAT** to build:
-- Requirements and acceptance criteria
-- Chosen approach and rationale
-- Key decisions and trade-offs
+Brainstorming answers **WHAT** -- requirements, chosen approach, key decisions.
+Planning answers **HOW** -- implementation steps, code patterns, testing strategy.
 
-Planning answers **HOW** to build it:
-- Implementation steps and file changes
-- Technical details and code patterns
-- Testing strategy and verification
-
-When brainstorm output exists, `/workflows:plan` should detect it and use it as input, skipping its own idea refinement phase.
+When brainstorm output exists, `/workflows:plan` should detect it and use it as input.

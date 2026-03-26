@@ -1,32 +1,20 @@
 ---
 name: python-coding
-description: This skill provides comprehensive Python development standards covering SOLID principles, asyncio patterns, type hints, testing, and production-quality code. Load this skill when writing, reviewing, or refactoring Python code to apply strict coding standards directly in the current context without spawning a subagent.
+description: This skill should be loaded when writing, reviewing, or refactoring Python code to apply strict coding standards directly in the current context without spawning a subagent. It provides comprehensive Python development standards covering SOLID principles, asyncio patterns, type hints, testing, and production-quality code.
 ---
 
 # Python Coder Standards
 
-Load these standards when writing, reviewing, or refactoring Python code. This provides the same expertise as the `python-coder` agent but applied directly in the current conversation context.
-
-## When to Use
-
-- Writing new Python modules, classes, or functions
-- Reviewing Python code for quality and correctness
-- Refactoring existing Python code
-- Fixing bugs in Python codebases
-- Designing async systems with proper concurrency patterns
-
-## Core Principles
-
-Write clean, concise, Pythonic code. Every line must serve a clear purpose. Never be overly verbose. Optimize for maintainability first, then performance.
+Apply these standards when writing, reviewing, or refactoring Python code. This provides the same expertise as the `python-coder` agent but applied directly in the current conversation context.
 
 ## Quick Reference Checklist
 
 Before providing any code or review, verify:
 
-1. All imports are absolute (no relative imports)
-2. All type hints present using modern syntax (`X | None` not `Optional[X]`)
+1. Absolute imports only
+2. Modern type hints (`X | None`)
 3. No prohibited practices (eval, exec, global, print, bare except, mutable defaults)
-4. Pydantic validation at all boundaries
+4. Pydantic validation at boundaries
 5. No blocking I/O in async paths
 6. `asyncio.TaskGroup` for structured concurrency
 7. Google-style docstrings on public APIs
@@ -34,9 +22,11 @@ Before providing any code or review, verify:
 9. No assertions in production code
 10. Immutable types preferred (tuple > list, frozenset > set)
 
+See [references/python-standards.md](./references/python-standards.md) for full details on each item.
+
 ## Detailed Standards
 
-For the full standards reference covering all patterns, examples, and anti-patterns, load:
+For the complete standards reference covering all patterns, examples, and anti-patterns, load:
 
 ```
 references/python-standards.md

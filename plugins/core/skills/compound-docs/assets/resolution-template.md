@@ -1,14 +1,14 @@
 ---
 module: [Module name or "CORA" for system-wide]
 date: [YYYY-MM-DD]
-problem_type: [build_error|test_failure|runtime_error|performance_issue|database_issue|security_issue|ui_bug|integration_issue|logic_error]
-component: [rails_model|rails_controller|rails_view|service_object|background_job|database|frontend_stimulus|hotwire_turbo|email_processing|brief_system|assistant|authentication|payments]
+problem_type: [build_error|test_failure|runtime_error|performance_issue|database_issue|security_issue|ui_bug|integration_issue|logic_error|developer_experience|workflow_issue|best_practice|documentation_gap]
+component: [rails_model|rails_controller|rails_view|service_object|background_job|database|frontend_stimulus|hotwire_turbo|email_processing|brief_system|assistant|authentication|payments|development_workflow|testing_framework|documentation|tooling]
 symptoms:
   - [Observable symptom 1 - specific error message or behavior]
-  - [Observable symptom 2 - what user actually saw/experienced]
-root_cause: [missing_association|missing_include|missing_index|wrong_api|scope_issue|thread_violation|async_timing|memory_leak|config_error|logic_error|test_isolation|missing_validation|missing_permission]
+  - [Observable symptom 2 - what was actually observed]
+root_cause: [missing_association|missing_include|missing_index|wrong_api|scope_issue|thread_violation|async_timing|memory_leak|config_error|logic_error|test_isolation|missing_validation|missing_permission|missing_workflow_step|inadequate_documentation|missing_tooling|incomplete_setup]
 rails_version: [7.1.2 - optional]
-resolution_type: [code_fix|migration|config_change|test_fix|dependency_update|environment_setup]
+resolution_type: [code_fix|migration|config_change|test_fix|dependency_update|environment_setup|workflow_improvement|documentation_update|tooling_addition|seed_data_update]
 severity: [critical|high|medium|low]
 tags: [keyword1, keyword2, keyword3]
 ---
@@ -16,7 +16,7 @@ tags: [keyword1, keyword2, keyword3]
 # Troubleshooting: [Clear Problem Title]
 
 ## Problem
-[1-2 sentence clear description of the issue and what the user experienced]
+[1-2 sentence clear description of the issue and observable behavior]
 
 ## Environment
 - Module: [Name or "CORA system"]
@@ -25,7 +25,7 @@ tags: [keyword1, keyword2, keyword3]
 - Date: [YYYY-MM-DD when this was solved]
 
 ## Symptoms
-- [Observable symptom 1 - what the user saw/experienced]
+- [Observable symptom 1 - what was observed]
 - [Observable symptom 2 - error messages, visual issues, unexpected behavior]
 - [Continue as needed - be specific]
 
@@ -37,7 +37,7 @@ tags: [keyword1, keyword2, keyword3]
 **Attempted Solution 2:** [Description of second attempt]
 - **Why it failed:** [Technical reason]
 
-[Continue for all significant attempts that DIDN'T work]
+[Continue for all significant attempts that didn't work]
 
 [If nothing else was attempted first, write:]
 **Direct solution:** The problem was identified and fixed on the first attempt.
@@ -78,7 +78,7 @@ tags: [keyword1, keyword2, keyword3]
 
 ## Prevention
 
-[How to avoid this problem in future CORA development:]
+[How to avoid this problem in future development:]
 - [Specific coding practice, check, or pattern to follow]
 - [What to watch out for]
 - [How to catch this early]
