@@ -1,22 +1,50 @@
 #!/usr/bin/env python3
 """
-Skill Packager - Creates a distributable zip file of a skill folder
+Skill Packager - Creates a distributable zip file of a skill folder.
 
 Usage:
-    python utils/package_skill.py <path/to/skill-folder> [output-directory]
-
-Example:
-    python utils/package_skill.py skills/public/my-skill
-    python utils/package_skill.py skills/public/my-skill ./dist
+    uv run python plugins/core/skills/skill-creator/scripts/package_skill.py <path/to/skill-folder> [output-directory]
 """
+
+from __future__ import annotations
 
 import sys
 import zipfile
 from pathlib import Path
-from quick_validate import validate_skill
+
+from quick_validate import analyze_skill
 
 
-def package_skill(skill_path, output_dir=None):
+EXCLUDED_DIRS = {
+    "__pycache__",
+    ".git",
+}
+
+EXCLUDED_FILE_NAMES = {
+    ".DS_Store",
+    "Thumbs.db",
+}
+
+EXCLUDED_SUFFIXES = {
+    ".pyc",
+    ".pyo",
+    ".tmp",
+    ".bak",
+    ".orig",
+}
+
+
+def should_package(path: Path) -> bool:
+    if any(part in EXCLUDED_DIRS for part in path.parts):
+        return False
+    if path.name in EXCLUDED_FILE_NAMES:
+        return False
+    if any(path.name.endswith(suffix) for suffix in EXCLUDED_SUFFIXES):
+        return False
+    return True
+
+
+def package_skill(skill_path: str | Path, output_dir: str | Path | None = None):
     """
     Package a skill folder into a zip file.
 
@@ -29,7 +57,6 @@ def package_skill(skill_path, output_dir=None):
     """
     skill_path = Path(skill_path).resolve()
 
-    # Validate skill folder exists
     if not skill_path.exists():
         print(f"❌ Error: Skill folder not found: {skill_path}")
         return None
@@ -38,22 +65,25 @@ def package_skill(skill_path, output_dir=None):
         print(f"❌ Error: Path is not a directory: {skill_path}")
         return None
 
-    # Validate SKILL.md exists
     skill_md = skill_path / "SKILL.md"
     if not skill_md.exists():
         print(f"❌ Error: SKILL.md not found in {skill_path}")
         return None
 
-    # Run validation before packaging
     print("🔍 Validating skill...")
-    valid, message = validate_skill(skill_path)
-    if not valid:
-        print(f"❌ Validation failed: {message}")
-        print("   Please fix the validation errors before packaging.")
+    report = analyze_skill(skill_path)
+    if not report.valid:
+        print("❌ Validation failed:")
+        print(report.render())
+        print("\nPlease fix the validation errors before packaging.")
         return None
-    print(f"✅ {message}\n")
 
-    # Determine output location
+    if report.warnings:
+        print(report.render())
+        print()
+    else:
+        print("✅ Skill is valid!\n")
+
     skill_name = skill_path.name
     if output_dir:
         output_path = Path(output_dir).resolve()
@@ -62,19 +92,29 @@ def package_skill(skill_path, output_dir=None):
         output_path = Path.cwd()
 
     zip_filename = output_path / f"{skill_name}.zip"
+    files_added = 0
+    files_skipped = 0
 
-    # Create the zip file
     try:
-        with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Walk through the skill directory
-            for file_path in skill_path.rglob('*'):
-                if file_path.is_file():
-                    # Calculate the relative path within the zip
-                    arcname = file_path.relative_to(skill_path.parent)
-                    zipf.write(file_path, arcname)
-                    print(f"  Added: {arcname}")
+        with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in sorted(skill_path.rglob("*")):
+                if not file_path.is_file():
+                    continue
+
+                if not should_package(file_path):
+                    files_skipped += 1
+                    print(f"  Skipped: {file_path.relative_to(skill_path.parent)}")
+                    continue
+
+                arcname = file_path.relative_to(skill_path.parent)
+                zipf.write(file_path, arcname)
+                files_added += 1
+                print(f"  Added: {arcname}")
 
         print(f"\n✅ Successfully packaged skill to: {zip_filename}")
+        print(f"   Files added: {files_added}")
+        if files_skipped:
+            print(f"   Files skipped: {files_skipped}")
         return zip_filename
 
     except Exception as e:
@@ -84,10 +124,10 @@ def package_skill(skill_path, output_dir=None):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python utils/package_skill.py <path/to/skill-folder> [output-directory]")
+        print("Usage: uv run python plugins/core/skills/skill-creator/scripts/package_skill.py <path/to/skill-folder> [output-directory]")
         print("\nExample:")
-        print("  python utils/package_skill.py skills/public/my-skill")
-        print("  python utils/package_skill.py skills/public/my-skill ./dist")
+        print("  uv run python plugins/core/skills/skill-creator/scripts/package_skill.py skills/public/my-skill")
+        print("  uv run python plugins/core/skills/skill-creator/scripts/package_skill.py skills/public/my-skill ./dist")
         sys.exit(1)
 
     skill_path = sys.argv[1]

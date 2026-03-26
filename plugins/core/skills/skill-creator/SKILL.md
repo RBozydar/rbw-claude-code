@@ -6,7 +6,10 @@ license: Complete terms in LICENSE.txt
 
 # Skill Creator
 
+## Overview
+
 This skill provides guidance for creating effective skills.
+Use it to design, restructure, or harden a skill so it triggers correctly, stays lean, and contains the non-obvious guidance that actually changes Claude's behavior.
 
 ## Core Mental Model
 
