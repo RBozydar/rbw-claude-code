@@ -96,7 +96,13 @@ Include things Claude would otherwise get wrong, such as:
 - schema quirks
 - common failure patterns
 
-Start with at least one real gotcha.]
+Helpful pattern for each gotcha:
+- Situation:
+- Wrong instinct:
+- Correct approach:
+- How to verify the fix:
+
+Start with at least one real gotcha drawn from actual failures, not generic advice.]
 
 ## Verification
 
@@ -109,7 +115,23 @@ Examples:
 - capture screenshots, logs, or videos
 - verify downstream side effects
 
+Helpful pattern:
+1. Preconditions
+2. Action
+3. Assertion or observable proof
+4. Failure interpretation
+
 If verification is not applicable, say why.]
+
+## Success Criteria
+
+[TODO: Define what "done" looks like for this skill.
+Examples:
+- the skill triggers for the intended requests
+- bundled resources are referenced correctly
+- the main workflow is reproducible
+- the common failure cases are covered by gotchas
+- verification is explicit and realistic]
 
 ## Progressive Disclosure Notes
 

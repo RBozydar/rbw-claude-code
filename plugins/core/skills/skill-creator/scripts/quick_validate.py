@@ -24,6 +24,7 @@ RECOMMENDED_TOP_LEVEL_SECTIONS = [
     "overview",
     "gotchas",
     "verification",
+    "success criteria",
 ]
 
 TRIGGER_HINTS = [
