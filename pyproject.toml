@@ -1,0 +1,14 @@
+[project]
+name = "rbw-claude-code"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cchooks>=0.1.5",
+    "pyyaml>=6.0",
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+convert = "src.convert.cli:main"
