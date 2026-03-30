@@ -1,0 +1,44 @@
+{
+  "name": "rbw-claude-code",
+  "interface": {
+    "displayName": "rbw-claude-code"
+  },
+  "plugins": [
+    {
+      "name": "core",
+      "source": {
+        "source": "local",
+        "path": "./plugins/core"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "python-backend",
+      "source": {
+        "source": "local",
+        "path": "./plugins/python-backend"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "deep-research-plus",
+      "source": {
+        "source": "local",
+        "path": "./plugins/deep-research-plus"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Research"
+    }
+  ]
+}

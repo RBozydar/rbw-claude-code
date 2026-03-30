@@ -2,6 +2,8 @@
 
 Guide to creating new plugins for this marketplace.
 
+If a plugin should work in both Claude Code and Codex, ship both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. See [Codex Compatibility](codex-compatibility.md) for the repo-level marketplace rules.
+
 ## Quick Start
 
 ```bash

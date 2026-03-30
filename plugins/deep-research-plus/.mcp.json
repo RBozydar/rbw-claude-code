@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "gdelt-research": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "gdelt-py[mcp]",
+        "python",
+        "-m",
+        "py_gdelt.mcp_server.server"
+      ],
+      "cwd": "./mcp-server"
+    }
+  }
+}

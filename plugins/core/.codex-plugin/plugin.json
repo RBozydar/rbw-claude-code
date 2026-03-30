@@ -1,0 +1,41 @@
+{
+  "name": "core",
+  "version": "1.5.0",
+  "description": "Universal AI-powered development tools for code review, research, and workflow automation.",
+  "author": {
+    "name": "RBozydar",
+    "url": "https://github.com/RBozydar"
+  },
+  "homepage": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/core",
+  "repository": "https://github.com/RBozydar/rbw-claude-code",
+  "license": "MIT",
+  "keywords": [
+    "ai-powered",
+    "compound-engineering",
+    "workflow-automation",
+    "code-review",
+    "knowledge-management",
+    "language-agnostic"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Core",
+    "shortDescription": "Reusable development workflows and review skills",
+    "longDescription": "Language-agnostic skills for planning, review, workflow automation, and instruction hygiene, with optional Context7 MCP access for framework docs.",
+    "developerName": "RBozydar",
+    "category": "Development",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/core",
+    "defaultPrompt": [
+      "Review this change for unnecessary complexity.",
+      "Turn this feature idea into a concrete work plan.",
+      "Help me package a reusable agent skill."
+    ],
+    "brandColor": "#0F766E"
+  }
+}

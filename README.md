@@ -1,11 +1,13 @@
 # rbw-claude-code
 
-A Claude Code plugin marketplace for Python development with AI-powered code
-review, workflow automation, and productivity tools.
+A Claude Code plugin marketplace with parallel Codex marketplace metadata for
+the plugins that already map cleanly onto Codex's current plugin model.
 
 > This project started as a fork of [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin).
 
 ## Installation
+
+### Claude Code
 
 Add this marketplace to Claude Code:
 
@@ -18,6 +20,30 @@ Then browse and install plugins:
 ```bash
 /plugin menu
 ```
+
+### Codex
+
+Codex currently reads local marketplaces rather than remote GitHub marketplace
+references. This repo now ships a repo-local Codex marketplace at
+`.agents/plugins/marketplace.json`.
+
+To use it:
+
+```bash
+git clone https://github.com/RBozydar/rbw-claude-code.git
+cd rbw-claude-code
+codex
+/plugins
+```
+
+The current Codex marketplace exposes:
+
+- `core`
+- `python-backend`
+- `deep-research-plus`
+
+The guard plugins remain Claude-only for now because current Codex plugin docs
+describe skills, apps, and MCP configuration, but not hook plugins.
 
 ### Poetry Users
 
@@ -92,24 +118,46 @@ You can also manually check sync status:
 |--------|-------------|
 | [core](plugins/core) | Universal AI development tools: 29 agents, 18 commands, 16 skills |
 | [python-backend](plugins/python-backend) | Python-specific tools: 5 reviewers, 2 commands |
+| [deep-research-plus](plugins/deep-research-plus) | Deep research workflows with optional GDELT MCP support |
 
 ### Automation Hooks
 
 | Plugin | Description |
 |--------|-------------|
-| [enforce-uv](plugins/enforce-uv) | Block bare python/pip/pytest commands, enforce uv |
-| [conventional-commits](plugins/conventional-commits) | Validate conventional commit format |
-| [python-format](plugins/python-format) | Auto-format Python files with ruff after edits |
-| [python-typecheck](plugins/python-typecheck) | Run type checking after Python file edits |
-| [test-reminder](plugins/test-reminder) | Remind to add tests when creating new Python files |
+| [enforce-uv](plugins/guards/policy/enforce-uv) | Block bare python/pip/pytest commands, enforce uv |
+| [conventional-commits](plugins/guards/policy/conventional-commits) | Validate conventional commit format |
+| [python-format](plugins/guards/quality/python-format) | Auto-format Python files with ruff after edits |
+| [python-typecheck](plugins/guards/quality/python-typecheck) | Run type checking after Python file edits |
+| [test-reminder](plugins/guards/quality/test-reminder) | Remind to add tests when creating new Python files |
 
 ### Security Hooks
 
 | Plugin | Description |
 |--------|-------------|
-| [protect-env](plugins/protect-env) | Block reading .env files to protect secrets |
-| [git-safety-guard](plugins/git-safety-guard) | Block destructive git commands |
-| [safety-guard](plugins/safety-guard) | Block destructive file ops and supply chain attacks |
+| [protect-env](plugins/guards/security/protect-env) | Block reading .env files to protect secrets |
+| [git-safety-guard](plugins/guards/security/git-safety-guard) | Block destructive git commands |
+| [safety-guard](plugins/guards/security/safety-guard) | Block destructive file ops and supply chain attacks |
+
+## Codex Support
+
+Codex-compatible plugins in this repo currently are:
+
+- `core`
+- `python-backend`
+- `deep-research-plus`
+
+Each now ships a `.codex-plugin/plugin.json`, and the repo marketplace lives at
+`.agents/plugins/marketplace.json`.
+
+Hook-only plugins remain Claude-specific for now. Details:
+[docs/codex-compatibility.md](docs/codex-compatibility.md)
+
+For Codex-only local generation without hand-maintaining duplicate markdown,
+use the converter to emit `.codex/` artifacts from the Claude source tree:
+
+```bash
+convert plugins/core --to codex -o /path/to/project
+```
 
 ## Core Plugin
 

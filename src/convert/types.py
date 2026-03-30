@@ -12,6 +12,7 @@ class ClaudeMcpServer:
     command: str | None = None
     args: list[str] | None = None
     url: str | None = None
+    cwd: str | None = None
     env: dict[str, str] | None = None
     headers: dict[str, str] | None = None
 
@@ -100,6 +101,37 @@ class ClaudePlugin:
 class SkillDir:
     name: str
     source_dir: str
+
+
+# --- Codex output types ---
+
+
+@dataclass
+class CodexInvocationTargets:
+    prompt_targets: dict[str, str] = field(default_factory=dict)
+    skill_targets: dict[str, str] = field(default_factory=dict)
+    agent_targets: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class CodexPrompt:
+    name: str
+    content: str
+
+
+@dataclass
+class CodexGeneratedSkill:
+    name: str
+    content: str
+
+
+@dataclass
+class CodexBundle:
+    prompts: list[CodexPrompt] = field(default_factory=list)
+    skill_dirs: list[SkillDir] = field(default_factory=list)
+    generated_skills: list[CodexGeneratedSkill] = field(default_factory=list)
+    invocation_targets: CodexInvocationTargets | None = None
+    mcp_servers: dict[str, ClaudeMcpServer] | None = None
 
 
 # --- OpenCode output types ---

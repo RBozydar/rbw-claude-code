@@ -234,6 +234,7 @@ def _parse_mcp_dict(raw: dict) -> dict[str, ClaudeMcpServer]:
             command=server_data.get("command"),
             args=server_data.get("args"),
             url=server_data.get("url"),
+            cwd=server_data.get("cwd"),
             env=server_data.get("env"),
             headers=server_data.get("headers"),
         )

@@ -1,0 +1,43 @@
+{
+  "name": "python-backend",
+  "version": "1.4.0",
+  "description": "Python-specific development tools for review, testing, type checking, and coding workflows.",
+  "author": {
+    "name": "RBozydar",
+    "url": "https://github.com/RBozydar"
+  },
+  "homepage": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/python-backend",
+  "repository": "https://github.com/RBozydar/rbw-claude-code",
+  "license": "MIT",
+  "keywords": [
+    "python",
+    "pytest",
+    "mypy",
+    "pyright",
+    "type-hints",
+    "code-review",
+    "ml",
+    "llm",
+    "data-science"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Python Backend",
+    "shortDescription": "Python coding, review, and testing workflows",
+    "longDescription": "Python-focused skills for backend development, code review, typing, testing, and Gemini-assisted workflows.",
+    "developerName": "RBozydar",
+    "category": "Development",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/python-backend",
+    "defaultPrompt": [
+      "Review this Python change for simplicity and typing issues.",
+      "Help write tests for this backend module.",
+      "Show the right uv, pytest, or mypy workflow for this repo."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

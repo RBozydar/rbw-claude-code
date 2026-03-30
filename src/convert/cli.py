@@ -6,19 +6,21 @@ import argparse
 import os
 import sys
 
+from .converters.codex import convert_claude_to_codex
 from .converters.opencode import convert_claude_to_opencode
 from .converters.pi import convert_claude_to_pi
 from .parser import load_claude_plugin
+from .writers.codex import write_codex_bundle
 from .writers.opencode import write_opencode_bundle
 from .writers.pi import write_pi_bundle
 
-TARGETS = ("opencode", "pi")
+TARGETS = ("codex", "opencode", "pi")
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="convert",
-        description="Convert a Claude Code plugin into OpenCode or Pi format",
+        description="Convert a Claude Code plugin into Codex, OpenCode, or Pi format",
     )
     parser.add_argument(
         "source",
@@ -120,6 +122,9 @@ def _run_conversion(
             permissions=permissions,
         )
         write_opencode_bundle(output_root, bundle)
+    elif target == "codex":
+        bundle = convert_claude_to_codex(plugin)
+        write_codex_bundle(output_root, bundle)
     elif target == "pi":
         bundle = convert_claude_to_pi(plugin)
         write_pi_bundle(output_root, bundle)

@@ -1,0 +1,46 @@
+{
+  "name": "deep-research-plus",
+  "version": "1.1.0",
+  "description": "Advanced research workflows with deep web research, domain routing, and optional GDELT-powered geopolitical analysis.",
+  "author": {
+    "name": "RBozydar",
+    "url": "https://github.com/RBozydar"
+  },
+  "homepage": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/deep-research-plus",
+  "repository": "https://github.com/RBozydar/rbw-claude-code",
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "deep-research",
+    "gdelt",
+    "geopolitical",
+    "conflicts",
+    "sanctions",
+    "multi-agent",
+    "diffusion",
+    "parallel",
+    "web-search",
+    "mcp-server"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Deep Research Plus",
+    "shortDescription": "Long-horizon research workflows with optional GDELT MCP",
+    "longDescription": "Deep research workflows with domain-aware routing, iterative gap detection, and optional GDELT MCP configuration for structured geopolitical analysis.",
+    "developerName": "RBozydar",
+    "category": "Research",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/deep-research-plus",
+    "defaultPrompt": [
+      "Do deep research on this topic with full citations.",
+      "Analyze sanctions and conflict signals for this country.",
+      "Investigate this market trend and summarize key drivers."
+    ],
+    "brandColor": "#B45309"
+  }
+}
