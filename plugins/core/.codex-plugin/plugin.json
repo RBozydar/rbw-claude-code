@@ -1,9 +1,10 @@
 {
   "name": "core",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Universal AI-powered development tools for code review, research, and workflow automation.",
   "author": {
-    "name": "RBozydar",
+    "name": "Robert Wasilewski",
+    "email": "wasilewski.robert@gmail.com",
     "url": "https://github.com/RBozydar"
   },
   "homepage": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/core",
@@ -23,7 +24,7 @@
     "displayName": "Core",
     "shortDescription": "Reusable development workflows and review skills",
     "longDescription": "Language-agnostic skills for planning, review, workflow automation, and instruction hygiene, with optional Context7 MCP access for framework docs.",
-    "developerName": "RBozydar",
+    "developerName": "Robert Wasilewski",
     "category": "Development",
     "capabilities": [
       "Interactive",

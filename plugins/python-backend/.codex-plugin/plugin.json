@@ -1,9 +1,10 @@
 {
   "name": "python-backend",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Python-specific development tools for review, testing, type checking, and coding workflows.",
   "author": {
-    "name": "RBozydar",
+    "name": "Robert Wasilewski",
+    "email": "wasilewski.robert@gmail.com",
     "url": "https://github.com/RBozydar"
   },
   "homepage": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/python-backend",
@@ -25,7 +26,7 @@
     "displayName": "Python Backend",
     "shortDescription": "Python coding, review, and testing workflows",
     "longDescription": "Python-focused skills for backend development, code review, typing, testing, and Gemini-assisted workflows.",
-    "developerName": "RBozydar",
+    "developerName": "Robert Wasilewski",
     "category": "Development",
     "capabilities": [
       "Interactive",

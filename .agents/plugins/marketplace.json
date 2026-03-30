@@ -1,7 +1,7 @@
 {
   "name": "rbw-claude-code",
   "interface": {
-    "displayName": "rbw-claude-code"
+    "displayName": "RBW Codex Plugins"
   },
   "plugins": [
     {
