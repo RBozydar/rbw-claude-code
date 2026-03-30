@@ -107,31 +107,17 @@ class SkillDir:
 
 
 @dataclass
-class CodexInvocationTargets:
-    prompt_targets: dict[str, str] = field(default_factory=dict)
-    skill_targets: dict[str, str] = field(default_factory=dict)
-    agent_targets: dict[str, str] = field(default_factory=dict)
-
-
-@dataclass
-class CodexPrompt:
+class CodexAgentFile:
     name: str
-    content: str
-
-
-@dataclass
-class CodexGeneratedSkill:
-    name: str
-    content: str
+    description: str
+    developer_instructions: str
+    source_path: str
+    mcp_servers: dict[str, ClaudeMcpServer] | None = None
 
 
 @dataclass
 class CodexBundle:
-    prompts: list[CodexPrompt] = field(default_factory=list)
-    skill_dirs: list[SkillDir] = field(default_factory=list)
-    generated_skills: list[CodexGeneratedSkill] = field(default_factory=list)
-    invocation_targets: CodexInvocationTargets | None = None
-    mcp_servers: dict[str, ClaudeMcpServer] | None = None
+    agents: list[CodexAgentFile] = field(default_factory=list)
 
 
 # --- OpenCode output types ---

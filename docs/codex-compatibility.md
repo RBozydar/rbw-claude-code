@@ -24,6 +24,22 @@ The repo marketplace at `.agents/plugins/marketplace.json` currently includes:
 
 These plugins now ship `.codex-plugin/plugin.json` manifests, and the plugins that need MCP setup also ship `.mcp.json`.
 
+For subagents specifically, the repo also generates project-scoped Codex custom
+agents under `.codex/agents/` from the Claude agent markdown. Those files are
+generated artifacts, not hand-maintained copies.
+
+Regenerate them with:
+
+```bash
+uv run python scripts/generate_codex_agents.py
+```
+
+Install them into `~/.codex/agents/` with:
+
+```bash
+./scripts/install-codex-agents.sh
+```
+
 ## Avoiding drift
 
 Do not hand-maintain a second Codex copy of the instruction tree.
@@ -31,17 +47,23 @@ Do not hand-maintain a second Codex copy of the instruction tree.
 The repo now supports a generated Codex workflow from the canonical Claude plugin source:
 
 ```bash
-convert plugins/core --to codex -o /path/to/project
+uv run python scripts/generate_codex_agents.py
 ```
 
-That Codex target:
+That Codex workflow:
 
-- copies existing `skills/` into `.codex/skills/` with Codex-specific syntax rewrites
-- generates Codex skills from Claude `agents/`
-- generates Codex prompts plus backing skills from Claude `commands/`
-- writes MCP configuration into `.codex/config.toml`
+- generates `.codex/agents/*.toml` from Claude `agents/`
+- enforces collision checks and blocks reserved built-in Codex agent names
+- rewrites common Claude `Task(...)` / `AskUserQuestion` patterns into Codex agent phrasing
+- carries plugin-level MCP configuration into generated agent files when present
 
-This keeps the source of truth in the Claude plugin markdown and emits Codex artifacts mechanically.
+Install the generated agents with:
+
+```bash
+./scripts/install-codex-agents.sh
+```
+
+This keeps the source of truth in the Claude agent markdown and emits Codex artifacts mechanically.
 
 ## What stays Claude-only for now
 

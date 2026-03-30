@@ -153,11 +153,24 @@ Hook-only plugins remain Claude-specific for now. Details:
 [docs/codex-compatibility.md](docs/codex-compatibility.md)
 
 For Codex-only local generation without hand-maintaining duplicate markdown,
-use the converter to emit `.codex/` artifacts from the Claude source tree:
+the repo now generates Codex custom agents directly from the Claude agent
+markdown and keeps them under `.codex/agents/`.
+
+Regenerate them from source:
 
 ```bash
-convert plugins/core --to codex -o /path/to/project
+uv run python scripts/generate_codex_agents.py
 ```
+
+Install them into your Codex home:
+
+```bash
+./scripts/install-codex-agents.sh
+```
+
+By default the installer creates symlinks into `~/.codex/agents/` so updates in
+this repo propagate without copy drift. Use `--copy` if you prefer materialized
+files.
 
 ## Core Plugin
 

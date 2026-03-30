@@ -1,4 +1,4 @@
-"""Content transformation utilities for Pi conversions."""
+"""Content transformation utilities for target-specific conversions."""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def transform_content_for_codex(
     prompt_targets: dict[str, str] | None = None,
     skill_targets: dict[str, str] | None = None,
     agent_targets: dict[str, str] | None = None,
-    unknown_slash_behavior: Literal["prompt", "preserve"] = "prompt",
+    unknown_slash_behavior: Literal["prompt", "preserve"] = "preserve",
 ) -> str:
     """Transform Claude Code content to Codex-compatible content."""
     result = body
@@ -63,26 +63,45 @@ def transform_content_for_codex(
     def _render_task(prefix: str, agent_name: str, args: str) -> str:
         final_segment = agent_name.split(":")[-1] if ":" in agent_name else agent_name
         normalized = normalize_name(final_segment)
-        skill_name = agent_targets.get(normalized, normalized)
+        target_name = agent_targets.get(normalized, normalized)
         trimmed_args = re.sub(r"\s+", " ", args.strip())
         if trimmed_args:
-            return f"{prefix}Use the ${skill_name} skill to: {trimmed_args}"
-        return f"{prefix}Use the ${skill_name} skill"
+            return (
+                f"{prefix}Spawn the `{target_name}` agent with this task: "
+                f"{trimmed_args}."
+            )
+        return f"{prefix}Spawn the `{target_name}` agent."
 
     def _replace_task(m: re.Match) -> str:
         return _render_task(m.group(1), m.group(2), m.group(3))
 
     result = re.sub(
-        r"^(\s*-?\s*)Task\s+([a-z][a-z0-9:-]*)\(([^)]*)\)",
+        r"Task\(\s*subagent_type:\s*\"([a-z][a-z0-9:_-]*)\"\s*,\s*prompt:\s*\"(.*?)\"\s*\)",
+        lambda m: _render_task("", m.group(1), m.group(2)),
+        result,
+        flags=re.DOTALL,
+    )
+    result = re.sub(
+        r"^(\s*)Task\s+\d+\s*:\s*([a-z][a-z0-9:_-]*)\s*(?:→|->|=>)\s*\"([^\"]+)\"",
         _replace_task,
         result,
         flags=re.MULTILINE,
     )
     result = re.sub(
-        r"\bTask\s+([a-z][a-z0-9:-]*)\(([^)]*)\)",
+        r"^(\s*-?\s*)Task\s+([a-z][a-z0-9:_-]*)\(([^)]*)\)",
+        _replace_task,
+        result,
+        flags=re.MULTILINE,
+    )
+    result = re.sub(
+        r"\bTask\s+([a-z][a-z0-9:_-]*)\(([^)]*)\)",
         lambda m: _render_task("", m.group(1), m.group(2)),
         result,
     )
+    result = re.sub(r"\bAskUserQuestion\b", "ask the user directly", result)
+    result = re.sub(r"\bTask tool\b", "agent spawning", result)
+    result = re.sub(r"\bTask calls\b", "agent spawns", result)
+    result = re.sub(r"\bTask call\b", "agent spawn", result)
 
     def _replace_slash(m: re.Match) -> str:
         command_name = m.group(1)
@@ -112,8 +131,8 @@ def transform_content_for_codex(
 
     def _replace_agent_ref(m: re.Match) -> str:
         normalized = normalize_name(m.group(1))
-        skill_name = agent_targets.get(normalized, normalized)
-        return f"${skill_name} skill"
+        agent_name = agent_targets.get(normalized, normalized)
+        return f"`{agent_name}` agent"
 
     result = re.sub(
         r"@([a-z][a-z0-9-]*-(?:agent|reviewer|researcher|analyst|specialist|oracle|sentinel|guardian|strategist))",
