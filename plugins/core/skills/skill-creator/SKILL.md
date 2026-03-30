@@ -140,72 +140,21 @@ Start small if needed: one excellent gotcha is more valuable than pages of boile
 
 ## Avoid Railroading
 
-Give Claude the information and tools it needs without forcing an unnecessarily rigid sequence.
-
-Bad:
-- "Always use tool A, then tool B, then grep, then rewrite the file in exactly this order"
-
-Better:
-- "Tool A is useful for retrieving live dashboard state; tool B is useful for historical comparison; use whichever combination best fits the failure mode"
-
-Use structure where it protects correctness or safety, but avoid over-constraining normal reasoning.
+Describe what tools and approaches are available and when each is useful. Only enforce a rigid sequence when safety or correctness requires it.
 
 ## Prefer Scripts Over Repeated Prose
 
-If Claude keeps rewriting the same helper logic, move that logic into scripts.
-Use scripts when they provide:
-- Deterministic reliability
-- Faster execution
-- Lower token usage
-- Easier composition across tasks
-- Better verification through assertions
-
-Examples:
-- `scripts/rotate_pdf.py`
-- `scripts/run_signup_flow.py`
-- `scripts/assert_invoice_state.py`
-- `scripts/fetch_events.py`
-
-Do not stop at describing what a helper should do when the helper can be shipped directly.
+If Claude keeps rewriting the same helper logic, ship it as a script instead of describing it. Scripts are better when they provide deterministic reliability, lower token usage, or easier composition. Do not stop at describing what a helper should do when the helper can be shipped directly.
 
 ## Verification Skills Deserve Extra Care
 
-Verification skills are especially valuable because they improve trust in Claude's output.
-When relevant, include:
-- Browser or CLI driving scripts
-- Assertions on expected state after each step
-- Screenshot or video capture
-- Logs or structured result output for review
-
-A good verification skill does not merely say "test the feature". It gives Claude a repeatable way to prove the feature works.
+Verification skills compound in value. When relevant, include driving scripts, assertions on expected state, screenshot/video capture, and structured result output. A good verification skill gives Claude a repeatable way to prove the feature works, not just "test the feature".
 
 ## Configuration, State, and Hooks
 
-Use configuration and state intentionally.
-
-### Configuration
-
-Store user- or team-specific constants in `config.json` when needed, such as:
-- Slack channel IDs
-- environment names
-- dashboard identifiers
-- ticket schema enums
-
-### State
-
-Only persist state when it materially improves outcomes, such as:
-- prior workflow results
-- log files used for consistency across recurring reports
-- cached identifiers or mappings
-
-Prefer `${CLAUDE_PLUGIN_DATA}` for durable writable state.
-
-### Hooks
-
-Use hooks when they provide meaningful leverage, but prefer on-demand hooks tied to the skill instead of globally annoying restrictions.
-Examples:
-- A careful production skill that blocks risky commands only during production work
-- A logging hook that records skill usage to measure adoption or under-triggering
+- **Configuration**: Store user- or team-specific constants (Slack channel IDs, environment names, dashboard identifiers) in `config.json` when needed.
+- **State**: Only persist state when it materially improves outcomes. Prefer `${CLAUDE_PLUGIN_DATA}` for durable writable state.
+- **Hooks**: Prefer on-demand hooks tied to the skill instead of globally annoying restrictions.
 
 ## Skill Creation Process
 
@@ -335,6 +284,49 @@ When updating an existing skill, check for these failure modes:
 - Persistent state is stored in the wrong place
 - Hooks are global and annoying instead of skill-scoped and purposeful
 - No guidance exists for measuring whether the skill is actually helping
+
+## Gotchas
+
+### Description too broad causes over-triggering
+
+A description like "Use this skill when working with files" will trigger on nearly every request. Descriptions must name the specific domain, task type, or failure mode. Test by asking: would this description match requests that should NOT use this skill?
+
+### Placeholder content shipped in production
+
+The `init_skill.py` scaffold includes TODO markers and example files (`scripts/example.py`, `references/reference_notes.md`, `assets/example_asset.txt`). The validator catches `[TODO:]` patterns, but subtler template remnants like "Replace this placeholder" or generic section headings can slip through. Always delete or replace every scaffold file before packaging.
+
+### Description written as marketing copy instead of trigger conditions
+
+The most common single mistake. "A powerful skill for managing deployments" tells the model nothing about when to activate. Rewrite as: "Use this skill when deploying to production, rolling back a release, or debugging CI pipeline failures in the deploy workflow."
+
+### SKILL.md grows until it defeats its own purpose
+
+Skills that start lean accumulate detail over iterations until they consume excessive context on every trigger. After each round of additions, re-evaluate whether new content is guidance (belongs in SKILL.md) or reference material (belongs in `references/`).
+
+### `package_skill.py` fails when run from repo root
+
+`package_skill.py` imports `from quick_validate import analyze_skill` as a sibling import. This only resolves when Python's working directory is `scripts/`. When invoked from the repo root as documented, it will fail with `ModuleNotFoundError`. Run it from the `scripts/` directory or fix the import.
+
+### Gotchas section filled with generic advice instead of real failures
+
+A gotchas section that says "be careful with edge cases" adds no value. Every gotcha should describe a specific situation where the obvious approach fails, what goes wrong, and what to do instead. If you do not have real failure data yet, start with one concrete gotcha and add more as the skill is used.
+
+## Verification
+
+After creating or updating a skill, verify it by running the validator from the repository root:
+
+```bash
+uv run python plugins/core/skills/skill-creator/scripts/quick_validate.py <path/to/skill-folder>
+```
+
+The validator checks:
+- Frontmatter has a valid name and trigger-oriented description
+- No TODO or placeholder text remains in the body
+- Required sections (especially Gotchas) exist
+- Referenced bundled resources (`scripts/`, `references/`, `assets/`, `config.json`) actually exist on disk
+- SKILL.md is not excessively large
+
+A clean validation pass is necessary but not sufficient. After the skill is used in a real session, check whether it triggered correctly and whether Claude's output was meaningfully better than it would have been without the skill.
 
 ## Success Criteria
 
