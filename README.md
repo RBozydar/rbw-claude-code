@@ -153,10 +153,12 @@ Hook-only plugins remain Claude-specific for now. Details:
 [docs/codex-compatibility.md](docs/codex-compatibility.md)
 
 For Codex-only local generation without hand-maintaining duplicate markdown,
-the repo now generates Codex custom agents directly from the Claude agent
-markdown and keeps them under `.codex/agents/`.
+the repo now generates:
 
-Regenerate them from source:
+- Codex custom agents under `.codex/agents/` from Claude `agents/`
+- Codex custom prompts under `.codex/prompts/` from Claude `commands/`
+
+Regenerate both from source:
 
 ```bash
 uv run python scripts/generate_codex_agents.py
@@ -168,9 +170,17 @@ Install them into your Codex home:
 ./scripts/install-codex-agents.sh
 ```
 
-By default the installer creates symlinks into `~/.codex/agents/` so updates in
-this repo propagate without copy drift. Use `--copy` if you prefer materialized
-files.
+By default the installer creates symlinks into `~/.codex/agents/` and
+`~/.codex/prompts/` so updates in this repo propagate without copy drift. Use
+`--copy` if you prefer materialized files.
+
+For the Claude workflow commands specifically, the generated Codex entrypoints
+show up as custom prompts such as `/prompts:workflows-review`,
+`/prompts:workflows-plan`, and `/prompts:workflows-work`.
+
+OpenAI currently documents custom prompts as deprecated in favor of skills for
+reusable prompts, but custom prompts are still the Codex surface that most
+closely matches Claude-style explicit slash commands.
 
 ## Core Plugin
 

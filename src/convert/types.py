@@ -47,7 +47,7 @@ class ClaudeCommand:
     body: str
     source_path: str
     description: str | None = None
-    argument_hint: str | None = None
+    argument_hint: str | list | dict | None = None
     model: str | None = None
     allowed_tools: list[str] | None = None
     disable_model_invocation: bool | None = None
@@ -59,7 +59,7 @@ class ClaudeSkill:
     source_dir: str
     skill_path: str
     description: str | None = None
-    argument_hint: str | None = None
+    argument_hint: str | list | dict | None = None
     disable_model_invocation: bool | None = None
 
 
@@ -116,8 +116,18 @@ class CodexAgentFile:
 
 
 @dataclass
+class CodexPromptFile:
+    name: str
+    source_path: str
+    body: str
+    description: str | None = None
+    argument_hint: str | None = None
+
+
+@dataclass
 class CodexBundle:
     agents: list[CodexAgentFile] = field(default_factory=list)
+    prompts: list[CodexPromptFile] = field(default_factory=list)
 
 
 # --- OpenCode output types ---

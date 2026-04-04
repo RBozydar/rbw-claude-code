@@ -22,8 +22,8 @@ jobs:
       - name: markdownlint
         uses: DavidAnson/markdownlint-cli2-action@v19
 
-  codex-agents:
-    name: Codex Agents
+  codex-artifacts:
+    name: Codex Artifacts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -40,21 +40,21 @@ jobs:
       - name: Run Codex conversion tests
         run: uv run pytest tests/test_convert_codex.py -q
 
-      - name: Regenerate Codex agents
+      - name: Regenerate Codex artifacts
         run: uv run python scripts/generate_codex_agents.py
 
-      - name: Check generated Codex agents are up to date
+      - name: Check generated Codex artifacts are up to date
         run: |
-          if [[ -n "$(git status --short -- .codex/agents)" ]]; then
-            git status --short -- .codex/agents
-            echo "Generated Codex agents are out of date. Run: uv run python scripts/generate_codex_agents.py"
+          if [[ -n "$(git status --short -- .codex/agents .codex/prompts)" ]]; then
+            git status --short -- .codex/agents .codex/prompts
+            echo "Generated Codex artifacts are out of date. Run: uv run python scripts/generate_codex_agents.py"
             exit 1
           fi
 
   ci-success:
     name: All CI Checks Passed
     runs-on: ubuntu-latest
-    needs: [lint, codex-agents]
+    needs: [lint, codex-artifacts]
     if: always()
     steps:
       - name: Check all jobs status
@@ -63,7 +63,7 @@ jobs:
             echo "CI job failed"
             exit 1
           fi
-          if [[ "${{ needs.codex-agents.result }}" != "success" ]]; then
+          if [[ "${{ needs.codex-artifacts.result }}" != "success" ]]; then
             echo "CI job failed"
             exit 1
           fi

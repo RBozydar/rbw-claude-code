@@ -28,17 +28,25 @@ For subagents specifically, the repo also generates project-scoped Codex custom
 agents under `.codex/agents/` from the Claude agent markdown. Those files are
 generated artifacts, not hand-maintained copies.
 
-Regenerate them with:
+For Claude slash commands specifically, the repo also generates project-scoped
+Codex custom prompts under `.codex/prompts/` from the Claude command markdown.
+Those prompts are invocable as `/prompts:<name>` in Codex, for example
+`/prompts:workflows-review`.
+
+Regenerate both with:
 
 ```bash
 uv run python scripts/generate_codex_agents.py
 ```
 
-Install them into `~/.codex/agents/` with:
+Install them into your Codex home with:
 
 ```bash
 ./scripts/install-codex-agents.sh
 ```
+
+This installs generated agents into `~/.codex/agents/` and generated prompts
+into `~/.codex/prompts/`.
 
 ## Avoiding drift
 
@@ -53,17 +61,30 @@ uv run python scripts/generate_codex_agents.py
 That Codex workflow:
 
 - generates `.codex/agents/*.toml` from Claude `agents/`
+- generates `.codex/prompts/*.md` from Claude `commands/`
 - enforces collision checks and blocks reserved built-in Codex agent names
 - rewrites common Claude `Task(...)` / `AskUserQuestion` patterns into Codex agent phrasing
+- rewrites known Claude slash-command references like `/workflows:review` into Codex prompt references like `/prompts:workflows-review`
 - carries plugin-level MCP configuration into generated agent files when present
 
-Install the generated agents with:
+Install the generated Codex artifacts with:
 
 ```bash
 ./scripts/install-codex-agents.sh
 ```
 
-This keeps the source of truth in the Claude agent markdown and emits Codex artifacts mechanically.
+This keeps the source of truth in the Claude markdown and emits Codex artifacts mechanically.
+
+## Prompt caveat
+
+OpenAI's Codex docs currently describe custom prompts as deprecated and
+recommend skills for reusable prompts instead. This repository still generates
+custom prompts because they remain the closest Codex-native equivalent to
+Claude's explicit slash-command entrypoints.
+
+For long-term shared workflow packaging, Codex skills remain the more stable
+surface. For command-like explicit invocation parity, custom prompts are still
+useful today.
 
 ## What stays Claude-only for now
 
