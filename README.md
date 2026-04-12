@@ -41,6 +41,7 @@ The current Codex marketplace exposes:
 - `core`
 - `python-backend`
 - `deep-research-plus`
+- `linux-hyprland`
 
 The guard plugins remain Claude-only for now because current Codex plugin docs
 describe skills, apps, and MCP configuration, but not hook plugins.
@@ -119,6 +120,7 @@ You can also manually check sync status:
 | [core](plugins/core) | Universal AI development tools: 29 agents, 18 commands, 16 skills |
 | [python-backend](plugins/python-backend) | Python-specific tools: 5 reviewers, 2 commands |
 | [deep-research-plus](plugins/deep-research-plus) | Deep research workflows with optional GDELT MCP support |
+| [linux-hyprland](plugins/linux-hyprland) | Quickshell and Hyprland shell development skill for Qt6/QML |
 
 ### Automation Hooks
 
@@ -145,6 +147,7 @@ Codex-compatible plugins in this repo currently are:
 - `core`
 - `python-backend`
 - `deep-research-plus`
+- `linux-hyprland`
 
 Each now ships a `.codex-plugin/plugin.json`, and the repo marketplace lives at
 `.agents/plugins/marketplace.json`.

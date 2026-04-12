@@ -21,6 +21,7 @@ The repo marketplace at `.agents/plugins/marketplace.json` currently includes:
 - `core`
 - `python-backend`
 - `deep-research-plus`
+- `linux-hyprland`
 
 These plugins now ship `.codex-plugin/plugin.json` manifests, and the plugins that need MCP setup also ship `.mcp.json`.
 
