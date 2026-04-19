@@ -71,7 +71,8 @@ skill-name/
 ├── SKILL.md
 ├── scripts/      # executable helpers
 ├── references/   # detailed docs loaded on demand
-├── assets/       # templates, boilerplate, images, sample files
+├── templates/    # reusable output structures
+├── assets/       # boilerplate files, sample outputs, images, fixtures
 ├── config.json   # optional user/team-specific configuration
 └── logs/ or data/ if truly needed for local state
 ```
@@ -80,7 +81,8 @@ Use the folder structure deliberately:
 - Put concise trigger and workflow guidance in SKILL.md
 - Put long API details, schemas, and reference material in references/
 - Put deterministic helpers in scripts/
-- Put boilerplate and output resources in assets/
+- Put repeatable output structures in templates/
+- Put boilerplate and sample resources in assets/
 - Put user- or team-specific configuration in config.json when needed
 
 When persistent writable data is required across upgrades, prefer `${CLAUDE_PLUGIN_DATA}` instead of storing state directly inside the shipped skill folder.
@@ -189,6 +191,7 @@ For each representative example, decide what should live in:
 - SKILL.md
 - scripts/
 - references/
+- templates/
 - assets/
 - config.json
 - `${CLAUDE_PLUGIN_DATA}`
@@ -197,7 +200,8 @@ Use this rule of thumb:
 - Put guidance in SKILL.md
 - Put detail in references/
 - Put deterministic helpers in scripts/
-- Put reusable output materials in assets/
+- Put reusable output structures in templates/
+- Put boilerplate/sample output materials in assets/
 - Put install- or user-specific values in config
 
 ### Step 4: Initialize the Skill
@@ -212,9 +216,21 @@ uv run python plugins/core/skills/skill-creator/scripts/init_skill.py <skill-nam
 This script creates:
 - the skill directory
 - a starter SKILL.md
-- example `scripts/`, `references/`, and `assets/` directories
+- example `scripts/`, `references/`, `templates/`, and `assets/` directories
 
 Delete any example files that are not actually useful.
+
+### Step 4.5: Start from Built-in Templates and References
+
+Before writing from scratch, use the bundled starter resources in this skill:
+
+- `templates/simple-skill.md` for single-file skills
+- `templates/router-skill.md` for multi-workflow/router-style skills
+- `references/recommended-structure.md` for deciding simple vs router structure
+- `references/using-scripts.md` for script design and workflow integration
+- `references/using-templates.md` for template design and placeholder conventions
+
+Copy the closest template, then edit heavily for your actual domain.
 
 ### Step 5: Write the Actual Skill
 
@@ -293,7 +309,7 @@ A description like "Use this skill when working with files" will trigger on near
 
 ### Placeholder content shipped in production
 
-The `init_skill.py` scaffold includes TODO markers and example files (`scripts/example.py`, `references/reference_notes.md`, `assets/example_asset.txt`). The validator catches `[TODO:]` patterns, but subtler template remnants like "Replace this placeholder" or generic section headings can slip through. Always delete or replace every scaffold file before packaging.
+The `init_skill.py` scaffold includes TODO markers and example files (`scripts/example.py`, `references/reference_notes.md`, `templates/example_template.md`, `assets/example_asset.txt`). The validator catches obvious TODO-style markers, but subtler template remnants (for example, generic placeholder instructions) can slip through. Always delete or replace every scaffold file before packaging.
 
 ### Description written as marketing copy instead of trigger conditions
 
@@ -303,9 +319,9 @@ The most common single mistake. "A powerful skill for managing deployments" tell
 
 Skills that start lean accumulate detail over iterations until they consume excessive context on every trigger. After each round of additions, re-evaluate whether new content is guidance (belongs in SKILL.md) or reference material (belongs in `references/`).
 
-### `package_skill.py` fails when run from repo root
+### Packaging and validation commands drift apart
 
-`package_skill.py` imports `from quick_validate import analyze_skill` as a sibling import. This only resolves when Python's working directory is `scripts/`. When invoked from the repo root as documented, it will fail with `ModuleNotFoundError`. Run it from the `scripts/` directory or fix the import.
+If `quick_validate.py` and `package_skill.py` behaviors diverge over time, packaging may succeed while quality checks regress (or vice versa). Keep both scripts aligned when adding new resource types, validation rules, or exclusions.
 
 ### Gotchas section filled with generic advice instead of real failures
 
@@ -323,7 +339,7 @@ The validator checks:
 - Frontmatter has a valid name and trigger-oriented description
 - No TODO or placeholder text remains in the body
 - Required sections (especially Gotchas) exist
-- Referenced bundled resources (`scripts/`, `references/`, `assets/`, `config.json`) actually exist on disk
+- Referenced bundled resources (`scripts/`, `references/`, `templates/`, `assets/`, `config.json`) actually exist on disk
 - SKILL.md is not excessively large
 
 A clean validation pass is necessary but not sufficient. After the skill is used in a real session, check whether it triggered correctly and whether Claude's output was meaningfully better than it would have been without the skill.

@@ -58,13 +58,12 @@ claude plugin add ./plugins/core
 ### Skills (selected)
 
 - `agent-native-architecture` - Building AI agents with prompt-native patterns
-- `create-agent-skills` - Guide for creating Claude Code skills
 - `compound-docs` - Document solved problems for knowledge compounding
 - `git-worktree` - Manage Git worktrees for isolated development
 - `git-ship` - Complete git workflow: commit, push, PR, CI wait, merge
 - `file-todos` - File-based todo tracking system
 - `instruction-hygiene` - Audit and trim bloated CLAUDE.md, skills, and context setups
-- `skill-creator` - Creating new Claude Code skills
+- `skill-creator` - Canonical guide for creating and refining Claude Code skills
 
 The full core plugin currently ships 29 agents, 18 commands, and 16 skills.
 

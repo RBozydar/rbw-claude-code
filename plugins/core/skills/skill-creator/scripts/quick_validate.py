@@ -7,7 +7,7 @@ The validator aims to catch the most common problems in new or updated skills:
 - weak trigger descriptions
 - unfinished TODO/template content
 - missing high-signal sections like Gotchas
-- mismatches between mentioned bundled resources and actual files
+- mismatches between mentioned bundled resources and actual files (scripts/references/templates/assets/config)
 - suspicious packaging artifacts or oversized SKILL.md files
 """
 
@@ -224,13 +224,13 @@ def analyze_skill(skill_path: str | Path) -> ValidationReport:
     resource_refs = normalize_inline_code_references(body)
     for ref in sorted(resource_refs):
         normalized = ref.split(" (", 1)[0].strip()
-        if normalized.startswith(("scripts/", "references/", "assets/")) or normalized == "config.json":
+        if normalized.startswith(("scripts/", "references/", "templates/", "assets/")) or normalized == "config.json":
             if not (skill_path / normalized).exists():
                 errors.append(f"Referenced resource not found: {normalized}")
 
     bundled_resource_refs = {
         ref for ref in resource_refs
-        if ref.startswith(("scripts/", "references/", "assets/")) or ref == "config.json"
+        if ref.startswith(("scripts/", "references/", "templates/", "assets/")) or ref == "config.json"
     }
 
     if any(ref.startswith("references/") for ref in bundled_resource_refs) and not (skill_path / "references").exists():
@@ -238,6 +238,9 @@ def analyze_skill(skill_path: str | Path) -> ValidationReport:
 
     if any(ref.startswith("scripts/") for ref in bundled_resource_refs) and not (skill_path / "scripts").exists():
         errors.append("SKILL.md references files under scripts/ but the directory does not exist")
+
+    if any(ref.startswith("templates/") for ref in bundled_resource_refs) and not (skill_path / "templates").exists():
+        errors.append("SKILL.md references files under templates/ but the directory does not exist")
 
     if any(ref.startswith("assets/") for ref in bundled_resource_refs) and not (skill_path / "assets").exists():
         errors.append("SKILL.md references files under assets/ but the directory does not exist")
@@ -257,7 +260,7 @@ def analyze_skill(skill_path: str | Path) -> ValidationReport:
             warnings.append(f"Temporary or backup file found: {path.relative_to(skill_path)}")
         if path.name == "example.py" and "example.py" not in body:
             stray_files.append(str(path.relative_to(skill_path)))
-        if path.name in {"reference_notes.md", "example_asset.txt"}:
+        if path.name in {"reference_notes.md", "example_asset.txt", "example_template.md"}:
             stray_files.append(str(path.relative_to(skill_path)))
 
     if stray_files and not contains_placeholder(body):

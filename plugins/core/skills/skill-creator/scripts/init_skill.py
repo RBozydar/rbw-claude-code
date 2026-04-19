@@ -79,11 +79,12 @@ Keep the structure helpful, but avoid railroading Claude into an overly rigid to
 The scaffold created alongside this file currently includes:
 - `scripts/example.py` - Replace with a real helper script or delete it
 - `references/reference_notes.md` - Replace with real reference material or delete it
+- `templates/example_template.md` - Replace with a real output template or delete it
 - `assets/example_asset.txt` - Replace with a real asset or delete it
 - `config.json` - Keep only if this skill needs install-specific IDs, enums, or environment names
 
 Update this list to match the actual files that remain in the skill folder.
-Delete this section if the skill truly has no bundled resources, but most strong skills should at least consider scripts, references, assets, or config.]
+Delete this section if the skill truly has no bundled resources, but most strong skills should at least consider scripts, references, templates, assets, or config.]
 
 ## Gotchas
 
@@ -138,7 +139,8 @@ Examples:
 [TODO: Keep SKILL.md lean.
 Move long API details, schemas, examples, or policy documents into `references/`.
 Put deterministic helper logic into `scripts/`.
-Put templates and boilerplate into `assets/`.
+Put reusable output structures into `templates/`.
+Put boilerplate and sample files into `assets/`.
 Mention where detailed information lives so Claude can load it on demand.]
 
 ## Iteration Notes
@@ -197,6 +199,21 @@ This file should hold material Claude may need to consult on demand, such as:
 
 Do not duplicate the entire contents of this file back into SKILL.md.
 SKILL.md should point here when detailed reference information is needed.
+"""
+
+EXAMPLE_TEMPLATE = """# {{OUTPUT_NAME}} Template
+
+## Overview
+{{Brief one-paragraph summary}}
+
+## Inputs
+- {{Input 1}}
+- {{Input 2}}
+
+## Output Structure
+1. {{Section 1}}
+2. {{Section 2}}
+3. {{Section 3}}
 """
 
 EXAMPLE_ASSET = """# Example Asset Placeholder
@@ -283,6 +300,12 @@ def init_skill(skill_name, path):
         example_reference.write_text(EXAMPLE_REFERENCE.format(skill_title=skill_title))
         print("✅ Created references/reference_notes.md")
 
+        templates_dir = skill_dir / 'templates'
+        templates_dir.mkdir(exist_ok=True)
+        example_template = templates_dir / 'example_template.md'
+        example_template.write_text(EXAMPLE_TEMPLATE)
+        print("✅ Created templates/example_template.md")
+
         assets_dir = skill_dir / 'assets'
         assets_dir.mkdir(exist_ok=True)
         example_asset = assets_dir / 'example_asset.txt'
@@ -300,7 +323,7 @@ def init_skill(skill_name, path):
     print("\nNext steps:")
     print("1. Rewrite the description so it clearly describes when the skill should trigger")
     print("2. Replace placeholder sections with real workflow guidance and at least one gotcha")
-    print("3. Customize or delete the example files in scripts/, references/, assets/, and config.json")
+    print("3. Customize or delete the example files in scripts/, references/, templates/, assets/, and config.json")
     print("4. Keep SKILL.md lean; move bulky details into references/ and helper logic into scripts/")
     print("5. Run the validator when ready to check the skill structure")
 
