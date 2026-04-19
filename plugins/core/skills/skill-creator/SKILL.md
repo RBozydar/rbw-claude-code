@@ -229,8 +229,10 @@ Before writing from scratch, use the bundled starter resources in this skill:
 - `references/recommended-structure.md` for deciding simple vs router structure
 - `references/using-scripts.md` for script design and workflow integration
 - `references/using-templates.md` for template design and placeholder conventions
+- `scripts/evaluate_skill.py` for summarizing repeated trigger and negative-trigger eval runs
 
 Copy the closest template, then edit heavily for your actual domain.
+Add `evals/skill-evals.yaml` early so trigger behavior is tested, not guessed.
 
 ### Step 5: Write the Actual Skill
 
@@ -253,7 +255,7 @@ Remove filler, duplicated explanation, and obvious advice.
 Move long reference material into `references/`.
 If the skill starts feeling bloated, split detail out instead of expanding SKILL.md indefinitely.
 
-### Step 7: Validate and Package
+### Step 7: Validate, Evaluate, and Package
 
 Before packaging, validate the finished skill.
 From the repository root, run:
@@ -261,6 +263,14 @@ From the repository root, run:
 ```bash
 uv run python plugins/core/skills/skill-creator/scripts/quick_validate.py <path/to/skill-folder>
 ```
+
+Then summarize repeated trigger results using the eval harness:
+
+```bash
+uv run python plugins/core/skills/skill-creator/scripts/evaluate_skill.py <path/to/skill-folder>/evals/skill-evals.yaml --results <results.json>
+```
+
+The results JSON should capture repeated true/false outcomes for both `should_trigger` and `should_not_trigger` prompts.
 
 To package a distributable zip, run:
 
@@ -282,8 +292,9 @@ After a skill is used:
 2. Add or refine gotchas
 3. Add helper scripts if Claude keeps redoing the same work
 4. Clarify trigger wording if the skill under-triggers or over-triggers
-5. Move bulky detail into references if context usage becomes noisy
-6. Add hooks or persistent state only when repeated pain justifies them
+5. Expand `evals/skill-evals.yaml` with the new trigger and negative-trigger cases
+6. Move bulky detail into references if context usage becomes noisy
+7. Add hooks or persistent state only when repeated pain justifies them
 
 Treat iteration as part of the design, not as cleanup.
 
@@ -300,6 +311,7 @@ When updating an existing skill, check for these failure modes:
 - Persistent state is stored in the wrong place
 - Hooks are global and annoying instead of skill-scoped and purposeful
 - No guidance exists for measuring whether the skill is actually helping
+- No repeated trigger / negative-trigger eval coverage exists in `evals/skill-evals.yaml`
 
 ## Gotchas
 
@@ -341,8 +353,9 @@ The validator checks:
 - Required sections (especially Gotchas) exist
 - Referenced bundled resources (`scripts/`, `references/`, `templates/`, `assets/`, `config.json`) actually exist on disk
 - SKILL.md is not excessively large
+- Finished skills warn if they have no repeated eval coverage in `evals/skill-evals.yaml`
 
-A clean validation pass is necessary but not sufficient. After the skill is used in a real session, check whether it triggered correctly and whether Claude's output was meaningfully better than it would have been without the skill.
+A clean validation pass is necessary but not sufficient. After the skill is used in a real session, check whether it triggered correctly and whether Claude's output was meaningfully better than it would have been without the skill. Prefer repeated trials and negative-trigger checks over one-off spot checks.
 
 ## Success Criteria
 
