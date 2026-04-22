@@ -11,6 +11,7 @@ Examples:
     init_skill.py custom-skill --path /custom/location
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -81,6 +82,7 @@ The scaffold created alongside this file currently includes:
 - `references/reference_notes.md` - Replace with real reference material or delete it
 - `templates/example_template.md` - Replace with a real output template or delete it
 - `assets/example_asset.txt` - Replace with a real asset or delete it
+- `evals/skill-evals.yaml` - Replace placeholder prompts with real trigger and negative-trigger eval cases
 - `config.json` - Keep only if this skill needs install-specific IDs, enums, or environment names
 
 Update this list to match the actual files that remain in the skill folder.
@@ -242,10 +244,40 @@ EXAMPLE_CONFIG = """{
 }
 """
 
+EXAMPLE_EVAL_SPEC = """skill: {skill_name}
+should_trigger:
+  - id: basic-trigger
+    prompt: \"[TODO: Add a request that should activate this skill]\"
+    trials: 3
+    success_criteria:
+      - \"Skill activates for the intended request\"
+      - \"Output includes the required structure or action\"
+should_not_trigger:
+  - id: negative-trigger
+    prompt: \"[TODO: Add a similar request that should NOT activate this skill]\"
+    trials: 3
+    success_criteria:
+      - \"Skill stays inactive for this request\"
+notes:
+  - \"Add edge cases and regressions as the skill evolves.\"
+  - \"Run multiple trials to catch nondeterministic failures.\"
+"""
+
 
 def title_case_skill_name(skill_name):
     """Convert hyphenated skill name to Title Case for display."""
     return ' '.join(word.capitalize() for word in skill_name.split('-'))
+
+
+def validate_skill_name(skill_name: str) -> str | None:
+    """Return an error string when the requested skill name is invalid."""
+    if len(skill_name) > 40:
+        return "Skill name must be 40 characters or fewer"
+    if not re.match(r"^[a-z0-9-]+$", skill_name):
+        return "Skill name must use lowercase letters, digits, and hyphens only"
+    if skill_name.startswith("-") or skill_name.endswith("-") or "--" in skill_name:
+        return "Skill name cannot start/end with a hyphen or contain consecutive hyphens"
+    return None
 
 
 def init_skill(skill_name, path):
@@ -259,6 +291,11 @@ def init_skill(skill_name, path):
     Returns:
         Path to created skill directory, or None if error
     """
+    validation_error = validate_skill_name(skill_name)
+    if validation_error:
+        print(f"❌ Error: {validation_error}")
+        return None
+
     skill_dir = Path(path).resolve() / skill_name
 
     if skill_dir.exists():
@@ -315,6 +352,12 @@ def init_skill(skill_name, path):
         config_path = skill_dir / 'config.json'
         config_path.write_text(EXAMPLE_CONFIG)
         print("✅ Created config.json")
+
+        evals_dir = skill_dir / 'evals'
+        evals_dir.mkdir(exist_ok=True)
+        eval_spec_path = evals_dir / 'skill-evals.yaml'
+        eval_spec_path.write_text(EXAMPLE_EVAL_SPEC.format(skill_name=skill_name))
+        print("✅ Created evals/skill-evals.yaml")
     except Exception as e:
         print(f"❌ Error creating resource directories: {e}")
         return None
@@ -323,9 +366,10 @@ def init_skill(skill_name, path):
     print("\nNext steps:")
     print("1. Rewrite the description so it clearly describes when the skill should trigger")
     print("2. Replace placeholder sections with real workflow guidance and at least one gotcha")
-    print("3. Customize or delete the example files in scripts/, references/, templates/, assets/, and config.json")
+    print("3. Customize or delete the example files in scripts/, references/, templates/, assets/, evals/, and config.json")
     print("4. Keep SKILL.md lean; move bulky details into references/ and helper logic into scripts/")
-    print("5. Run the validator when ready to check the skill structure")
+    print("5. Add real trigger and negative-trigger prompts to evals/skill-evals.yaml")
+    print("6. Run the validator when ready to check the skill structure")
 
     return skill_dir
 

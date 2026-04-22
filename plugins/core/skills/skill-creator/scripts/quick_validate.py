@@ -221,6 +221,12 @@ def analyze_skill(skill_path: str | Path) -> ValidationReport:
             "SKILL.md exceeds 400 lines; consider moving verbose detail into references/"
         )
 
+    eval_spec_path = skill_path / "evals" / "skill-evals.yaml"
+    if not contains_placeholder(body) and not eval_spec_path.exists():
+        warnings.append(
+            "Finished skills should usually ship eval coverage in evals/skill-evals.yaml so trigger and negative-trigger behavior can be tested repeatedly"
+        )
+
     resource_refs = normalize_inline_code_references(body)
     for ref in sorted(resource_refs):
         normalized = ref.split(" (", 1)[0].strip()

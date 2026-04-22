@@ -1,73 +1,109 @@
 ---
 name: {{SKILL_NAME}}
-description: {{What it does}} Use when {{trigger conditions}}.
+description: Use this skill when {{task family, systems, file types, or failure modes}}. Do not use it for {{similar tasks that should route elsewhere}}.
 ---
 
-<essential_principles>
-## {{Core Concept}}
+# {{Skill Title}}
 
-{{Principles that ALWAYS apply, regardless of which workflow runs}}
+## Overview
 
-### 1. {{First principle}}
-{{Explanation}}
+{{1-3 sentences explaining the shared capability across the workflows in this skill and why this needs routing rather than a single flat instruction set.}}
 
-### 2. {{Second principle}}
-{{Explanation}}
+## Essential Principles
 
-### 3. {{Third principle}}
-{{Explanation}}
-</essential_principles>
+These rules apply across all workflows:
+1. {{Shared principle that must not be skipped}}
+2. {{Safety, correctness, or quality guardrail}}
+3. {{Constraint that keeps the skill focused}}
 
-<intake>
-**Ask the user:**
+## Trigger Examples
 
-What would you like to do?
-1. {{First option}}
-2. {{Second option}}
-3. {{Third option}}
+Use this skill for requests like:
+- "{{request that should route to workflow A}}"
+- "{{request that should route to workflow B}}"
+- "{{request that should route to workflow C}}"
 
-**Wait for response before proceeding.**
-</intake>
+Do not use it for:
+- "{{similar request that belongs to another skill}}"
+- "{{request too broad or unrelated for this router}}"
 
-<routing>
-| Response | Workflow |
-|----------|----------|
-| 1, "{{keywords}}" | `workflows/{{first-workflow}}.md` |
-| 2, "{{keywords}}" | `workflows/{{second-workflow}}.md` |
-| 3, "{{keywords}}" | `workflows/{{third-workflow}}.md` |
+## Intake and Routing
 
-**After reading the workflow, follow it exactly.**
-</routing>
+If the user intent is ambiguous, ask one focused intake question to determine the workflow.
+If intent is already clear from the request, route directly without asking.
 
-<quick_reference>
-## {{Skill Name}} Quick Reference
+Example routing table:
 
-{{Brief reference information always useful to have visible}}
-</quick_reference>
+| Signal | Workflow | Read next |
+|--------|----------|-----------|
+| {{keyword set A}} | Workflow A | `workflows/{{workflow-a}}.md` |
+| {{keyword set B}} | Workflow B | `workflows/{{workflow-b}}.md` |
+| {{keyword set C}} | Workflow C | `workflows/{{workflow-c}}.md` |
 
-<reference_index>
-## Domain Knowledge
+Route to the closest workflow, then adapt within that workflow. Do not force brittle step ordering unless the workflow is safety-critical.
 
-All in `references/`:
-- {{reference-1.md}} - {{purpose}}
-- {{reference-2.md}} - {{purpose}}
-</reference_index>
+## Bundled Resources
 
-<workflows_index>
-## Workflows
+- `workflows/...` - workflow-specific procedures and decision trees
+- `references/...` - detailed domain knowledge loaded on demand
+- `templates/...` - reusable output structures
+- `scripts/...` - deterministic helpers or verifiers
+- `evals/skill-evals.yaml` - repeated trigger and routing eval cases
 
-All in `workflows/`:
+Delete lines for resources this skill does not ship.
 
-| Workflow | Purpose |
-|----------|---------|
-| {{first-workflow}}.md | {{purpose}} |
-| {{second-workflow}}.md | {{purpose}} |
-| {{third-workflow}}.md | {{purpose}} |
-</workflows_index>
+## Domain Knowledge Index
 
-<success_criteria>
-A well-executed {{skill name}}:
-- {{First criterion}}
-- {{Second criterion}}
-- {{Third criterion}}
-</success_criteria>
+Summarize what lives in `references/`:
+- `references/{{reference-1}}.md` - {{purpose}}
+- `references/{{reference-2}}.md` - {{purpose}}
+
+## Workflow Index
+
+Summarize what lives in `workflows/`:
+- `workflows/{{workflow-a}}.md` - {{when to use it}}
+- `workflows/{{workflow-b}}.md` - {{when to use it}}
+- `workflows/{{workflow-c}}.md` - {{when to use it}}
+
+## Gotchas
+
+Capture real routing and execution failures:
+- Situation: {{ambiguous phrasing or misroute}}
+- Wrong instinct: {{common incorrect routing choice}}
+- Correct approach: {{how to disambiguate or route correctly}}
+- How to verify the fix: {{observable proof}}
+
+Add workflow-specific footguns here only if they affect more than one workflow; otherwise put them in the workflow file.
+
+## Verification
+
+Explain how to verify both routing and outcome:
+1. Trigger check: {{how to confirm the right workflow was selected}}
+2. Action check: {{how to confirm the workflow executed correctly}}
+3. Negative check: {{how to confirm unrelated prompts do not route here}}
+4. Evidence: {{logs, files, screenshots, assertions, or other proof}}
+
+## Success Criteria
+
+A well-executed {{SKILL_NAME}} skill:
+- [ ] Routes requests to the right workflow consistently
+- [ ] Avoids hijacking adjacent requests
+- [ ] Keeps shared principles in SKILL.md and details in workflow/reference files
+- [ ] Documents cross-workflow failure modes in Gotchas
+- [ ] Has repeatable eval coverage for trigger and routing behavior
+
+## Progressive Disclosure Notes
+
+Keep SKILL.md focused on shared principles, routing, and resource discovery.
+Move workflow detail into `workflows/`.
+Move dense knowledge into `references/`.
+Point to files explicitly so Claude can load only what it needs.
+
+## Iteration Notes
+
+Improve this router over time:
+- add new trigger phrases when user language shifts
+- add negative cases when the skill hijacks nearby requests
+- split workflows when a single route becomes overloaded
+- extend `evals/skill-evals.yaml` with routing regressions and edge cases
+- remove workflows that no longer add value
