@@ -472,7 +472,6 @@ This is the full recommended allow list for `~/.claude/settings.json`, designed 
       "Skill(core:workflows:work)",
       "Skill(core:agent-native-architecture)",
       "Skill(core:compound-docs)",
-      "Skill(core:create-agent-skills)",
       "Skill(core:file-todos)",
       "Skill(core:git-ship)",
       "Skill(core:git-worktree)",

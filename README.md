@@ -41,6 +41,7 @@ The current Codex marketplace exposes:
 - `core`
 - `python-backend`
 - `deep-research-plus`
+- `linux-hyprland`
 
 The guard plugins remain Claude-only for now because current Codex plugin docs
 describe skills, apps, and MCP configuration, but not hook plugins.
@@ -119,6 +120,7 @@ You can also manually check sync status:
 | [core](plugins/core) | Universal AI development tools: 29 agents, 18 commands, 16 skills |
 | [python-backend](plugins/python-backend) | Python-specific tools: 5 reviewers, 2 commands |
 | [deep-research-plus](plugins/deep-research-plus) | Deep research workflows with optional GDELT MCP support |
+| [linux-hyprland](plugins/linux-hyprland) | Quickshell and Hyprland shell development skill for Qt6/QML |
 
 ### Automation Hooks
 
@@ -145,6 +147,7 @@ Codex-compatible plugins in this repo currently are:
 - `core`
 - `python-backend`
 - `deep-research-plus`
+- `linux-hyprland`
 
 Each now ships a `.codex-plugin/plugin.json`, and the repo marketplace lives at
 `.agents/plugins/marketplace.json`.
@@ -167,10 +170,11 @@ uv run python scripts/generate_codex_agents.py
 Install them into your Codex home:
 
 ```bash
-./scripts/install-codex-agents.sh
+./scripts/install-codex.sh
 ```
 
-By default the installer creates symlinks into `~/.codex/agents/` and
+This single installer handles both agents and prompts. By default it creates
+symlinks into `~/.codex/agents/` and
 `~/.codex/prompts/` so updates in this repo propagate without copy drift. Use
 `--copy` if you prefer materialized files.
 
@@ -216,12 +220,11 @@ The `core` plugin provides language-agnostic AI-powered development tools:
 |------------|-------------|
 | `core:agent-native-architecture` | Build AI agents using prompt-native architecture |
 | `core:compound-docs` | Capture solved problems as categorized documentation |
-| `core:create-agent-skills` | Expert guidance for creating Claude Code skills |
 | `core:file-todos` | File-based todo tracking in todos/ directory |
 | `core:git-ship` | Complete git workflow: commit, push, PR, CI, merge |
 | `core:git-worktree` | Manage Git worktrees for parallel development |
 | `core:instruction-hygiene` | Audit and trim bloated CLAUDE.md/skill/context setups with recurring hygiene checks |
-| `core:skill-creator` | Guide for creating effective skills |
+| `core:skill-creator` | Canonical skill-authoring guide with templates and validation/packaging scripts |
 
 ## Python Backend Plugin
 

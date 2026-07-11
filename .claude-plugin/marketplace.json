@@ -22,6 +22,12 @@
       "category": "development"
     },
     {
+      "name": "linux-hyprland",
+      "description": "Quickshell (Qt6/QML) desktop shell development for Hyprland: API reference, patterns, visual effects, gotchas, and feature matrix across reference shells",
+      "source": "./plugins/linux-hyprland",
+      "category": "development"
+    },
+    {
       "name": "enforce-uv",
       "description": "Block bare python/pip/pytest commands, enforce uv usage",
       "source": "./plugins/guards/policy/enforce-uv",

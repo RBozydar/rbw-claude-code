@@ -4,7 +4,7 @@ Remind to add tests when Claude Code creates new Python files.
 
 ## What it does
 
-This PostToolUse hook checks if a corresponding test file exists when a new Python module is created. If no test file is found, it prints a reminder.
+This PostToolUse hook checks if a corresponding test file exists when a new Python module is created. If no test file is found, it prints a reminder. The hook implementation lives at `hooks/reminder_hook.py`.
 
 ## Installation
 

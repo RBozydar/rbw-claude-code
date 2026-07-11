@@ -1,0 +1,42 @@
+{
+  "name": "linux-hyprland",
+  "version": "2.0.0",
+  "description": "Skills for building custom desktop shells on Hyprland using Quickshell, Qt6, and QML.",
+  "author": {
+    "name": "Robert Wasilewski",
+    "email": "wasilewski.robert@gmail.com",
+    "url": "https://github.com/RBozydar"
+  },
+  "homepage": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/linux-hyprland",
+  "repository": "https://github.com/RBozydar/rbw-claude-code",
+  "license": "MIT",
+  "keywords": [
+    "linux",
+    "hyprland",
+    "wayland",
+    "quickshell",
+    "qt6",
+    "qml",
+    "desktop-shell"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Linux Hyprland",
+    "shortDescription": "Quickshell and Hyprland shell development guidance",
+    "longDescription": "Specialized skill support for building, reviewing, and debugging Quickshell-based desktop shells on Hyprland, including QML patterns, module APIs, visual effects, and reference implementations.",
+    "developerName": "Robert Wasilewski",
+    "category": "Development",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/linux-hyprland",
+    "defaultPrompt": [
+      "Help me build a Quickshell panel for Hyprland.",
+      "Review this QML for Quickshell-specific mistakes.",
+      "Show the right multi-monitor pattern for a Hyprland bar."
+    ],
+    "brandColor": "#4D7C0F"
+  }
+}

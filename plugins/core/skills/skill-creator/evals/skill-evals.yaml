@@ -1,0 +1,30 @@
+skill: skill-creator
+should_trigger:
+  - id: create-new-skill
+    prompt: "Create a new Claude Code skill for deploying services to staging and production."
+    trials: 3
+    success_criteria:
+      - "Skill Creator is invoked"
+      - "Response discusses trigger-oriented descriptions and bundled resources"
+      - "Response recommends gotchas, verification, and eval coverage"
+  - id: harden-existing-skill
+    prompt: "Audit this existing skill because it under-triggers and its SKILL.md is bloated."
+    trials: 3
+    success_criteria:
+      - "Skill Creator is invoked"
+      - "Response recommends tightening the description and moving detail into references"
+      - "Response mentions negative-trigger or trigger evals"
+should_not_trigger:
+  - id: unrelated-general-coding
+    prompt: "Refactor this Python function to reduce duplication."
+    trials: 3
+    success_criteria:
+      - "Skill Creator stays inactive because this is a normal coding task"
+  - id: unrelated-research
+    prompt: "Summarize this paper about retrieval architectures."
+    trials: 3
+    success_criteria:
+      - "Skill Creator stays inactive because this is research, not skill authoring"
+notes:
+  - "Add regressions whenever Skill Creator misses a trigger or hijacks a nearby request."
+  - "Keep should_not_trigger cases close to real adjacent requests so over-triggering is visible."

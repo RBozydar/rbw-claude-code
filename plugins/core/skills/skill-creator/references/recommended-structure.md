@@ -59,7 +59,7 @@ description: What it does and when to use it.
 </essential_principles>
 
 <intake>
-**Ask the user:**
+**If intent is ambiguous, ask the user one focused intake question:**
 
 What would you like to do?
 1. [Option A]
@@ -67,7 +67,7 @@ What would you like to do?
 3. [Option C]
 4. Something else
 
-**Wait for response before proceeding.**
+**If the request already makes the path obvious, route directly without asking.**
 </intake>
 
 <routing>
@@ -78,7 +78,7 @@ What would you like to do?
 | 3, "keyword", "keyword" | `workflows/option-c.md` |
 | 4, other | Clarify, then select |
 
-**After reading the workflow, follow it exactly.**
+After reading the workflow, apply it with judgment. Follow safety-critical or correctness-critical steps exactly, but otherwise adapt the workflow to the user's context.
 </routing>
 
 <reference_index>

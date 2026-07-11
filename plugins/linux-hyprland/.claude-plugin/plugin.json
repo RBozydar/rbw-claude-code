@@ -1,0 +1,20 @@
+{
+  "name": "linux-hyprland",
+  "version": "1.0.0",
+  "description": "Skills for building custom desktop shells on Hyprland using Quickshell, Qt6, and QML.",
+  "author": {
+    "name": "RBozydar",
+    "url": "https://github.com/RBozydar"
+  },
+  "homepage": "https://github.com/RBozydar/rbw-claude-code/tree/main/plugins/linux-hyprland",
+  "license": "MIT",
+  "keywords": [
+    "linux",
+    "hyprland",
+    "wayland",
+    "quickshell",
+    "qt6",
+    "qml",
+    "desktop-shell"
+  ]
+}
