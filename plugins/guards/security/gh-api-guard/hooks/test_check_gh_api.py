@@ -2,6 +2,8 @@
 """Tests for the gh-api-guard PreToolUse hook."""
 
 import importlib.util
+import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -20,7 +22,78 @@ spec.loader.exec_module(check_gh_api_module)
 extract_endpoint = check_gh_api_module.extract_endpoint
 check_for_dangerous_method = check_gh_api_module.check_for_dangerous_method
 check_blocked_subcommands = check_gh_api_module.check_blocked_subcommands
-SHELL_WRAPPER_PATTERN = check_gh_api_module.SHELL_WRAPPER_PATTERN
+
+
+def run_hook(command: str) -> subprocess.CompletedProcess[str]:
+    """Run the hook with a complete Claude Code PreToolUse payload."""
+    payload = {
+        "session_id": "test-session",
+        "transcript_path": "/tmp/test-transcript.jsonl",
+        "cwd": str(Path.cwd()),
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {"command": command},
+    }
+    return subprocess.run(
+        [str(hook_path)],
+        input=json.dumps(payload),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+class TestHookBoundary:
+    """Test behavior through the real hook process."""
+
+    def test_user_reported_compound_read_commands_are_allowed(self) -> None:
+        command = (
+            "gh pr view 5 --json comments --jq '.comments | length' 2>&1; "
+            "gh api repos/RBozydar/cat_tracker/pulls/5/comments "
+            "--jq 'length' 2>&1"
+        )
+
+        result = run_hook(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "gh api repos/owner/repo/issues/1/comments -f body=write",
+            "gh api repos/owner/repo/issues/1/comments --method POST -f body=write",
+            "gh api --method=DELETE repos/owner/repo/issues/1/comments",
+            "gh api graphql -f 'query=mutation { closeIssue(input: {}) { clientMutationId } }'",
+            "gh api graphql -f query=@mutation.graphql",
+            "bash -c 'gh pr merge 123'",
+            "bash -lc 'gh pr merge 123'",
+            "gh pr view 123; gh pr merge 123",
+            "gh --repo owner/repo pr merge 123",
+            "gh --hostname github.example api repos/owner/repo/issues -f title=write",
+        ],
+    )
+    def test_mutations_are_blocked(self, command: str) -> None:
+        result = run_hook(command)
+
+        assert result.returncode == 2
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "gh api graphql -f 'query=query { viewer { login } }'",
+            "gh api graphql -f 'query=query { repository(name: \"mutation\") { id } }'",
+            "gh api 'repos/owner/repo/pulls/1/comments?per_page=100'",
+            "gh api repos/owner/repo/issues -X GET -f state=open",
+            "cd /tmp && gh api repos/owner/repo/pulls/1/comments",
+            "bash -c 'gh pr view 123'",
+            "gh ruleset view 1",
+            "printf 'example: gh pr merge 123'",
+        ],
+    )
+    def test_safe_github_commands_are_allowed(self, command: str) -> None:
+        result = run_hook(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
 
 
 class TestExtractEndpoint:
@@ -113,26 +186,6 @@ class TestCheckBlockedSubcommands:
     def test_issue_list_allowed(self):
         reason = check_blocked_subcommands("gh issue list")
         assert reason is None
-
-
-class TestShellWrapperPattern:
-    """Test detection of shell wrapper bypass attempts."""
-
-    def test_bash_c_with_gh(self):
-        cmd = "bash -c 'gh repo delete owner/repo'"
-        assert SHELL_WRAPPER_PATTERN.search(cmd)
-
-    def test_sh_c_with_gh(self):
-        cmd = "sh -c 'gh pr merge 123'"
-        assert SHELL_WRAPPER_PATTERN.search(cmd)
-
-    def test_eval_with_gh(self):
-        cmd = 'eval "gh secret set KEY"'
-        assert SHELL_WRAPPER_PATTERN.search(cmd)
-
-    def test_no_wrapper(self):
-        cmd = "gh pr view 123"
-        assert not SHELL_WRAPPER_PATTERN.search(cmd)
 
 
 class TestJqPipeHandling:

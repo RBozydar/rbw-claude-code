@@ -2,224 +2,342 @@
 # /// script
 # dependencies = ["cchooks"]
 # ///
-"""Block dangerous gh CLI commands, allow only safe read operations."""
+"""Allow read-only GitHub CLI operations and block explicit mutations."""
 
+import os
 import re
 import shlex
+from collections.abc import Iterator, Sequence
 
 from cchooks import PreToolUseContext, create_context
 
-# Safe patterns for gh api - read-only operations
-# Note: Leading slash is stripped before matching
-ALLOWED_API_PATTERNS = [
-    # PR comments (inline/review comments)
-    r"^repos/[^/]+/[^/]+/pulls/\d+/comments$",
-    # Issue/PR conversation comments
-    r"^repos/[^/]+/[^/]+/issues/\d+/comments$",
-    # Single comment by ID (issues/comments/{id} works for both issue and PR comments)
-    r"^repos/[^/]+/[^/]+/issues/comments/\d+$",
-    # Single PR review comment by ID
-    r"^repos/[^/]+/[^/]+/pulls/comments/\d+$",
-    # PR reviews
-    r"^repos/[^/]+/[^/]+/pulls/\d+/reviews$",
-    # Specific review comments
-    r"^repos/[^/]+/[^/]+/pulls/\d+/reviews/\d+/comments$",
-    # PR details
-    r"^repos/[^/]+/[^/]+/pulls/\d+$",
-    # Issue details
-    r"^repos/[^/]+/[^/]+/issues/\d+$",
-    # Commit comments
-    r"^repos/[^/]+/[^/]+/commits/[a-f0-9]+/comments$",
-    # Repository info
-    r"^repos/[^/]+/[^/]+$",
-    # List PRs/issues (useful for searching)
-    r"^repos/[^/]+/[^/]+/pulls$",
-    r"^repos/[^/]+/[^/]+/issues$",
-    # PR files (for reviewing changes)
-    r"^repos/[^/]+/[^/]+/pulls/\d+/files$",
-    # Commits on a PR
-    r"^repos/[^/]+/[^/]+/pulls/\d+/commits$",
-]
 
-# Dangerous HTTP methods to block
-DANGEROUS_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
+DANGEROUS_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+FIELD_FLAGS = frozenset({"-f", "-F", "--raw-field", "--field"})
+INPUT_FLAGS = frozenset({"--input"})
+SHELL_PUNCTUATION = frozenset("();<>|&")
+GH_GLOBAL_FLAGS_WITH_VALUES = frozenset({"-R", "--repo", "--hostname"})
 
-# Dangerous gh subcommands that should ALWAYS be blocked
-# These are destructive or security-sensitive operations
-BLOCKED_SUBCOMMANDS = [
-    # Repository destruction
-    (r"\bgh\s+repo\s+delete\b", "gh repo delete permanently destroys repositories"),
-    (r"\bgh\s+repo\s+archive\b", "gh repo archive requires manual approval"),
-    # PR/Issue modifications
-    (r"\bgh\s+pr\s+merge\b", "gh pr merge requires manual approval"),
-    (r"\bgh\s+pr\s+close\b", "gh pr close requires manual approval"),
-    (r"\bgh\s+issue\s+close\b", "gh issue close requires manual approval"),
-    (r"\bgh\s+issue\s+delete\b", "gh issue delete requires manual approval"),
-    # Secrets and variables (security-sensitive)
-    (r"\bgh\s+secret\s+set\b", "gh secret set modifies repository secrets"),
-    (r"\bgh\s+secret\s+delete\b", "gh secret delete removes repository secrets"),
-    (r"\bgh\s+variable\s+set\b", "gh variable set modifies repository variables"),
-    (r"\bgh\s+variable\s+delete\b", "gh variable delete removes repository variables"),
-    # Release management
-    (r"\bgh\s+release\s+delete\b", "gh release delete requires manual approval"),
-    # Branch protection
-    (r"\bgh\s+ruleset\b", "gh ruleset commands modify branch protection"),
-    # Workflow runs
-    (r"\bgh\s+run\s+cancel\b", "gh run cancel requires manual approval"),
-    (r"\bgh\s+run\s+delete\b", "gh run delete requires manual approval"),
-    # Cache management
-    (r"\bgh\s+cache\s+delete\b", "gh cache delete requires manual approval"),
-    # GraphQL mutations (can do anything)
-    (
-        r"\bgh\s+api\s+graphql\b.{0,2000}?\bmutation\b",
-        "GraphQL mutations require manual approval",
-    ),
-]
+# Only the mutating members of mixed command families belong here. Read-only
+# commands such as `gh ruleset view` and `gh ruleset list` must remain usable.
+BLOCKED_SUBCOMMANDS = {
+    ("repo", "delete"): "gh repo delete permanently destroys repositories",
+    ("repo", "archive"): "gh repo archive requires manual approval",
+    ("pr", "merge"): "gh pr merge requires manual approval",
+    ("pr", "close"): "gh pr close requires manual approval",
+    ("issue", "close"): "gh issue close requires manual approval",
+    ("issue", "delete"): "gh issue delete requires manual approval",
+    ("secret", "set"): "gh secret set modifies repository secrets",
+    ("secret", "delete"): "gh secret delete removes repository secrets",
+    ("variable", "set"): "gh variable set modifies repository variables",
+    ("variable", "delete"): "gh variable delete removes repository variables",
+    ("release", "delete"): "gh release delete requires manual approval",
+    ("ruleset", "create"): "gh ruleset create modifies branch protection",
+    ("ruleset", "delete"): "gh ruleset delete modifies branch protection",
+    ("run", "cancel"): "gh run cancel requires manual approval",
+    ("run", "delete"): "gh run delete requires manual approval",
+    ("cache", "delete"): "gh cache delete requires manual approval",
+}
 
-# Pattern for bash -c / sh -c / eval containing gh commands
-SHELL_WRAPPER_PATTERN = re.compile(
-    r"""(?:(?:ba)?sh\s+-c|eval)\s+['"].*\bgh\s+""",
-    re.IGNORECASE,
-)
 
-# Pattern for heredoc with gh commands
-HEREDOC_GH_PATTERN = re.compile(
-    r"<<-?\s*['\"]?\w+['\"]?.*\bgh\s+",
-    re.DOTALL | re.IGNORECASE,
-)
+def tokenize_shell(command: str) -> list[str]:
+    """Tokenize a shell command while retaining command separators."""
+    lexer = shlex.shlex(command, posix=True, punctuation_chars="();<>|&")
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    return list(lexer)
+
+
+def split_shell_segments(parts: Sequence[str]) -> Iterator[list[str]]:
+    """Yield command segments separated by shell control operators."""
+    segment: list[str] = []
+    for part in parts:
+        if part and all(character in SHELL_PUNCTUATION for character in part):
+            if segment:
+                yield segment
+                segment = []
+            continue
+        segment.append(part)
+    if segment:
+        yield segment
+
+
+def _skip_command_prefix(parts: Sequence[str]) -> int:
+    """Return the likely executable position after common command prefixes."""
+    index = 0
+    while index < len(parts) and re.match(r"^[A-Za-z_]\w*=", parts[index]):
+        index += 1
+
+    if index < len(parts) and parts[index] == "env":
+        index += 1
+        while index < len(parts) and (
+            parts[index].startswith("-") or re.match(r"^[A-Za-z_]\w*=", parts[index])
+        ):
+            index += 1
+
+    while index < len(parts) and parts[index] in {"command", "nohup", "sudo"}:
+        index += 1
+        while index < len(parts) and parts[index].startswith("-"):
+            index += 1
+
+    if index < len(parts) and parts[index] == "timeout":
+        index += 1
+        while index < len(parts) and parts[index].startswith("-"):
+            index += 1
+        if index < len(parts):
+            index += 1
+
+    return index
+
+
+def iter_gh_invocations(command: str) -> Iterator[list[str]]:
+    """Yield parsed ``gh`` invocations, including safe shell wrappers."""
+    parts = tokenize_shell(command)
+    for segment in split_shell_segments(parts):
+        executable_index = _skip_command_prefix(segment)
+        if executable_index >= len(segment):
+            continue
+
+        executable = os.path.basename(segment[executable_index])
+        if executable in {"bash", "sh", "zsh"}:
+            wrapper_args = segment[executable_index + 1 :]
+            command_flag_index = next(
+                (
+                    index
+                    for index, argument in enumerate(wrapper_args)
+                    if argument == "--command"
+                    or re.fullmatch(r"-[^-]*c[^-]*", argument)
+                ),
+                None,
+            )
+            if command_flag_index is not None:
+                command_index = command_flag_index + 1
+                if command_index < len(wrapper_args):
+                    yield from iter_gh_invocations(wrapper_args[command_index])
+            continue
+        if executable == "eval":
+            inner_command = " ".join(segment[executable_index + 1 :])
+            if inner_command:
+                yield from iter_gh_invocations(inner_command)
+            continue
+        if executable == "gh":
+            yield segment[executable_index:]
 
 
 def extract_endpoint(parts: list[str]) -> str | None:
-    """Extract the API endpoint from parsed command parts."""
+    """Extract the API endpoint from a parsed ``gh api`` invocation."""
+    flags_with_args = {
+        "-X",
+        "--method",
+        "-H",
+        "--header",
+        "-f",
+        "--raw-field",
+        "-F",
+        "--field",
+        "--input",
+        "--hostname",
+        "--jq",
+        "-q",
+        "--template",
+        "-t",
+    }
     skip_next = False
-    # Flags that take arguments
-    flags_with_args = {"-X", "-H", "-f", "-F", "--jq", "-q", "--template", "-t"}
-
-    for part in parts[2:]:  # Skip "gh" and "api"
+    for part in parts[2:]:
         if skip_next:
             skip_next = False
             continue
+        if part in flags_with_args:
+            skip_next = True
+            continue
         if part.startswith("-"):
-            if part in flags_with_args:
-                skip_next = True
             continue
         return part
     return None
 
 
+def explicit_http_method(parts: Sequence[str]) -> str | None:
+    """Return the HTTP method explicitly selected by a ``gh api`` command."""
+    for index, part in enumerate(parts):
+        if part in {"-X", "--method"} and index + 1 < len(parts):
+            return parts[index + 1].upper()
+        if part.startswith("--method="):
+            return part.partition("=")[2].upper()
+    return None
+
+
 def check_for_dangerous_method(parts: list[str]) -> str | None:
-    """Check if command uses a dangerous HTTP method. Returns method if found."""
-    for i, part in enumerate(parts):
-        if part == "-X" and i + 1 < len(parts):
-            method = parts[i + 1].upper()
-            if method in DANGEROUS_METHODS:
-                return method
+    """Return an explicitly selected dangerous HTTP method, if present."""
+    method = explicit_http_method(parts)
+    return method if method in DANGEROUS_METHODS else None
+
+
+def _field_values(parts: Sequence[str]) -> Iterator[str]:
+    """Yield values supplied through GitHub API field flags."""
+    for index, part in enumerate(parts):
+        if part in FIELD_FLAGS and index + 1 < len(parts):
+            yield parts[index + 1]
+        elif any(part.startswith(f"{flag}=") for flag in FIELD_FLAGS):
+            yield part.partition("=")[2]
+
+
+def normalize_gh_invocation(parts: Sequence[str]) -> list[str]:
+    """Remove supported global flags so the command group has a stable position."""
+    normalized = [parts[0]]
+    index = 1
+    while index < len(parts):
+        part = parts[index]
+        if part in GH_GLOBAL_FLAGS_WITH_VALUES:
+            index += 2
+            continue
+        if any(part.startswith(f"{flag}=") for flag in GH_GLOBAL_FLAGS_WITH_VALUES):
+            index += 1
+            continue
+        break
+    normalized.extend(parts[index:])
+    return normalized
+
+
+def effective_http_method(parts: Sequence[str]) -> str:
+    """Return the method GitHub CLI will use for a REST API invocation."""
+    explicit_method = explicit_http_method(parts)
+    if explicit_method is not None:
+        return explicit_method
+    if any(part in FIELD_FLAGS or part in INPUT_FLAGS for part in parts):
+        return "POST"
+    if any(
+        any(part.startswith(f"{flag}=") for flag in FIELD_FLAGS | INPUT_FLAGS)
+        for part in parts
+    ):
+        return "POST"
+    return "GET"
+
+
+def graphql_has_mutation(document: str) -> bool:
+    """Return whether a GraphQL document declares a top-level mutation."""
+    index = 0
+    brace_depth = 0
+    while index < len(document):
+        if document.startswith('"""', index):
+            end = document.find('"""', index + 3)
+            index = len(document) if end == -1 else end + 3
+            continue
+        character = document[index]
+        if character == '"':
+            index += 1
+            while index < len(document):
+                if document[index] == "\\":
+                    index += 2
+                    continue
+                if document[index] == '"':
+                    index += 1
+                    break
+                index += 1
+            continue
+        if character == "#":
+            newline = document.find("\n", index + 1)
+            index = len(document) if newline == -1 else newline + 1
+            continue
+        if character == "{":
+            brace_depth += 1
+            index += 1
+            continue
+        if character == "}":
+            brace_depth = max(0, brace_depth - 1)
+            index += 1
+            continue
+        if character.isalpha() or character == "_":
+            end = index + 1
+            while end < len(document) and (
+                document[end].isalnum() or document[end] == "_"
+            ):
+                end += 1
+            if brace_depth == 0 and document[index:end].lower() == "mutation":
+                return True
+            index = end
+            continue
+        index += 1
+    return False
+
+
+def graphql_mutation_reason(parts: Sequence[str]) -> str | None:
+    """Return a block reason for GraphQL mutations or opaque query input."""
+    if any(part in INPUT_FLAGS or part.startswith("--input=") for part in parts):
+        return (
+            "GraphQL input files require manual approval because their operation "
+            "is opaque"
+        )
+
+    query_values = [
+        value.partition("=")[2]
+        for value in _field_values(parts)
+        if value.startswith("query=")
+    ]
+    if not query_values:
+        return "Could not determine whether the GraphQL operation is read-only"
+    if any(query.startswith("@") for query in query_values):
+        return (
+            "GraphQL query files require manual approval because their operation "
+            "is opaque"
+        )
+    if any(graphql_has_mutation(query) for query in query_values):
+        return "GraphQL mutations require manual approval"
+    return None
+
+
+def blocked_invocation_reason(parts: list[str]) -> str | None:
+    """Return why a parsed GitHub CLI invocation must be blocked."""
+    parts = normalize_gh_invocation(parts)
+    lowered = [part.lower() for part in parts]
+    if len(lowered) >= 3:
+        reason = BLOCKED_SUBCOMMANDS.get((lowered[1], lowered[2]))
+        if reason is not None:
+            return reason
+
+    if len(lowered) < 2 or lowered[1] != "api":
+        return None
+
+    endpoint = extract_endpoint(parts)
+    if endpoint == "graphql":
+        return graphql_mutation_reason(parts)
+
+    method = effective_http_method(parts)
+    if method not in {"GET", "HEAD"}:
+        return f"gh api with effective {method} method requires manual approval"
     return None
 
 
 def check_blocked_subcommands(command: str) -> str | None:
-    """Check if command contains blocked gh subcommands. Returns reason if blocked."""
-    for pattern, reason in BLOCKED_SUBCOMMANDS:
-        if re.search(pattern, command, re.IGNORECASE | re.DOTALL):
-            return reason
+    """Return why any actual ``gh`` invocation in a command is blocked."""
+    try:
+        invocations = iter_gh_invocations(command)
+        for invocation in invocations:
+            reason = blocked_invocation_reason(invocation)
+            if reason is not None:
+                return reason
+    except ValueError:
+        return "Could not safely parse GitHub CLI command"
     return None
 
 
-def check_gh_api(command: str, c: PreToolUseContext) -> None:
-    """Validate gh api commands."""
-    try:
-        parts = shlex.split(command)
-    except ValueError:
-        c.output.exit_block("Could not parse gh api command")
-        return
-
-    # Check for dangerous HTTP methods
-    dangerous_method = check_for_dangerous_method(parts)
-    if dangerous_method:
-        c.output.exit_block(
-            f"gh api with {dangerous_method} method requires manual approval. "
-            "Only GET requests for PR comments are auto-allowed."
-        )
-        return
-
-    # Extract the API endpoint
-    endpoint = extract_endpoint(parts)
-    if endpoint is None:
-        c.output.exit_block("Could not determine gh api endpoint")
-        return
-
-    # Strip leading slash for consistent matching
-    endpoint = endpoint.lstrip("/")
-
-    # Check if endpoint matches allowed patterns
-    for pattern in ALLOWED_API_PATTERNS:
-        if re.match(pattern, endpoint):
-            c.output.exit_success()
-
-    c.output.exit_block(
-        f"gh api endpoint '{endpoint}' is not in the allowed list.\n"
-        "Allowed: PR comments, issue comments, and PR reviews (read-only).\n"
-        "Add to ALLOWED_API_PATTERNS in the hook if this is a safe read operation."
-    )
-
-
 def main() -> None:
-    c = create_context()
-    if not isinstance(c, PreToolUseContext):
-        c.output.exit_success()
+    """Validate GitHub CLI invocations in a Claude Code Bash tool call."""
+    context = create_context()
+    if not isinstance(context, PreToolUseContext):
+        context.output.exit_success()
 
-    command = c.tool_input.get("command", "")
-
-    # Quick check: if "gh" not in command, skip
+    command = context.tool_input.get("command", "")
     if "gh" not in command.lower():
-        c.output.exit_success()
+        context.output.exit_success()
 
-    # Check for shell wrapper bypass attempts (bash -c, eval)
-    if SHELL_WRAPPER_PATTERN.search(command):
-        c.output.exit_block(
-            "gh commands inside bash -c or eval require manual approval.\n"
-            "Run gh commands directly without shell wrappers."
-        )
-        return
-
-    # Check for heredoc bypass
-    if HEREDOC_GH_PATTERN.search(command):
-        c.output.exit_block(
-            "Heredoc with gh commands requires manual approval.\n"
-            f"Command: {command}\n"
-            "Run gh commands directly without heredocs."
-        )
-        return
-
-    # Check for blocked subcommands first
     blocked_reason = check_blocked_subcommands(command)
-    if blocked_reason:
-        c.output.exit_block(
+    if blocked_reason is not None:
+        context.output.exit_block(
             f"BLOCKED: {blocked_reason}\n"
             f"Command: {command}\n"
             "If this operation is truly needed, ask the user for explicit permission."
         )
-        return
-
-    # Check if this is a gh api command
-    # Use shlex to properly handle quoted arguments (e.g., --jq '.[] | .body')
-    try:
-        parts = shlex.split(command)
-        # Find 'gh' followed by 'api' in the command parts
-        for i, part in enumerate(parts):
-            if part == "gh" and i + 1 < len(parts) and parts[i + 1] == "api":
-                # Reconstruct the gh api command from this point
-                # (shlex already handled the quoting correctly)
-                check_gh_api(command, c)
-                return
-    except ValueError:
-        # If shlex fails, fall back to simple check
-        if re.search(r"\bgh\s+api\b", command):
-            check_gh_api(command, c)
-            return
-
-    # For other gh commands not explicitly blocked, allow them
-    c.output.exit_success()
+    context.output.exit_success()
 
 
 if __name__ == "__main__":

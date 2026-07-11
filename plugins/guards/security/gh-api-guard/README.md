@@ -1,84 +1,53 @@
 # gh-api-guard
 
-A Claude Code hook plugin that allows only safe `gh api` commands while blocking
-potentially dangerous operations.
+A Claude Code hook plugin that allows read-only GitHub CLI operations while
+requiring manual approval for explicit mutations.
 
-## Purpose
+## Behavior
 
-The `gh api` command is powerful but can perform destructive operations like
-deleting repositories, force merging PRs, or modifying settings. This plugin
-creates a safelist of allowed read-only operations (primarily PR comment
-fetching) while requiring manual approval for everything else.
+The guard parses actual `gh` invocations, including compound commands and
+commands nested in `bash -c`, `sh -c`, `zsh -c`, or `eval`.
 
-## Allowed Operations
+It allows:
 
-The following `gh api` endpoints are auto-allowed:
+- `gh api` REST requests whose effective method is `GET` or `HEAD`
+- GraphQL queries supplied through a `query=` field
+- Read-only `gh` commands such as `gh pr view` and `gh ruleset view`
 
-| Endpoint Pattern | Description |
-|------------------|-------------|
-| `repos/{owner}/{repo}/pulls/{num}/comments` | Fetch inline PR comments |
-| `repos/{owner}/{repo}/issues/{num}/comments` | Fetch issue/PR general comments |
-| `repos/{owner}/{repo}/pulls/{num}/reviews` | Fetch PR reviews |
-| `repos/{owner}/{repo}/pulls/{num}/reviews/{id}/comments` | Fetch specific review comments |
+It blocks:
 
-## Blocked Operations
+- REST requests whose effective method is `POST`, `PUT`, `PATCH`, or `DELETE`
+- GraphQL mutations and opaque GraphQL input/query files
+- Destructive CLI operations such as PR merges, repository deletion, secret
+  changes, workflow cancellation, and ruleset creation/deletion
 
-- Any endpoint using `POST`, `PUT`, `PATCH`, or `DELETE` methods
-- Any endpoint not in the allowed list
+GitHub CLI changes the default REST method from `GET` to `POST` when field or
+input flags are supplied. The guard accounts for this behavior and also
+recognizes `-X`, `--method`, and `--method=...` overrides.
 
 ## Examples
 
 ### Allowed
 
 ```bash
-# Fetch inline PR comments
-gh api repos/owner/repo/pulls/35/comments
-
-# Fetch with jq filtering
-gh api repos/owner/repo/pulls/35/comments --jq '.[] | .body'
-
-# Fetch issue comments
-gh api repos/owner/repo/issues/35/comments
-
-# Fetch PR reviews
-gh api repos/owner/repo/pulls/35/reviews
+gh pr view 5 --json comments --jq '.comments | length'
+gh api 'repos/owner/repo/pulls/5/comments?per_page=100' --jq 'length'
+gh api graphql -f 'query=query { viewer { login } }'
+gh api repos/owner/repo/issues -X GET -f state=open
+gh ruleset view 123
 ```
 
-### Blocked (requires manual approval)
+### Blocked
 
 ```bash
-# POST request to create a comment
-gh api repos/owner/repo/pulls/35/comments -X POST -f body="comment"
-
-# DELETE request
+gh api repos/owner/repo/issues/5/comments -f body='comment'
 gh api repos/owner/repo -X DELETE
-
-# Unlisted endpoint
-gh api repos/owner/repo/collaborators
-```
-
-## Customization
-
-To allow additional safe endpoints, edit `hooks/check-gh-api.py` and add
-patterns to the `ALLOWED_PATTERNS` list:
-
-```python
-ALLOWED_PATTERNS = [
-    # Existing patterns...
-    r"^repos/[^/]+/[^/]+/pulls/\d+/comments$",
-    # Add your pattern here:
-    r"^repos/[^/]+/[^/]+/pulls/\d+/files$",  # Allow fetching PR files
-]
+gh api graphql -f 'query=mutation { ... }'
+gh pr merge 5
+gh ruleset delete 123
 ```
 
 ## Installation
 
-Add to your `.claude/settings.json`:
-
-```json
-{
-  "plugins": ["./plugins/gh-api-guard"]
-}
-```
-
-Or install from the marketplace.
+Add the plugin to your Claude Code configuration through the repository's
+marketplace entry.
