@@ -1,0 +1,7 @@
+interface:
+  display_name: "Orchestrate Implementation"
+  short_description: "Delegate vertical slices with proportional review"
+  default_prompt: "Use $orchestrate-implementation to frame this vertical slice, delegate it, review affected risks, and deliver the exact candidate safely."
+
+policy:
+  allow_implicit_invocation: false
